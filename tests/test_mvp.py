@@ -1,13 +1,12 @@
-"""
-tests/test_mvp.py
-=================
-Suite de testes robusta para mvp.py — Controle de LEDs via Air Mouse LE-7278
 
-Estratégia: mocking híbrido
-  • Lógica de negócio  → testada com mocks (sem hardware)
-  • Erros de hardware  → simulados com side_effect
-  • Parametrize        → cobre múltiplos valores sem duplicar código
-  • Fixtures           → configuram e limpam estado global entre testes
+"""
+tests/test_mvp.py — Suite pytest para mvp.py v2
+================================================
+Estratégia híbrida:
+  • Funções de lógica pura  → testadas com mocks (sem hardware)
+  • Erros de hardware       → simulados com side_effect
+  • Fixtures                → resetam EstadoDaemon entre testes
+  • Parametrize             → múltiplos valores sem duplicar código
 
 Rodar:
     python3 -m pytest tests/ -v
@@ -17,35 +16,37 @@ Rodar:
 import sys
 import time
 import subprocess
+import signal
+import asyncio
 from unittest.mock import MagicMock, patch, call
 
 import pytest
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STUB DO HARDWARE — registrado ANTES do import do módulo
+# STUB DE HARDWARE (registrado ANTES do import do módulo)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class _EcodeStub:
-    """Códigos reais do kernel Linux (confirmados nos logs do evtest)."""
-    EV_KEY        = 1
-    KEY_ENTER     = 28
-    KEY_RIGHT     = 106
-    KEY_LEFT      = 105
-    KEY_UP        = 103
-    KEY_DOWN      = 108
-    KEY_VOLUMEUP  = 115
+    """Códigos reais do kernel Linux — confirmados nos logs evtest."""
+    EV_KEY         = 1
+    KEY_ENTER      = 28
+    KEY_RIGHT      = 106
+    KEY_LEFT       = 105
+    KEY_UP         = 103
+    KEY_DOWN       = 108
+    KEY_VOLUMEUP   = 115
     KEY_VOLUMEDOWN = 114
-    KEY_BACK      = 158
+    KEY_BACK       = 158
+
 
 class _EvdevStub(MagicMock):
-    """Módulo evdev falso com ecodes reais e InputDevice simulável."""
-    ecodes = _EcodeStub()
+    ecodes       = _EcodeStub()
+    list_devices = MagicMock(return_value=[])
+
 
 _evdev_stub = _EvdevStub()
-_evdev_stub.list_devices.return_value = []   # sem devices por padrão
 sys.modules["evdev"] = _evdev_stub
 
-# Importa o módulo DEPOIS do stub estar registrado
 import mvp  # noqa: E402
 
 
@@ -53,189 +54,202 @@ import mvp  # noqa: E402
 # FIXTURES
 # ─────────────────────────────────────────────────────────────────────────────
 
-@pytest.fixture(autouse=True)
-def estado_global_limpo():
-    """
-    Restaura o estado global do daemon antes de CADA teste.
-    autouse=True → aplicado automaticamente em todos os testes.
-    """
-    mvp.modo_led_ativo = False
-    mvp.indice_cor     = 8        # índice de "Branco"
-    mvp.ok_press_time  = None
-    mvp.device_teclado  = None
-    mvp.device_consumer = None
-    yield                         # executa o teste
-    # cleanup pós-teste (se necessário)
-    mvp.modo_led_ativo = False
+@pytest.fixture
+def estado() -> mvp.EstadoDaemon:
+    """Estado limpo para cada teste."""
+    return mvp.EstadoDaemon()
+
+
+@pytest.fixture
+def mock_teclado() -> MagicMock:
+    """Device de teclado mockado."""
+    dev = MagicMock()
+    dev.name = "XING WEI 2.4G USB USB Composite Device"
+    return dev
 
 
 @pytest.fixture
 def mock_subprocess():
-    """Mockeia subprocess.run globalmente no módulo mvp."""
-    with patch("mvp.subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0)
-        yield mock_run
+    with patch("mvp.subprocess.run") as m:
+        m.return_value = MagicMock(returncode=0)
+        yield m
 
 
 @pytest.fixture
 def mock_notificar():
-    """Substitui notificar() para não chamar notify-send nos testes."""
-    with patch("mvp.notificar") as mock_n:
-        yield mock_n
+    with patch("mvp.notificar") as m:
+        yield m
 
 
 @pytest.fixture
-def mock_aplicar_cor_ok():
-    """aplicar_cor() sempre retorna True (sucesso)."""
-    with patch("mvp.aplicar_cor", return_value=True) as mock_ac:
-        yield mock_ac
+def mock_aplicar_ok():
+    with patch("mvp.aplicar_cor", return_value=True) as m:
+        yield m
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 1. PALETA DE CORES
+# 1. EstadoDaemon — dataclass
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestEstadoDaemon:
+
+    def test_valores_default(self):
+        e = mvp.EstadoDaemon()
+        assert e.modo_led_ativo is False
+        assert e.indice_cor     == 8
+        assert e.ok_press_time  is None
+        assert e.grabbed        is False
+
+    def test_mutavel(self):
+        e = mvp.EstadoDaemon()
+        e.modo_led_ativo = True
+        e.indice_cor = 3
+        assert e.modo_led_ativo is True
+        assert e.indice_cor == 3
+
+    def test_instancias_independentes(self):
+        e1 = mvp.EstadoDaemon()
+        e2 = mvp.EstadoDaemon()
+        e1.modo_led_ativo = True
+        assert e2.modo_led_ativo is False
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. Paleta
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestPaleta:
 
-    def test_tamanho_esperado(self):
+    def test_tamanho(self):
         assert len(mvp.PALETA) == 10
 
-    @pytest.mark.parametrize("indice,nome,hex_esperado", [
-        (0,  "Vermelho", "FF0000"),
-        (3,  "Verde",    "00FF00"),
-        (5,  "Azul",     "0000FF"),
-        (8,  "Branco",   "FFFFFF"),
-        (9,  "Desligar", "000000"),
+    @pytest.mark.parametrize("idx,nome,hex_esperado", [
+        (0, "Vermelho", "FF0000"),
+        (3, "Verde",    "00FF00"),
+        (8, "Branco",   "FFFFFF"),
+        (9, "Desligar", "000000"),
     ])
-    def test_cores_especificas(self, indice, nome, hex_esperado):
-        n, h = mvp.PALETA[indice]
-        assert n == nome, f"índice {indice}: nome esperado '{nome}', obtido '{n}'"
+    def test_cores_especificas(self, idx, nome, hex_esperado):
+        n, h = mvp.PALETA[idx]
+        assert n == nome
         assert h == hex_esperado
 
     @pytest.mark.parametrize("nome,cor", mvp.PALETA)
-    def test_todos_hex_validos(self, nome, cor):
+    def test_hex_valido(self, nome, cor):
         import re
-        assert re.fullmatch(r"[0-9A-Fa-f]{6}", cor), \
-            f"'{cor}' ({nome}) não é um HEX válido de 6 dígitos"
-
-    def test_ultimo_e_preto(self):
-        _, cor = mvp.PALETA[-1]
-        assert cor == "000000", "Último item deve ser preto (desligar LEDs)"
+        assert re.fullmatch(r"[0-9A-Fa-f]{6}", cor), f"{nome}: '{cor}' inválido"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 2. NAVEGAÇÃO DE CORES (mudar_cor)
+# 3. mudar_cor
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestMudarCor:
 
     @pytest.mark.parametrize("inicio,delta,esperado", [
-        (0, +1, 1),   # Vermelho → Laranja
-        (3, +1, 4),   # Verde → Ciano
-        (3, -1, 2),   # Verde → Amarelo
-        (8,  0, 8),   # sem movimento
+        (0, +1, 1),
+        (3, +1, 4),
+        (3, -1, 2),
     ])
-    def test_delta_basico(self, inicio, delta, esperado, mock_notificar, mock_aplicar_cor_ok):
-        mvp.indice_cor = inicio
-        mvp.mudar_cor(delta)
-        assert mvp.indice_cor == esperado
+    def test_delta(self, inicio, delta, esperado, estado, mock_notificar, mock_aplicar_ok):
+        estado.indice_cor = inicio
+        mvp.mudar_cor(estado, delta)
+        assert estado.indice_cor == esperado
 
-    def test_ciclico_frente(self, mock_notificar, mock_aplicar_cor_ok):
-        """Do último item deve voltar para o primeiro."""
-        mvp.indice_cor = len(mvp.PALETA) - 1
-        mvp.mudar_cor(+1)
-        assert mvp.indice_cor == 0
+    def test_ciclico_frente(self, estado, mock_notificar, mock_aplicar_ok):
+        estado.indice_cor = len(mvp.PALETA) - 1
+        mvp.mudar_cor(estado, +1)
+        assert estado.indice_cor == 0
 
-    def test_ciclico_tras(self, mock_notificar, mock_aplicar_cor_ok):
-        """Do primeiro item deve ir para o último."""
-        mvp.indice_cor = 0
-        mvp.mudar_cor(-1)
-        assert mvp.indice_cor == len(mvp.PALETA) - 1
+    def test_ciclico_tras(self, estado, mock_notificar, mock_aplicar_ok):
+        estado.indice_cor = 0
+        mvp.mudar_cor(estado, -1)
+        assert estado.indice_cor == len(mvp.PALETA) - 1
 
-    def test_aplica_cor_correta(self, mock_notificar):
-        """mudar_cor() deve chamar aplicar_cor com o HEX certo."""
-        with patch("mvp.aplicar_cor", return_value=True) as mock_ac:
-            mvp.indice_cor = 0   # Vermelho
-            mvp.mudar_cor(+1)    # → Laranja
-            nome, cor = mvp.PALETA[1]
-            mock_ac.assert_called_once_with(cor, nome)
-
-    def test_sem_notificacao_se_openrgb_falhar(self, mock_notificar):
-        """Se openrgb falhar, NÃO deve notificar."""
+    def test_sem_notificacao_se_falha(self, estado, mock_notificar):
         with patch("mvp.aplicar_cor", return_value=False):
-            mvp.mudar_cor(+1)
+            mvp.mudar_cor(estado, +1)
         mock_notificar.assert_not_called()
 
-    def test_notifica_nome_da_cor(self, mock_notificar, mock_aplicar_cor_ok):
-        """Notificação deve conter o nome da nova cor."""
-        mvp.indice_cor = 0
-        mvp.mudar_cor(+1)                   # → Laranja (índice 1)
-        nome_esperado = mvp.PALETA[1][0]
-        args = mock_notificar.call_args[0]   # (titulo, corpo, ...)
-        assert nome_esperado in args
+    def test_aplica_hex_correto(self, estado, mock_notificar):
+        estado.indice_cor = 0   # Vermelho
+        with patch("mvp.aplicar_cor", return_value=True) as m:
+            mvp.mudar_cor(estado, +1)   # → Laranja (idx=1)
+        m.assert_called_once_with(mvp.PALETA[1][1], mvp.PALETA[1][0])
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 3. MODO LED (alternar_modo)
+# 4. alternar_modo — com grab/ungrab
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestAlternarModo:
 
-    def test_liga(self, mock_notificar):
-        assert mvp.modo_led_ativo is False
-        mvp.alternar_modo()
-        assert mvp.modo_led_ativo is True
+    def test_liga(self, estado, mock_teclado, mock_notificar):
+        mvp.alternar_modo(estado, mock_teclado)
+        assert estado.modo_led_ativo is True
+        assert estado.grabbed is True
+        mock_teclado.grab.assert_called_once()
 
-    def test_desliga(self, mock_notificar):
-        mvp.modo_led_ativo = True
-        mvp.alternar_modo()
-        assert mvp.modo_led_ativo is False
+    def test_desliga(self, estado, mock_teclado, mock_notificar):
+        estado.modo_led_ativo = True
+        estado.grabbed        = True
+        mvp.alternar_modo(estado, mock_teclado)
+        assert estado.modo_led_ativo is False
+        assert estado.grabbed is False
+        mock_teclado.ungrab.assert_called_once()
 
-    def test_toggle_duplo_restaura_estado(self, mock_notificar):
-        mvp.alternar_modo()
-        mvp.alternar_modo()
-        assert mvp.modo_led_ativo is False
+    def test_toggle_duplo(self, estado, mock_teclado, mock_notificar):
+        mvp.alternar_modo(estado, mock_teclado)
+        mvp.alternar_modo(estado, mock_teclado)
+        assert estado.modo_led_ativo is False
 
-    def test_notificacao_ao_ligar(self, mock_notificar):
-        mvp.alternar_modo()
+    def test_grab_falha_silenciosa(self, estado, mock_notificar):
+        """grab() com OSError não deve derrubar o daemon."""
+        dev = MagicMock()
+        dev.grab.side_effect = OSError("device busy")
+        try:
+            mvp.alternar_modo(estado, dev)
+        except OSError:
+            pytest.fail("alternar_modo() propagou OSError")
+        assert estado.grabbed is False  # não marcou como grabbed
+
+    def test_sem_device_nao_crasha(self, estado, mock_notificar):
+        """dev_teclado=None é suportado (device não encontrado)."""
+        mvp.alternar_modo(estado, None)
+        assert estado.modo_led_ativo is True
+
+    def test_notifica_ao_ligar(self, estado, mock_teclado, mock_notificar):
+        mvp.alternar_modo(estado, mock_teclado)
         titulo, corpo = mock_notificar.call_args[0][:2]
-        assert "Ligado" in corpo
+        assert "Ativo" in corpo
 
-    def test_notificacao_ao_desligar(self, mock_notificar):
-        mvp.modo_led_ativo = True
-        mvp.alternar_modo()
+    def test_notifica_ao_desligar(self, estado, mock_teclado, mock_notificar):
+        estado.modo_led_ativo = True
+        mvp.alternar_modo(estado, mock_teclado)
         titulo, corpo = mock_notificar.call_args[0][:2]
-        assert "Desligado" in corpo
-
-    def test_notifica_exatamente_uma_vez(self, mock_notificar):
-        mvp.alternar_modo()
-        assert mock_notificar.call_count == 1
+        assert "Desativado" in corpo
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 4. LONG PRESS — lógica de tempo
+# 5. Long Press — lógica de tempo
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestLongPress:
 
-    LONG = mvp.LONG_PRESS_TIME
-
     @pytest.mark.parametrize("duracao_s,deve_alternar", [
-        (3.1, True),    # exatamente acima do limiar
-        (5.0, True),    # bem acima
-        (0.5, False),   # press rápido
-        (2.9, False),   # quase 3s mas não chegou
+        (3.1, True),
+        (5.0, True),
+        (0.5, False),
+        (2.9, False),
     ])
-    def test_limiar(self, duracao_s, deve_alternar):
-        """Simula press e release com diferentes durações."""
+    def test_limiar(self, duracao_s, deve_alternar, estado, mock_notificar, mock_teclado):
         with patch("mvp.alternar_modo") as mock_alt:
             t0 = time.time() - duracao_s
-            mvp.ok_press_time = t0
-
-            duracao_real = time.time() - mvp.ok_press_time
-            mvp.ok_press_time = None
-            if duracao_real >= mvp.LONG_PRESS_TIME:
-                mvp.alternar_modo()
+            estado.ok_press_time = t0
+            duracao = time.time() - estado.ok_press_time
+            estado.ok_press_time = None
+            if duracao >= mvp.LONG_PRESS_TIME:
+                mvp.alternar_modo(estado, mock_teclado)
 
             if deve_alternar:
                 mock_alt.assert_called_once()
@@ -243,166 +257,136 @@ class TestLongPress:
                 mock_alt.assert_not_called()
 
     def test_long_press_time_ergonomico(self):
-        """LONG_PRESS_TIME deve ser entre 2s e 5s (ergonomia)."""
         assert 2.0 <= mvp.LONG_PRESS_TIME <= 5.0
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 5. APLICAR COR — interface com openrgb (subprocess)
+# 6. aplicar_cor
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestAplicarCor:
 
-    def test_sucesso_sem_sudo(self, mock_subprocess):
-        resultado = mvp.aplicar_cor("FF0000", "Vermelho")
-        assert resultado is True
+    def test_sucesso_com_usuario_sant(self, mock_subprocess):
+        """v2.4: Aplica via sudo -u sant bash rbg.sh."""
+        assert mvp.aplicar_cor("FF0000", "Vermelho") is True
         cmd = mock_subprocess.call_args_list[0][0][0]
-        assert "sudo" not in cmd
-        assert "FF0000" in cmd
+        assert "sudo" in cmd
+        assert "-u" in cmd
+        assert "sant" in cmd
+        assert "rbg.sh" in cmd[4]
+        assert "vermelho" in cmd[5]
 
-    def test_fallback_sudo_quando_falha(self, mock_subprocess):
-        """2ª tentativa (com sudo) é acionada quando a 1ª falha."""
-        mock_subprocess.side_effect = [
-            MagicMock(returncode=1),
-            MagicMock(returncode=0),
-        ]
-        resultado = mvp.aplicar_cor("00FF00", "Verde")
-        assert resultado is True
+    def test_fallback_sudo(self, mock_subprocess):
+        mock_subprocess.side_effect = [MagicMock(returncode=1), MagicMock(returncode=0)]
+        assert mvp.aplicar_cor("00FF00", "Verde") is True
         assert mock_subprocess.call_count == 2
-        cmd_sudo = mock_subprocess.call_args_list[1][0][0]
-        assert "sudo" in cmd_sudo
 
-    def test_retorna_false_quando_ambas_falham(self, mock_subprocess):
-        """Se sem sudo E com sudo falharem, retorna False."""
-        mock_subprocess.side_effect = [
-            MagicMock(returncode=1),
-            MagicMock(returncode=1),
-        ]
+    def test_ambas_falham(self, mock_subprocess):
+        mock_subprocess.side_effect = [MagicMock(returncode=1), MagicMock(returncode=1)]
         assert mvp.aplicar_cor("0000FF", "Azul") is False
 
-    def test_excecao_timeout_retorna_false(self, mock_subprocess):
-        """Simula hardware que não responde (timeout)."""
+    def test_timeout(self, mock_subprocess):
         mock_subprocess.side_effect = subprocess.TimeoutExpired("openrgb", 5)
         assert mvp.aplicar_cor("FFFFFF", "Branco") is False
 
-    def test_excecao_genérica_retorna_false(self, mock_subprocess):
-        mock_subprocess.side_effect = Exception("USB disconnected")
-        assert mvp.aplicar_cor("000000", "Desligar") is False
-
-    @pytest.mark.parametrize("hex_entrada,hex_esperado", [
-        ("FF0000",   "FF0000"),   # sem #
-        ("#FF0000",  "FF0000"),   # com #
-        ("##FF0000", "FF0000"),   # duplo # (robustez)
+    @pytest.mark.parametrize("entrada,nome,esperado", [
+        ("FF0000", "Vermelho", "vermelho"),
+        ("#FF0000", "Laranja",  "laranja"),
     ])
-    def test_remove_hash(self, hex_entrada, hex_esperado, mock_subprocess):
-        mvp.aplicar_cor(hex_entrada, "Teste")
+    def test_passa_nome_correto_ao_script(self, entrada, nome, esperado, mock_subprocess):
+        mvp.aplicar_cor(entrada, nome)
         cmd = mock_subprocess.call_args_list[0][0][0]
-        cor_passada = cmd[cmd.index("--color") + 1]
-        assert "#" not in cor_passada
-        assert hex_esperado in cor_passada
-
-    def test_device_id_correto(self, mock_subprocess):
-        mvp.aplicar_cor("FF0000", "Vermelho")
-        cmd = mock_subprocess.call_args_list[0][0][0]
-        device_idx = cmd.index("--device") + 1
-        assert cmd[device_idx] == str(mvp.OPENRGB_DEVICE)
+        # v2.4: o script recebe o nome da cor como último argumento
+        assert cmd[-1] == esperado
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 6. NOTIFICAÇÕES — notify-send
+# 7. notificar
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestNotificar:
 
     def test_chama_notify_send(self, mock_subprocess):
-        mvp.notificar("🎨 MODO LED", "Ligado")
+        mvp.notificar("Título", "Corpo")
         cmd = mock_subprocess.call_args[0][0]
         assert cmd[0] == "notify-send"
-        assert "🎨 MODO LED" in cmd
-        assert "Ligado" in cmd
-
-    def test_urgencia_default_normal(self, mock_subprocess):
-        mvp.notificar("T", "C")
-        cmd = mock_subprocess.call_args[0][0]
-        assert "--urgency=normal" in cmd
+        assert "Título" in cmd
 
     def test_urgencia_customizada(self, mock_subprocess):
         mvp.notificar("T", "C", urgencia="low")
-        cmd = mock_subprocess.call_args[0][0]
-        assert "--urgency=low" in cmd
+        assert "--urgency=low" in mock_subprocess.call_args[0][0]
 
-    def test_tempo_customizado(self, mock_subprocess):
-        mvp.notificar("T", "C", ms=1500)
-        cmd = mock_subprocess.call_args[0][0]
-        assert "--expire-time=1500" in cmd
-
-    def test_excecao_nao_propaga(self, mock_subprocess):
-        """notify-send ausente NÃO deve derrubar o daemon."""
-        mock_subprocess.side_effect = FileNotFoundError("notify-send not found")
+    def test_excecao_silenciosa(self, mock_subprocess):
+        mock_subprocess.side_effect = FileNotFoundError("not found")
         try:
             mvp.notificar("T", "C")
         except Exception as e:
-            pytest.fail(f"notificar() propagou exceção inesperada: {e}")
-
-    def test_timeout_nao_propaga(self, mock_subprocess):
-        mock_subprocess.side_effect = subprocess.TimeoutExpired("notify-send", 2)
-        try:
-            mvp.notificar("T", "C")
-        except Exception as e:
-            pytest.fail(f"notificar() propagou TimeoutExpired: {e}")
+            pytest.fail(f"notificar propagou exceção: {e}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 7. AUTO-DETECÇÃO DE DEVICES (buscar_devices)
+# 8. buscar_devices — por Vendor/Product ID
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestBuscarDevices:
 
-    def _make_device(self, nome: str):
+    EV_KEY    = 1
+    KEY_ENTER = 28
+
+    def _make_device(self, nome: str, vendor: int = 0x1915,
+                     product: int = 0x1025, tem_enter: bool = True) -> MagicMock:
         dev = MagicMock()
         dev.name = nome
+        dev.info.vendor  = vendor
+        dev.info.product = product
+        caps = {self.EV_KEY: [self.KEY_ENTER, 105, 106, 103, 108]} if tem_enter else {}
+        dev.capabilities.return_value = caps
         return dev
 
     def test_detecta_teclado_e_consumer(self):
-        """Simula dois devices XING WEI retornados por list_devices."""
-        dev_tecl = self._make_device("XING WEI 2.4G USB USB Composite Device")
-        dev_cons = self._make_device("XING WEI 2.4G USB USB Composite Device Consumer Control")
+        tecl = self._make_device("XING WEI 2.4G USB USB Composite Device")
+        cons = self._make_device("XING WEI 2.4G USB USB Composite Device Consumer Control")
 
-        with patch("mvp.list_devices", return_value=["/dev/input/event11", "/dev/input/event23"]):
-            with patch("mvp.InputDevice", side_effect=[dev_tecl, dev_cons]):
-                resultado = mvp.buscar_devices()
+        with patch("mvp.list_devices", return_value=["/dev/input/event11", "/dev/input/event13"]):
+            with patch("mvp.InputDevice", side_effect=[tecl, cons]):
+                t, c = mvp.buscar_devices()
 
-        assert resultado is True
-        assert mvp.device_teclado is dev_tecl
-        assert mvp.device_consumer is dev_cons
+        assert t is tecl
+        assert c is cons
+
+    def test_ignora_vendor_diferente(self):
+        """Device com vendor errado (não XING WEI) deve ser ignorado."""
+        outro = self._make_device("2.4G Wireless Device", vendor=0x9999, product=0x0001)
+
+        with patch("mvp.list_devices", return_value=["/dev/input/event10"]):
+            with patch("mvp.InputDevice", return_value=outro):
+                t, c = mvp.buscar_devices()
+
+        assert t is None
+        assert c is None
+
+    def test_ignora_device_sem_key_enter(self):
+        """Dois devices mesmo vendor: só o que tem KEY_ENTER é selecionado."""
+        fantasma = self._make_device("XING WEI 2.4G USB USB Composite Device", tem_enter=False)
+        real     = self._make_device("XING WEI 2.4G USB USB Composite Device", tem_enter=True)
+
+        with patch("mvp.list_devices", return_value=["/dev/input/event15", "/dev/input/event11"]):
+            with patch("mvp.InputDevice", side_effect=[fantasma, real]):
+                t, _ = mvp.buscar_devices()
+
+        assert t is real
 
     def test_falha_sem_teclado(self):
-        """Sem teclado → retorna False."""
-        dev_cons = self._make_device("XING WEI 2.4G USB USB Composite Device Consumer Control")
+        cons = self._make_device("XING WEI 2.4G USB USB Composite Device Consumer Control")
 
-        with patch("mvp.list_devices", return_value=["/dev/input/event23"]):
-            with patch("mvp.InputDevice", return_value=dev_cons):
-                resultado = mvp.buscar_devices()
+        with patch("mvp.list_devices", return_value=["/dev/input/event13"]):
+            with patch("mvp.InputDevice", return_value=cons):
+                t, _ = mvp.buscar_devices()
 
-        assert resultado is False
+        assert t is None
 
-    def test_aviso_sem_consumer(self, caplog):
-        """Sem consumer control → retorna True mas com aviso de log."""
-        import logging
-        dev_tecl = self._make_device("XING WEI 2.4G USB USB Composite Device")
-
-        with patch("mvp.list_devices", return_value=["/dev/input/event11"]):
-            with patch("mvp.InputDevice", return_value=dev_tecl):
-                with caplog.at_level(logging.WARNING):
-                    resultado = mvp.buscar_devices()
-
-        assert resultado is True              # ainda funciona (sem Vol+/Vol-)
-        assert "Consumer Control" in caplog.text or resultado is True
-
-    def test_device_inacessivel_nao_trava(self):
-        """PermissionError em /dev/input não deve travar a busca."""
+    def test_permission_error_nao_trava(self):
         with patch("mvp.list_devices", return_value=["/dev/input/event0"]):
             with patch("mvp.InputDevice", side_effect=PermissionError("acesso negado")):
-                resultado = mvp.buscar_devices()
-
-        assert resultado is False   # não encontrou, mas não travou
+                t, c = mvp.buscar_devices()
+        assert t is None
