@@ -499,11 +499,14 @@ async def test_listener_teclado_toggle_ok(estado):
         m_alt.assert_not_called()
 
 @pytest.mark.asyncio
-async def test_listener_consumer_toggle_mic(estado):
+async def test_listener_consumer_toggle_mic_triple(estado):
+    """v3.2: Testa se o Clique Triplo ativa o modo."""
     mock_dev = MagicMock()
     ev_mic = MagicMock(type=1, code=582, value=1)
     
     async def mock_loop():
+        yield ev_mic
+        yield ev_mic
         yield ev_mic
 
     mock_dev.async_read_loop.return_value = mock_loop()
@@ -514,6 +517,7 @@ async def test_listener_consumer_toggle_mic(estado):
         await asyncio.sleep(0.1)
         stop_ev.set()
         await task
+        # Como o debounce de alternar_modo agora tb existe, o teste assume chamadas ok
         m_alt.assert_called_once()
 
 @pytest.mark.asyncio

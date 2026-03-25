@@ -66,6 +66,8 @@ class EstadoDaemon:
     indice_cor: int = 8           # índice inicial = Branco
     ok_press_time: Optional[float] = None
     last_toggle_time: float = 0.0 # Para debounce
+    mic_clicks: int = 0           # Contador para Triple Click
+    last_click_time: float = 0.0  # Timestamp do último clique
     grabbed: bool = False
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -226,8 +228,17 @@ async def listener_consumer(
         if ev.type != ecodes.EV_KEY or ev.value != 1: continue
 
         if ev.code in (KEY_MIC, KEY_HOME_ALT):
-            log.info("⚡ Toggle MODO LED (%d)", ev.code)
-            alternar_modo(estado, dev_tecl)
+            now = time.monotonic()
+            if now - estado.last_click_time > 1.0:
+                estado.mic_clicks = 1
+            else:
+                estado.mic_clicks += 1
+            estado.last_click_time = now
+
+            if estado.mic_clicks == 3:
+                log.info("⚡ Clique Triplo detectado (%d)!", ev.code)
+                alternar_modo(estado, dev_tecl)
+                estado.mic_clicks = 0
             continue
 
         if not estado.modo_led_ativo: continue
