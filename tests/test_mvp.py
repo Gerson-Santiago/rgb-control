@@ -14,13 +14,19 @@ Rodar:
 """
 
 import sys
+import os
+# Adiciona o diretório raiz ao path para garantir que 'mvp' seja encontrado por qualquer linter/ambiente
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import time
 import subprocess
 import signal
 import asyncio
+import os
+import argparse
 from unittest.mock import MagicMock, patch, call
 
-import pytest
+import pytest  # type: ignore
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STUB DE HARDWARE (registrado ANTES do import do módulo)
@@ -47,7 +53,7 @@ class _EvdevStub(MagicMock):
 _evdev_stub = _EvdevStub()
 sys.modules["evdev"] = _evdev_stub
 
-import mvp  # noqa: E402
+import mvp  # type: ignore  # noqa: E402
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -199,8 +205,9 @@ class TestAlternarModo:
         mock_teclado.ungrab.assert_called_once()
 
     def test_toggle_duplo(self, estado, mock_teclado, mock_notificar):
-        mvp.alternar_modo(estado, mock_teclado)
-        mvp.alternar_modo(estado, mock_teclado)
+        with patch("mvp.time.monotonic", side_effect=[100.0, 102.0]):
+            mvp.alternar_modo(estado, mock_teclado)
+            mvp.alternar_modo(estado, mock_teclado)
         assert estado.modo_led_ativo is False
 
     def test_grab_falha_silenciosa(self, estado, mock_notificar):
@@ -391,3 +398,184 @@ class TestBuscarDevices:
             with patch("mvp.InputDevice", side_effect=PermissionError("acesso negado")):
                 t, c = mvp.buscar_devices()
         assert t is None
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 9. Main e Argparse
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestMain:
+
+    def test_main_list(self):
+        with patch("mvp.argparse.ArgumentParser.parse_args") as m_args:
+            m_args.return_value = argparse.Namespace(toggle=False, status=False, list=True)
+            with patch("mvp.buscar_devices") as m_buscar:
+                mvp.main()
+                m_buscar.assert_called_once()
+
+    def test_main_status(self, capsys):
+        with patch("mvp.argparse.ArgumentParser.parse_args") as m_args:
+            m_args.return_value = argparse.Namespace(toggle=False, status=True, list=False)
+            mock_status = MagicMock()
+            mock_status.exists.return_value = True
+            mock_status.read_text.return_value = "on"
+            with patch("mvp.STATUS_FILE", mock_status):
+                mvp.main()
+                out, _ = capsys.readouterr()
+                assert "MODO LED: ON" in out
+
+    def test_main_toggle_sucesso(self):
+        with patch("mvp.argparse.ArgumentParser.parse_args") as m_args:
+            m_args.return_value = argparse.Namespace(toggle=True, status=False, list=False)
+            mock_pid = MagicMock()
+            mock_pid.exists.return_value = True
+            mock_pid.read_text.return_value = "1234"
+            with patch("mvp.PID_FILE", mock_pid):
+                with patch("os.kill") as m_kill:
+                    mvp.main()
+                    m_kill.assert_called_once_with(1234, signal.SIGUSR1)
+
+    def test_main_toggle_sem_pid(self, capsys):
+        with patch("mvp.argparse.ArgumentParser.parse_args") as m_args:
+            m_args.return_value = argparse.Namespace(toggle=True, status=False, list=False)
+            mock_pid = MagicMock()
+            mock_pid.exists.return_value = False
+            with patch("mvp.PID_FILE", mock_pid):
+                with pytest.raises(SystemExit):
+                    mvp.main()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 10. Async Listeners (Cobertura Crítica)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_listener_teclado_navegacao(estado):
+    """Testa se as teclas de seta mudam a cor quando o modo está ativo."""
+    mock_dev = MagicMock()
+    estado.modo_led_ativo = True
+    ev_right = MagicMock(type=1, code=106, value=1) # KEY_RIGHT
+    ev_up    = MagicMock(type=1, code=103, value=1) # KEY_UP
+    ev_left  = MagicMock(type=1, code=105, value=1) # KEY_LEFT
+    ev_down  = MagicMock(type=1, code=108, value=1) # KEY_DOWN
+    
+    async def mock_loop():
+        yield ev_right
+        yield ev_up
+        yield ev_left
+        yield ev_down
+
+    mock_dev.async_read_loop.return_value = mock_loop()
+    stop_ev = asyncio.Event()
+
+    with patch("mvp.mudar_cor") as m_mudar:
+        task = asyncio.create_task(mvp.listener_teclado(mock_dev, estado, stop_ev))
+        await asyncio.sleep(0.1)
+        stop_ev.set()
+        await task
+        assert m_mudar.call_count == 4
+
+@pytest.mark.asyncio
+async def test_listener_teclado_toggle_ok(estado):
+    """v3.0: Simula loop de eventos e toggle via long-press."""
+    mock_dev = MagicMock()
+    # Simula um evento KEY_ENTER (28) down(1) e up(0)
+    ev_down = MagicMock(type=1, code=28, value=1)
+    ev_up   = MagicMock(type=1, code=28, value=0)
+    
+    # Mock do async iterator
+    async def mock_loop():
+        yield ev_down
+        # Simula passagem de tempo curta
+        await asyncio.sleep(0.01)
+        yield ev_up
+
+    mock_dev.async_read_loop.return_value = mock_loop()
+    stop_ev = asyncio.Event()
+
+    with patch("mvp.alternar_modo") as m_alt:
+        task = asyncio.create_task(mvp.listener_teclado(mock_dev, estado, stop_ev))
+        await asyncio.sleep(0.1)
+        stop_ev.set()
+        await task
+        m_alt.assert_not_called()
+
+@pytest.mark.asyncio
+async def test_listener_consumer_toggle_mic(estado):
+    mock_dev = MagicMock()
+    ev_mic = MagicMock(type=1, code=582, value=1)
+    
+    async def mock_loop():
+        yield ev_mic
+
+    mock_dev.async_read_loop.return_value = mock_loop()
+    stop_ev = asyncio.Event()
+
+    with patch("mvp.alternar_modo") as m_alt:
+        task = asyncio.create_task(mvp.listener_consumer(mock_dev, estado, None, stop_ev))
+        await asyncio.sleep(0.1)
+        stop_ev.set()
+        await task
+        m_alt.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_listener_consumer_navegacao(estado):
+    mock_dev = MagicMock()
+    estado.modo_led_ativo = True
+    ev_volup = MagicMock(type=1, code=115, value=1) # KEY_VOLUMEUP
+    ev_voldn = MagicMock(type=1, code=114, value=1) # KEY_VOLUMEDOWN
+    ev_back  = MagicMock(type=1, code=158, value=1) # KEY_BACK
+    
+    async def mock_loop():
+        yield ev_volup
+        yield ev_voldn
+        yield ev_back
+
+    mock_dev.async_read_loop.return_value = mock_loop()
+    stop_ev = asyncio.Event()
+
+    with patch("mvp.mudar_cor") as m_mudar, patch("mvp.alternar_modo") as m_alt:
+        task = asyncio.create_task(mvp.listener_consumer(mock_dev, estado, None, stop_ev))
+        await asyncio.sleep(0.1)
+        stop_ev.set()
+        await task
+        assert m_mudar.call_count == 2
+        m_alt.assert_called_once()  # Chamado pelo KEY_BACK
+
+
+@pytest.mark.asyncio
+async def test_run_daemon_completo(mock_teclado):
+    """Testa o ciclo de vida completo do run_daemon sem travar."""
+    mock_cons = MagicMock()
+    # Mock para que os loops terminem imediatamente se stop_ev estiver setado
+    mock_teclado.async_read_loop.return_value = mock_teclado.__aiter__.return_value = MagicMock()
+    mock_cons.async_read_loop.return_value = mock_cons.__aiter__.return_value = MagicMock()
+    
+    # Simula o loop terminando
+    async def empty_loop():
+        yield MagicMock(type=0) # EV_SYN
+
+    mock_teclado.async_read_loop.return_value = empty_loop()
+    mock_cons.async_read_loop.return_value = empty_loop()
+
+    stop_ev = asyncio.Event()
+    
+    with patch("mvp.asyncio.Event", return_value=stop_ev):
+        # NOTA: Não patcheamos create_task para deixar os listeners rodarem
+        daemon_task = asyncio.create_task(mvp.run_daemon(mock_teclado, mock_cons))
+        await asyncio.sleep(0.1)
+        stop_ev.set()
+        # O daemon deve encerrar
+        await asyncio.wait_for(daemon_task, timeout=1.0)
+        assert True
+
+@pytest.mark.asyncio
+async def test_main_executa_daemon():
+    """Testa o caminho feliz do main()."""
+    with patch("mvp.argparse.ArgumentParser.parse_args") as m_args:
+        m_args.return_value = argparse.Namespace(toggle=False, status=False, list=False)
+        with patch("mvp.buscar_devices", return_value=(MagicMock(), MagicMock())):
+            # Mock de arquivos para evitar PermissionError
+            m_file = MagicMock()
+            with patch("mvp.PID_FILE", m_file), patch("mvp.STATUS_FILE", m_file):
+                with patch("mvp.asyncio.run") as m_run:
+                    mvp.main()
+                    m_run.assert_called_once()

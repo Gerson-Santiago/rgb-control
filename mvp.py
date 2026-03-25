@@ -19,6 +19,7 @@ import os
 import signal
 import subprocess
 import sys
+import time  # Fornece o relógio monotonic para debounce
 from pathlib import Path
 from typing import Optional
 
@@ -64,31 +65,36 @@ class EstadoDaemon:
     modo_led_ativo: bool = False
     indice_cor: int = 8           # índice inicial = Branco
     ok_press_time: Optional[float] = None
+    last_toggle_time: float = 0.0 # Para debounce
     grabbed: bool = False
 
 # ─────────────────────────────────────────────────────────────────────────────
 # OSD / NOTIFICAÇÕES
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Endereço do D-Bus da sessão gráfica do usuário (UID 1000 = sant)
+# Necessário para notify-send funcionar ao ser chamado via sudo
+_DBUS_ADDR = "unix:path=/run/user/1000/bus"
+
 def notificar(titulo: str, corpo: str, urgencia: str = "normal", icone: str = "") -> None:
     """
-    Exibe um modal OSD via notify-send (dunst/mako).
+    Exibe um modal OSD via notify-send (dunst/libnotify).
 
-    - Executa como usuário 'sant' para acessar o D-Bus da sessão gráfica.
-    - Usa x-dunst-stack-tag para SUBSTITUIR a notificação anterior
-      no mesmo local (comportamento igual ao OSD de volume do Linux).
+    Usa 'sudo -u sant env DBUS=...' para acessar o D-Bus da sessão gráfica,
+    mesmo quando o daemon está rodando como root.
+    Usa x-dunst-stack-tag para substituir a notificação anterior no mesmo
+    lugar, criando o efeito de OSD de volume (sem empilhar).
     """
-    cmd = [
-        "sudo", "-u", "sant", "notify-send",
-        titulo, corpo,
-        f"--urgency={urgencia}",
-        "-t", "3000",
-        "-h", "string:x-dunst-stack-tag:modo_led",
-    ]
-    if icone:
-        cmd += ["-i", icone]
     try:
-        subprocess.run(cmd, capture_output=True)
+        subprocess.run(
+            ["sudo", "-u", "sant",
+             "env", f"DBUS_SESSION_BUS_ADDRESS={_DBUS_ADDR}",
+             "notify-send", titulo, corpo,
+             f"--urgency={urgencia}", "-t", "3000",
+             "-h", "string:x-dunst-stack-tag:modo_led"]
+            + (["-i", icone] if icone else []),
+            capture_output=True,
+        )
     except: pass
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -141,9 +147,14 @@ def mudar_cor(estado: EstadoDaemon, delta: int) -> None:
     estado.indice_cor = (estado.indice_cor + delta) % len(PALETA)
     n, h = PALETA[estado.indice_cor]
     if aplicar_cor(h, n):
-        notificar(f"🎨 {n}", "← Vol− / Vol+ →", "low", "color-picker")
+        notificar(f"🎨 {n}", "Setas navegam | Vol±", "normal", "color-picker")
 
 def alternar_modo(estado: EstadoDaemon, dev_tecl: Optional[InputDevice]) -> None:
+    now = time.monotonic()
+    if now - estado.last_toggle_time < 0.5:
+        return
+    estado.last_toggle_time = now
+
     estado.modo_led_ativo = not estado.modo_led_ativo
     if estado.modo_led_ativo:
         log.info("✅ MODO LED ATIVO")
@@ -166,8 +177,8 @@ def alternar_modo(estado: EstadoDaemon, dev_tecl: Optional[InputDevice]) -> None
         STATUS_FILE.write_text("off")
         notificar(
             "⚫  MODO LED",
-            "Desativado",
-            urgencia="low",
+            "MODO LED — Desativado",
+            urgencia="normal",
             icone="display-brightness-off",
         )
 
@@ -185,11 +196,13 @@ async def listener_teclado(dev: InputDevice, estado: EstadoDaemon, stop_ev: asyn
         if ev.code == ecodes.KEY_ENTER:
             if ev.value == 1:
                 estado.ok_press_time = asyncio.get_event_loop().time()
-            elif ev.value == 0 and estado.ok_press_time is not None:
-                dur = asyncio.get_event_loop().time() - estado.ok_press_time
-                estado.ok_press_time = None
-                if dur >= LONG_PRESS_TIME:
-                    alternar_modo(estado, dev)
+            elif ev.value == 0:
+                t_press = estado.ok_press_time
+                if t_press is not None:
+                    dur = asyncio.get_event_loop().time() - t_press
+                    estado.ok_press_time = None
+                    if dur >= LONG_PRESS_TIME:
+                        alternar_modo(estado, dev)
 
         elif ev.value == 1 and estado.modo_led_ativo:
             if ev.code in (ecodes.KEY_RIGHT, ecodes.KEY_UP):
