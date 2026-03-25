@@ -1,0 +1,7 @@
+1: [x] verificar instalação
+2: [x] verificar driver 
+3: [x] verificar fan e led etc
+
+
+alias rbg='bash "/home/sant/Área de trabalho/PROJETOS/openrbg/rbg.sh"'
+alias led='rbg'

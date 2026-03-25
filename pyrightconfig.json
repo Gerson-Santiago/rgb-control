@@ -1,0 +1,8 @@
+{
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Linux",
+  "pythonPath": "/usr/bin/python3",
+  "extraPaths": ["."],
+  "reportMissingModuleSource": "none",
+  "reportMissingImports": "none"
+}
