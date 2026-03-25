@@ -221,7 +221,7 @@ class TestAlternarModo:
     def test_notifica_ao_ligar(self, estado, mock_teclado, mock_notificar):
         mvp.alternar_modo(estado, mock_teclado)
         titulo, corpo = mock_notificar.call_args[0][:2]
-        assert "Ativo" in corpo
+        assert "ATIVO" in corpo
 
     def test_notifica_ao_desligar(self, estado, mock_teclado, mock_notificar):
         estado.modo_led_ativo = True
@@ -309,7 +309,8 @@ class TestNotificar:
     def test_chama_notify_send(self, mock_subprocess):
         mvp.notificar("Título", "Corpo")
         cmd = mock_subprocess.call_args[0][0]
-        assert cmd[0] == "notify-send"
+        # v3.0: runna como sudo -u sant notify-send para acessar D-Bus do usuário
+        assert "notify-send" in cmd
         assert "Título" in cmd
 
     def test_urgencia_customizada(self, mock_subprocess):

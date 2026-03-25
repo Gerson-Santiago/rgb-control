@@ -10,3 +10,7 @@ htmlcov/
 
 # IDE
 .vscode/
+
+# Daemon (arquivos de estado em runtime)
+.controle_led.pid
+.controle_led.status
