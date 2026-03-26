@@ -45,5 +45,31 @@ class TestDaemonMainIntegration(unittest.TestCase):
         tecl, cons = buscar_devices()
         self.assertIsNotNone(cons)
 
+    @patch('evdev.list_devices', return_value=[])
+    def test_buscar_devices_empty(self, mock_list):
+        # Simula falha na descoberta (nenhum dispositivo)
+        tecl, cons = buscar_devices()
+        self.assertIsNone(tecl)
+        self.assertIsNone(cons)
+
+    @patch('argparse.ArgumentParser.parse_args')
+    @patch('builtins.print')
+    def test_main_cli_list(self, mock_print, mock_args):
+        # Simula --list
+        mock_args.return_value = MagicMock(toggle=False, status=False, list=True)
+        with patch('rgb_daemon.main.buscar_devices', return_value=(None, None)):
+            main()
+        mock_print.assert_any_call("Dispositivos não encontrados.")
+
+    @patch('argparse.ArgumentParser.parse_args')
+    @patch('builtins.print')
+    @patch('pathlib.Path.exists', return_value=True)
+    @patch('pathlib.Path.read_text', return_value="Ativo")
+    def test_main_cli_status(self, mock_read, mock_exists, mock_print, mock_args):
+        # Simula --status
+        mock_args.return_value = MagicMock(toggle=False, status=True, list=False)
+        main()
+        mock_print.assert_any_call("Status: Ativo")
+
 if __name__ == '__main__':
     unittest.main()
