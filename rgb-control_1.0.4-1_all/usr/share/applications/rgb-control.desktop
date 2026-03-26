@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=RGB Control
+Comment=Controle de Iluminação OpenRGB
+Exec=/usr/bin/rgb-control
+Icon=rgb-control
+Terminal=false
+Type=Application
+Categories=Utility;Settings;HardwareSettings;
+Keywords=rgb;led;openrgb;color;lighting;

@@ -114,7 +114,8 @@ class MainWindow(Adw.ApplicationWindow):
         
         for name, hex_val in self.colors:
             btn = Gtk.Button()
-            btn.set_size_request(45, 45)
+            btn.set_width_request(45)
+            btn.set_height_request(45)
             btn.set_tooltip_text(name)
             
             context = btn.get_style_context()
