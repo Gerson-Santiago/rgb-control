@@ -47,8 +47,16 @@ class RgbControlApp(Adw.Application):
     def __init__(self):
         super().__init__(
             application_id='com.github.sant.rgbcontrol', 
-            flags=Gio.ApplicationFlags.FLAGS_NONE
+            flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE
         )
+
+    def do_command_line(self, command_line):
+        args = command_line.get_arguments()
+        if "--version" in args:
+            print("RGB Control v1.0.1")
+            return 0
+        self.activate()
+        return 0
 
     def do_activate(self):
         # Show splash first
@@ -62,12 +70,8 @@ class RgbControlApp(Adw.Application):
         win.present()
 
 def main():
-    import sys
-    if "--version" in sys.argv:
-        print("RGB Control v1.0.2")
-        return 0
     app = RgbControlApp()
-    return app.run([sys.argv[0]])
+    return app.run(sys.argv)
 
 if __name__ == '__main__':
     sys.exit(main())
