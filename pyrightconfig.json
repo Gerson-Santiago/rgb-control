@@ -1,8 +1,9 @@
 {
+  "include": ["src", "tests"],
+  "exclude": ["**/__pycache__"],
+  "extraPaths": ["src"],
   "pythonVersion": "3.13",
-  "pythonPlatform": "Linux",
-  "pythonPath": "/usr/bin/python3",
-  "extraPaths": ["."],
-  "reportMissingModuleSource": "none",
-  "reportMissingImports": "none"
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false
 }

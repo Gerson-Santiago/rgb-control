@@ -15,7 +15,8 @@ class OSDProvider(ABC):
 class ColorApplicator(ABC):
     @abstractmethod
     def apply(self, hex_code: str, name: str) -> bool:
-        pass
+        """Aplica a cor ao hardware."""
+        raise NotImplementedError
 
 class StatusStorage(ABC):
     @abstractmethod

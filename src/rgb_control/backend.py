@@ -80,7 +80,11 @@ class Backend:
                 lines = f.readlines()
                 # Garantindo que o slice seja compatível com tipagem estrita
                 count = len(lines)
-                start = max(0, count - limit)
-                return [line.strip() for line in lines[start:]]
+                start_idx = max(0, count - limit)
+                # Slicing explícito
+                tail_lines = []
+                for i in range(start_idx, count):
+                    tail_lines.append(lines[i].strip())
+                return tail_lines
         except Exception as e:
             return [f"Erro ao ler log: {e}"]

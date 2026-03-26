@@ -2,22 +2,21 @@
 trigger: always_on
 ---
 
-Sim, o conceito de
-Test-Driven Development (TDD), ou "Testar Primeiro" (test first), não só existe como é amplamente utilizado e recomendado na comunidade Python. A metodologia consiste em escrever os testes automatizados antes de escrever o código funcional propriamente dito. 
-O processo segue o ciclo:
+## 🧪 Test-Driven Development & Qualidade (OpenRGB)
 
-    Escrever o teste: Criar um teste para uma funcionalidade específica que ainda não existe.
-    Ver o teste falhar: Executar o teste e confirmar que ele falha (pois a funcionalidade não existe).
-    Escrever o código: Desenvolver o código mínimo para fazer o teste passar.
-    Refatorar: Melhorar o código mantendo o teste passando. 
+O projeto exige alta confiabilidade devido à interação direta com hardware.
 
-Ferramentas Populares para Testes em Python:
+1. **Test-First (TDD)**:
+   - Escrever testes unitários ANTES da implementação da lógica no `Application` ou `Domain`.
+   - Garantir que o teste falhe apropriadamente antes de fazer passar.
 
-    pytest: O framework mais popular, conhecido por ser pythônico, simples e exigir menos código (sintaxe concisa).
-    unittest: O framework padrão do Python (módulo embutido). 
+2. **Metas de Cobertura**:
+   - **Mínimo Absoluto**: 80% de cobertura geral.
+   - **Alvo Ideal**: 90%+ para as camadas de `Domain` e `Application`.
 
-Vantagens:
+3. **Ferramental**:
+   - Usar `pytest` com `pytest-cov`.
+   - Mockar rigorosamente toda a infraestrutura (`Infrastructure`) para evitar efeitos colaterais no hardware durante os testes.
 
-    Identificação precoce de bugs.
-    Melhora a confiabilidade e manutenção do código.
-    Serve como documentação funcional. 
+4. **Pipeline de Qualidade**:
+   - Nenhum commit deve ser feito sem passar pelo workflow `/pipeline`.
