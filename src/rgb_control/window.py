@@ -45,6 +45,9 @@ class MainWindow(Adw.ApplicationWindow):
         logger.info("Carregando interface Libadwaita Premium...")
         self.backend = Backend()
         
+        # Carregar CSS Global
+        self.load_custom_css()
+        
         # 1. ToolbarView (Root)
         self.toolbar_view = Adw.ToolbarView()
         self.set_content(self.toolbar_view)
@@ -163,7 +166,10 @@ class MainWindow(Adw.ApplicationWindow):
             
         palette_box.append(flowbox)
         
-        # Seletor Personalizado
+        # Seletor Personalizado (dentro de outro grupo para destaque)
+        custom_group = Adw.PreferencesGroup()
+        custom_group.set_title("Cor Avançada")
+        
         custom_row = Adw.ActionRow()
         custom_row.set_title("Cor Personalizada")
         custom_row.set_subtitle("Escolha qualquer cor do espectro")
@@ -175,12 +181,13 @@ class MainWindow(Adw.ApplicationWindow):
         picker_btn.connect("notify::rgba", self.on_custom_color_selected)
         
         custom_row.add_suffix(picker_btn)
-        lighting_group.add(custom_row)
+        custom_group.add(custom_row)
         
         # Unificando o Flowerbox no grupo via um widget genérico se necessário
         lighting_group.add(palette_box)
         
         main_box.append(lighting_group)
+        main_box.append(custom_group)
         
         clamp.set_child(main_box)
         scrolled.set_child(clamp)
@@ -188,6 +195,19 @@ class MainWindow(Adw.ApplicationWindow):
         
         self.setup_actions(application)
         GLib.timeout_add(2000, self.update_status_ui)
+
+    def load_custom_css(self):
+        """Carrega o arquivo style.css se ele existir"""
+        css_path = get_asset_path("style.css")
+        if os.path.exists(css_path):
+            provider = Gtk.CssProvider()
+            provider.load_from_path(css_path)
+            Gtk.StyleContext.add_provider_for_display(
+                Gdk.Display.get_default(),
+                provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+            logger.info(f"CSS carregado de: {css_path}")
 
     def setup_actions(self, app):
         theme_light = Gio.SimpleAction.new("theme_light", None)
