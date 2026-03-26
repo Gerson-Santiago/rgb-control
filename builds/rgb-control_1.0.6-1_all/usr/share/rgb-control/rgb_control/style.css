@@ -1,0 +1,29 @@
+/* RGB Control - Modern Styles */
+
+@keyframes pulse {
+    from { opacity: 0.7; }
+    to { opacity: 1.0; }
+}
+
+.splash-logo {
+    border-radius: 999px;
+    background-color: #242424;
+    animation: pulse 1.5s infinite alternate ease-in-out;
+}
+
+.color-btn {
+    border-radius: 999px;
+    min-width: 48px;
+    min-height: 48px;
+    margin: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.color-btn:hover {
+    filter: brightness(1.1);
+}
+
+.logo-main {
+    margin-bottom: 24px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}

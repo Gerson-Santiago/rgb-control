@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 # Caminho absoluto para o python e para o seu script
-ExecStart=/usr/bin/python3 "/home/sant/Área de trabalho/PROJETOS/openrbg/mvp.py"
+ExecStart=/usr/bin/python3 "/home/sant/Área de trabalho/PROJETOS/openrbg/src/rgb_daemon/main.py"
 WorkingDirectory=/home/sant/Área de trabalho/PROJETOS/openrbg
 Restart=always
 RestartSec=5

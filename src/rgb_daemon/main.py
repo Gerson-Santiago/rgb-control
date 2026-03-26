@@ -42,11 +42,11 @@ PALETA: list[tuple[str, str]] = [
     ("Desligar", "000000"),
 ]
 
-BASE_DIR:    Path = Path(__file__).parent
-PID_FILE:    Path = BASE_DIR / ".controle_led.pid"
-STATUS_FILE: Path = BASE_DIR / ".controle_led.status"
-LOG_DIR:     Path = Path.home() / ".cache" / "controle_led"
-LOG_FILE:    Path = LOG_DIR / "controle_led.log"
+BASE_DIR:    Path = Path(__file__).parent.parent.parent # Root dir
+PID_FILE:    Path = Path("/tmp/.controle_led.pid")
+STATUS_FILE: Path = Path("/tmp/.controle_led.status")
+LOG_DIR:     Path = Path.home() / ".cache" / "rgb-control"
+LOG_FILE:    Path = LOG_DIR / "daemon.log"
 
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(

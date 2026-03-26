@@ -2,7 +2,7 @@
 set -e
 
 PKG_NAME="rgb-control"
-VERSION="1.0.5"
+VERSION="1.0.6"
 REV="1"
 ARCH="all"
 DEB_DIR="${PKG_NAME}_${VERSION}-${REV}_${ARCH}"
@@ -29,16 +29,16 @@ Maintainer: Sant <sant@local>
 Description: Interface Gráfica moderna em GTK4 para controle do OpenRGB com integrações.
 EOF
 
-# Copy source python package
-cp -r rgb_control "$DEB_DIR/usr/share/$PKG_NAME/"
+# Copy source python packages
+cp -r src/rgb_control "$DEB_DIR/usr/share/$PKG_NAME/"
+cp -r src/rgb_daemon "$DEB_DIR/usr/share/$PKG_NAME/"
 
 # Copy assets
-cp "logo.svg" "$DEB_DIR/usr/share/$PKG_NAME/"
-cp "544bd05c31a56c8347682a790975c619.gif" "$DEB_DIR/usr/share/$PKG_NAME/"
+cp -r assets "$DEB_DIR/usr/share/$PKG_NAME/"
 cp "rbg.sh" "$DEB_DIR/usr/bin/rbg.sh"
 chmod +x "$DEB_DIR/usr/bin/rbg.sh"
 
-# Create /usr/bin/rgb-control wrapper
+# Create /usr/bin/rgb-control wrapper (mesmo diretório para assets)
 cat <<EOF > "$DEB_DIR/usr/bin/rgb-control"
 #!/bin/bash
 export PYTHONPATH="/usr/share/$PKG_NAME:\$PYTHONPATH"
@@ -60,7 +60,7 @@ Keywords=rgb;led;openrgb;color;lighting;
 EOF
 
 # Copy Icon
-cp "logo.svg" "$DEB_DIR/usr/share/icons/hicolor/scalable/apps/rgb-control.svg"
+cp "assets/logo.svg" "$DEB_DIR/usr/share/icons/hicolor/scalable/apps/rgb-control.svg"
 
 # Build .deb
 echo "Running dpkg-deb --build..."
