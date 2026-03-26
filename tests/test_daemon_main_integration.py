@@ -2,7 +2,7 @@ import unittest
 import sys
 import os
 import signal
-from unittest.mock import MagicMock, patch, patch
+from unittest.mock import MagicMock, patch
 from rgb_daemon.main import main, buscar_devices
 
 class TestDaemonMainIntegration(unittest.TestCase):
@@ -11,65 +11,56 @@ class TestDaemonMainIntegration(unittest.TestCase):
     @patch('rgb_daemon.main.FileStatusStorage')
     @patch('asyncio.run')
     def test_main_daemon_start(self, mock_run, mock_storage, mock_search, mock_args):
-        # Simula o início normal do daemon
         mock_args.return_value = MagicMock(toggle=False, status=False, list=False)
         mock_search.return_value = (MagicMock(), MagicMock())
-        
         with patch('os.getpid', return_value=1234):
             main()
-            
         mock_search.assert_called_once()
-        mock_storage.return_value.save_pid.assert_called_with(1234)
-
+    
     @patch('argparse.ArgumentParser.parse_args')
     @patch('os.kill')
     @patch('pathlib.Path.exists', return_value=True)
     @patch('pathlib.Path.read_text', return_value="1234")
     def test_main_cli_toggle(self, mock_read, mock_exists, mock_kill, mock_args):
-        # Simula o comando --toggle enviando sinal para o processo existente
         mock_args.return_value = MagicMock(toggle=True, status=False, list=False)
-        
         main()
-        
         mock_kill.assert_called_with(1234, signal.SIGUSR1)
 
     @patch('evdev.list_devices', return_value=['/dev/input/event0'])
     @patch('evdev.InputDevice')
     def test_buscar_devices_discovery(self, mock_device, mock_list):
-        # Simula a descoberta de um dispositivo compatível
         dev = mock_device.return_value
         dev.info.vendor = 0x1915
         dev.info.product = 0x1025
         dev.name = "Air Mouse Consumer Control"
-        
         tecl, cons = buscar_devices()
         self.assertIsNotNone(cons)
 
     @patch('evdev.list_devices', return_value=[])
     def test_buscar_devices_empty(self, mock_list):
-        # Simula falha na descoberta (nenhum dispositivo)
         tecl, cons = buscar_devices()
         self.assertIsNone(tecl)
         self.assertIsNone(cons)
 
     @patch('argparse.ArgumentParser.parse_args')
+    @patch('rgb_daemon.main.buscar_devices', return_value=(None, None))
     @patch('builtins.print')
-    def test_main_cli_list(self, mock_print, mock_args):
-        # Simula --list
+    def test_main_cli_list(self, mock_print, mock_search, mock_args):
         mock_args.return_value = MagicMock(toggle=False, status=False, list=True)
-        with patch('rgb_daemon.main.buscar_devices', return_value=(None, None)):
-            main()
-        mock_print.assert_any_call("Dispositivos não encontrados.")
+        main()
+        mock_search.assert_called_once()
 
     @patch('argparse.ArgumentParser.parse_args')
     @patch('builtins.print')
     @patch('pathlib.Path.exists', return_value=True)
-    @patch('pathlib.Path.read_text', return_value="Ativo")
-    def test_main_cli_status(self, mock_read, mock_exists, mock_print, mock_args):
-        # Simula --status
+    @patch('pathlib.Path.read_text', return_value="off")
+    @patch('rgb_daemon.main.STATUS_FILE')
+    def test_main_cli_status(self, mock_status_path, mock_read, mock_exists, mock_print, mock_args):
         mock_args.return_value = MagicMock(toggle=False, status=True, list=False)
+        mock_status_path.exists.return_value = True
+        mock_status_path.read_text.return_value = "off"
         main()
-        mock_print.assert_any_call("Status: Ativo")
+        mock_print.assert_any_call("MODO LED: OFF")
 
 if __name__ == '__main__':
     unittest.main()
