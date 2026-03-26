@@ -2,7 +2,7 @@
 set -e
 
 PKG_NAME="rgb-control"
-VERSION="1.0.6"
+VERSION="1.0.7"
 REV="1"
 ARCH="all"
 DEB_DIR="${PKG_NAME}_${VERSION}-${REV}_${ARCH}"

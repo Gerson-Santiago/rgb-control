@@ -53,7 +53,7 @@ class _EvdevStub(MagicMock):
 _evdev_stub = _EvdevStub()
 sys.modules["evdev"] = _evdev_stub
 
-import mvp  # type: ignore  # noqa: E402
+from src.rgb_daemon import main as mvp  # type: ignore  # noqa: E402
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -76,20 +76,20 @@ def mock_teclado() -> MagicMock:
 
 @pytest.fixture
 def mock_subprocess():
-    with patch("mvp.subprocess.run") as m:
+    with patch("src.rgb_daemon.main.subprocess.run") as m:
         m.return_value = MagicMock(returncode=0)
         yield m
 
 
 @pytest.fixture
 def mock_notificar():
-    with patch("mvp.notificar") as m:
+    with patch("src.rgb_daemon.main.notificar") as m:
         yield m
 
 
 @pytest.fixture
 def mock_aplicar_ok():
-    with patch("mvp.aplicar_cor", return_value=True) as m:
+    with patch("src.rgb_daemon.main.aplicar_cor", return_value=True) as m:
         yield m
 
 
@@ -173,13 +173,13 @@ class TestMudarCor:
         assert estado.indice_cor == len(mvp.PALETA) - 1
 
     def test_sem_notificacao_se_falha(self, estado, mock_notificar):
-        with patch("mvp.aplicar_cor", return_value=False):
+        with patch("src.rgb_daemon.main.aplicar_cor", return_value=False):
             mvp.mudar_cor(estado, +1)
         mock_notificar.assert_not_called()
 
     def test_aplica_hex_correto(self, estado, mock_notificar):
         estado.indice_cor = 0   # Vermelho
-        with patch("mvp.aplicar_cor", return_value=True) as m:
+        with patch("src.rgb_daemon.main.aplicar_cor", return_value=True) as m:
             mvp.mudar_cor(estado, +1)   # → Laranja (idx=1)
         m.assert_called_once_with(mvp.PALETA[1][1], mvp.PALETA[1][0])
 
@@ -205,7 +205,7 @@ class TestAlternarModo:
         mock_teclado.ungrab.assert_called_once()
 
     def test_toggle_duplo(self, estado, mock_teclado, mock_notificar):
-        with patch("mvp.time.monotonic", side_effect=[100.0, 102.0]):
+        with patch("src.rgb_daemon.main.time.monotonic", side_effect=[100.0, 102.0]):
             mvp.alternar_modo(estado, mock_teclado)
             mvp.alternar_modo(estado, mock_teclado)
         assert estado.modo_led_ativo is False
@@ -250,7 +250,7 @@ class TestLongPress:
         (2.9, False),
     ])
     def test_limiar(self, duracao_s, deve_alternar, estado, mock_notificar, mock_teclado):
-        with patch("mvp.alternar_modo") as mock_alt:
+        with patch("src.rgb_daemon.main.alternar_modo") as mock_alt:
             t0 = time.time() - duracao_s
             estado.ok_press_time = t0
             duracao = time.time() - estado.ok_press_time
@@ -355,8 +355,8 @@ class TestBuscarDevices:
         tecl = self._make_device("XING WEI 2.4G USB USB Composite Device")
         cons = self._make_device("XING WEI 2.4G USB USB Composite Device Consumer Control")
 
-        with patch("mvp.list_devices", return_value=["/dev/input/event11", "/dev/input/event13"]):
-            with patch("mvp.InputDevice", side_effect=[tecl, cons]):
+        with patch("src.rgb_daemon.main.list_devices", return_value=["/dev/input/event11", "/dev/input/event13"]):
+            with patch("src.rgb_daemon.main.InputDevice", side_effect=[tecl, cons]):
                 t, c = mvp.buscar_devices()
 
         assert t is tecl
@@ -366,8 +366,8 @@ class TestBuscarDevices:
         """Device com vendor errado (não XING WEI) deve ser ignorado."""
         outro = self._make_device("2.4G Wireless Device", vendor=0x9999, product=0x0001)
 
-        with patch("mvp.list_devices", return_value=["/dev/input/event10"]):
-            with patch("mvp.InputDevice", return_value=outro):
+        with patch("src.rgb_daemon.main.list_devices", return_value=["/dev/input/event10"]):
+            with patch("src.rgb_daemon.main.InputDevice", return_value=outro):
                 t, c = mvp.buscar_devices()
 
         assert t is None
@@ -378,8 +378,8 @@ class TestBuscarDevices:
         fantasma = self._make_device("XING WEI 2.4G USB USB Composite Device", tem_enter=False)
         real     = self._make_device("XING WEI 2.4G USB USB Composite Device", tem_enter=True)
 
-        with patch("mvp.list_devices", return_value=["/dev/input/event15", "/dev/input/event11"]):
-            with patch("mvp.InputDevice", side_effect=[fantasma, real]):
+        with patch("src.rgb_daemon.main.list_devices", return_value=["/dev/input/event15", "/dev/input/event11"]):
+            with patch("src.rgb_daemon.main.InputDevice", side_effect=[fantasma, real]):
                 t, _ = mvp.buscar_devices()
 
         assert t is real
@@ -387,15 +387,15 @@ class TestBuscarDevices:
     def test_falha_sem_teclado(self):
         cons = self._make_device("XING WEI 2.4G USB USB Composite Device Consumer Control")
 
-        with patch("mvp.list_devices", return_value=["/dev/input/event13"]):
-            with patch("mvp.InputDevice", return_value=cons):
+        with patch("src.rgb_daemon.main.list_devices", return_value=["/dev/input/event13"]):
+            with patch("src.rgb_daemon.main.InputDevice", return_value=cons):
                 t, _ = mvp.buscar_devices()
 
         assert t is None
 
     def test_permission_error_nao_trava(self):
-        with patch("mvp.list_devices", return_value=["/dev/input/event0"]):
-            with patch("mvp.InputDevice", side_effect=PermissionError("acesso negado")):
+        with patch("src.rgb_daemon.main.list_devices", return_value=["/dev/input/event0"]):
+            with patch("src.rgb_daemon.main.InputDevice", side_effect=PermissionError("acesso negado")):
                 t, c = mvp.buscar_devices()
         assert t is None
 
@@ -406,40 +406,40 @@ class TestBuscarDevices:
 class TestMain:
 
     def test_main_list(self):
-        with patch("mvp.argparse.ArgumentParser.parse_args") as m_args:
+        with patch("src.rgb_daemon.main.argparse.ArgumentParser.parse_args") as m_args:
             m_args.return_value = argparse.Namespace(toggle=False, status=False, list=True)
-            with patch("mvp.buscar_devices") as m_buscar:
+            with patch("src.rgb_daemon.main.buscar_devices") as m_buscar:
                 mvp.main()
                 m_buscar.assert_called_once()
 
     def test_main_status(self, capsys):
-        with patch("mvp.argparse.ArgumentParser.parse_args") as m_args:
+        with patch("src.rgb_daemon.main.argparse.ArgumentParser.parse_args") as m_args:
             m_args.return_value = argparse.Namespace(toggle=False, status=True, list=False)
             mock_status = MagicMock()
             mock_status.exists.return_value = True
             mock_status.read_text.return_value = "on"
-            with patch("mvp.STATUS_FILE", mock_status):
+            with patch("src.rgb_daemon.main.STATUS_FILE", mock_status):
                 mvp.main()
                 out, _ = capsys.readouterr()
                 assert "MODO LED: ON" in out
 
     def test_main_toggle_sucesso(self):
-        with patch("mvp.argparse.ArgumentParser.parse_args") as m_args:
+        with patch("src.rgb_daemon.main.argparse.ArgumentParser.parse_args") as m_args:
             m_args.return_value = argparse.Namespace(toggle=True, status=False, list=False)
             mock_pid = MagicMock()
             mock_pid.exists.return_value = True
             mock_pid.read_text.return_value = "1234"
-            with patch("mvp.PID_FILE", mock_pid):
+            with patch("src.rgb_daemon.main.PID_FILE", mock_pid):
                 with patch("os.kill") as m_kill:
                     mvp.main()
                     m_kill.assert_called_once_with(1234, signal.SIGUSR1)
 
     def test_main_toggle_sem_pid(self, capsys):
-        with patch("mvp.argparse.ArgumentParser.parse_args") as m_args:
+        with patch("src.rgb_daemon.main.argparse.ArgumentParser.parse_args") as m_args:
             m_args.return_value = argparse.Namespace(toggle=True, status=False, list=False)
             mock_pid = MagicMock()
             mock_pid.exists.return_value = False
-            with patch("mvp.PID_FILE", mock_pid):
+            with patch("src.rgb_daemon.main.PID_FILE", mock_pid):
                 with pytest.raises(SystemExit):
                     mvp.main()
 
@@ -466,7 +466,7 @@ async def test_listener_teclado_navegacao(estado):
     mock_dev.async_read_loop.return_value = mock_loop()
     stop_ev = asyncio.Event()
 
-    with patch("mvp.mudar_cor") as m_mudar:
+    with patch("src.rgb_daemon.main.mudar_cor") as m_mudar:
         task = asyncio.create_task(mvp.listener_teclado(mock_dev, estado, stop_ev))
         await asyncio.sleep(0.1)
         stop_ev.set()
@@ -491,7 +491,7 @@ async def test_listener_teclado_toggle_ok(estado):
     mock_dev.async_read_loop.return_value = mock_loop()
     stop_ev = asyncio.Event()
 
-    with patch("mvp.alternar_modo") as m_alt:
+    with patch("src.rgb_daemon.main.alternar_modo") as m_alt:
         task = asyncio.create_task(mvp.listener_teclado(mock_dev, estado, stop_ev))
         await asyncio.sleep(0.1)
         stop_ev.set()
@@ -499,20 +499,18 @@ async def test_listener_teclado_toggle_ok(estado):
         m_alt.assert_not_called()
 
 @pytest.mark.asyncio
-async def test_listener_consumer_toggle_mic_triple(estado):
-    """v3.2: Testa se o Clique Triplo ativa o modo."""
+async def test_listener_consumer_toggle_mic_single(estado):
+    """v3.2: Testa se o Clique único ativa o modo."""
     mock_dev = MagicMock()
     ev_mic = MagicMock(type=1, code=582, value=1)
     
     async def mock_loop():
         yield ev_mic
-        yield ev_mic
-        yield ev_mic
 
     mock_dev.async_read_loop.return_value = mock_loop()
     stop_ev = asyncio.Event()
 
-    with patch("mvp.alternar_modo") as m_alt:
+    with patch("src.rgb_daemon.main.alternar_modo") as m_alt:
         task = asyncio.create_task(mvp.listener_consumer(mock_dev, estado, None, stop_ev))
         await asyncio.sleep(0.1)
         stop_ev.set()
@@ -536,7 +534,7 @@ async def test_listener_consumer_navegacao(estado):
     mock_dev.async_read_loop.return_value = mock_loop()
     stop_ev = asyncio.Event()
 
-    with patch("mvp.mudar_cor") as m_mudar, patch("mvp.alternar_modo") as m_alt:
+    with patch("src.rgb_daemon.main.mudar_cor") as m_mudar, patch("src.rgb_daemon.main.alternar_modo") as m_alt:
         task = asyncio.create_task(mvp.listener_consumer(mock_dev, estado, None, stop_ev))
         await asyncio.sleep(0.1)
         stop_ev.set()
@@ -562,7 +560,7 @@ async def test_run_daemon_completo(mock_teclado):
 
     stop_ev = asyncio.Event()
     
-    with patch("mvp.asyncio.Event", return_value=stop_ev):
+    with patch("src.rgb_daemon.main.asyncio.Event", return_value=stop_ev):
         # NOTA: Não patcheamos create_task para deixar os listeners rodarem
         daemon_task = asyncio.create_task(mvp.run_daemon(mock_teclado, mock_cons))
         await asyncio.sleep(0.1)
@@ -574,12 +572,12 @@ async def test_run_daemon_completo(mock_teclado):
 @pytest.mark.asyncio
 async def test_main_executa_daemon():
     """Testa o caminho feliz do main()."""
-    with patch("mvp.argparse.ArgumentParser.parse_args") as m_args:
+    with patch("src.rgb_daemon.main.argparse.ArgumentParser.parse_args") as m_args:
         m_args.return_value = argparse.Namespace(toggle=False, status=False, list=False)
-        with patch("mvp.buscar_devices", return_value=(MagicMock(), MagicMock())):
+        with patch("src.rgb_daemon.main.buscar_devices", return_value=(MagicMock(), MagicMock())):
             # Mock de arquivos para evitar PermissionError
             m_file = MagicMock()
-            with patch("mvp.PID_FILE", m_file), patch("mvp.STATUS_FILE", m_file):
-                with patch("mvp.asyncio.run") as m_run:
+            with patch("src.rgb_daemon.main.PID_FILE", m_file), patch("src.rgb_daemon.main.STATUS_FILE", m_file):
+                with patch("src.rgb_daemon.main.asyncio.run") as m_run:
                     mvp.main()
                     m_run.assert_called_once()

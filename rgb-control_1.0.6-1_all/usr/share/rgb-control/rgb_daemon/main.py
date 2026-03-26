@@ -235,8 +235,8 @@ async def listener_consumer(
                 estado.mic_clicks += 1
             estado.last_click_time = now
 
-            if estado.mic_clicks == 3:
-                log.info("⚡ Clique Triplo detectado (%d)!", ev.code)
+            if estado.mic_clicks == 1:
+                log.info("⚡ Clique detectado (%d)!", ev.code)
                 alternar_modo(estado, dev_tecl)
                 estado.mic_clicks = 0
             continue
