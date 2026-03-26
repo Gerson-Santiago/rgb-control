@@ -1,0 +1,19 @@
+[Unit]
+Description=Controle de LEDs via Air Mouse (OpenRGB)
+After=network.target
+
+[Service]
+Type=simple
+# Caminho absoluto para o python e para o seu script
+ExecStart=/usr/bin/python3 "/home/sant/Área de trabalho/PROJETOS/openrbg/mvp.py"
+WorkingDirectory=/home/sant/Área de trabalho/PROJETOS/openrbg
+Restart=always
+RestartSec=5
+User=root
+
+# Garante acesso ao ambiente de logs
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,93 @@
+============================================================
+  PERGUNTAS PARA O PROJETO: openRGB GUI (PyGObject + GTK4)
+============================================================
+
+Olá! Para criar a interface gráfica do jeito certo e entregar mais rápido,
+preciso das suas respostas para as seguintes dúvidas:
+
+------------------------------------------------------------
+BLOCO 1 — ESTRUTURA DO PROJETO
+------------------------------------------------------------
+
+1. A GUI deve ser um ARQUIVO SEPARADO (ex: gui.py) que controla o daemon
+   mvp.py por FORA (via sinais/IPC), ou deve ser INTEGRADA ao mvp.py em
+   um arquivo único?
+
+   não sei, 
+
+2. O daemon (mvp.py) ainda vai rodar como SERVIÇO SYSTEMD (root) enquanto
+   a GUI roda como usuário normal? Ou a GUI SUBSTITUI o daemon e passa a
+   ser o ponto central de controle?
+
+   Acho melhor subistituir porém ter uma função que possa desativar o daemon e ativar quando eu quiser bem como ativar e deixar sempre ativo ou desativar 
+   e deixar sempre desativado
+
+3. Quer manter o Air Mouse funcionando em PARALELO com a GUI?
+   (Ou seja: Air Mouse muda cor → GUI atualiza; GUI muda cor → Air Mouse
+   também vê a mudança?)
+
+   Qual é mais logico? sincronizar? 
+
+------------------------------------------------------------
+BLOCO 2 — FUNCIONALIDADES DA GUI
+------------------------------------------------------------
+
+4. "Ativar/Desativar controle" na GUI significa:
+   a) Ligar/desligar o DAEMON systemd (openrbg.service)? sim
+   b) Ligar/desligar apenas o MODO LED dentro do daemon que já está rodando? tbm ter esta opção na ordem correta de hierarquia
+   c) Abrir/fechar a conexão com o OpenRGB diretamente pela GUI? fazer como já deu certo atualmente né? mais coerente
+
+5. Para "escolher cores pela GUI": prefere uma LISTA/GRADE com as cores da
+   paleta atual (10 cores fixas), 
+   GRID de cores pré definidas
+   bem como opção de escolher cores personalizadas a lib mais comum de python para isso é a tkinter né? 
+   
+6. "Gerar cores personalizadas" — o que isso significa para você?
+   a) Entrada manual de valores R, G, B (sliders ou campos de texto)?
+   b) Salvar cores favoritas criadas pelo usuário em um arquivo?
+   c) Gerar gradientes/animações automaticamente?
+   d) Outra coisa? tem que ter como escolar cores personalizadas e se quiser fazer uma uma ou duas opções veja o mais comum para projetos com LED
+
+7. A janela da GUI deve ficar SEMPRE VISÍVEL (janela normal) ou preferir
+   como um APPLET de bandeja (system tray / status icon) que abre um menu?
+   deve ser um app de instalar no debian como um apt ou .deb coisa similar entende? e todo o fluxo de .deb ou de apt sei lá se são diferentes
+
+------------------------------------------------------------
+BLOCO 3 — VISUAL E ESTILO
+------------------------------------------------------------
+
+8. Prefere o estilo GNOME moderno (GTK4 + libadwaita, idêntico ao GNOME)?
+   Ou tudo bem usar Tkinter (mais simples e leve, sem depender de GTK4)?
+   O que é mais performatico e mais moderno? mais coerente em 2026?
+
+9. Quer que o LOGO do projeto (logo.svg) apareça na janela da GUI?
+sim e quando abrir o .deb ou apt pela interface do meu menu de apps quero ver o logo se mexendo apara abrir tipo o que o .gif faz em 
+/home/sant/Área de trabalho/PROJETOS/openrbg/544bd05c31a56c8347682a790975c619.gif que dá tempo de carregar o app e demais necessidade para usabilidade agradavel
+
+10. Precisa de suporte a TEMA ESCURO automático (seguir preferência do sistema)?
+sim, tema claro e escuro e opção de escolher manualmente e preferencia do sistema num menu de configuração 
+
+------------------------------------------------------------
+BLOCO 4 — TESTES
+------------------------------------------------------------
+
+11. Os testes existentes em tests/test_mvp.py cobrem o daemon. Quer que
+    a GUI também tenha testes automatizados (pytest), ou só o daemon precisa
+    de cobertura? 
+    sim devemos ter testes ok?
+
+12. Qual percentual mínimo de cobertura de testes você quer? (ex: 80%, 100%)
+entre 75% a 100% ok? que seja o melhor possivel e o mais coerente possivel sem inventar solução milagrosa
+
+------------------------------------------------------------
+BLOCO 5 — ENTREGA / PRIORIDADE
+------------------------------------------------------------
+
+13. O que é mais urgente para você agora?
+    a) Uma tela simples só com botão ON/OFF + seleção de cor da paleta
+    b) A GUI completa com color picker e cores customizadas
+    c) Outro? Os requisitos estão todos acima ok?
+
+14. A instalação precisa funcionar em outro computador além do seu? Ou é
+    uso PESSOAL apenas (uma máquina, Debian/GNOME)? por hora uso pessoal mas já pensar que quero usar em outras maquinas ok?
+
