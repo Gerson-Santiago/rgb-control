@@ -4,7 +4,7 @@ import os
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib, Gio, Gdk
+from gi.repository import Gtk, Adw, GLib, Gio
 import logging
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,6 @@ class MainWindow(Adw.ApplicationWindow):
         # Content Scroll
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_vexpand(True)
         
         content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
         content_box.set_margin_top(24)
@@ -69,8 +68,7 @@ class MainWindow(Adw.ApplicationWindow):
         logo_path = get_asset_path("logo.svg")
         try:
             self.logo = Gtk.Picture.new_for_filename(logo_path)
-            self.logo.set_size_request(150, 150)
-            self.logo.set_halign(Gtk.Align.CENTER)
+            self.logo.set_size_request(-1, 100)
             self.logo.set_content_fit(Gtk.ContentFit.CONTAIN)
             content_box.append(self.logo)
         except Exception:
@@ -120,32 +118,22 @@ class MainWindow(Adw.ApplicationWindow):
             ("Desligar", "#000000")
         ]
         
-        # Setup global CSS for colors
-        css = ""
-        for name, hex_val in self.colors:
-            cls_name = f"color-btn-{hex_val.strip('#')}"
-            css += f".{cls_name} {{ background-color: {hex_val}; border-radius: 22px; }}\n"
-            if hex_val == "#000000":
-                css += f".{cls_name} {{ border: 1px solid #777; }}\n"
-                
-        provider = Gtk.CssProvider()
-        try:
-            provider.load_from_string(css)
-        except AttributeError:
-            provider.load_from_data(css.encode())
-            
-        Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(),
-            provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
-        
         for name, hex_val in self.colors:
             btn = Gtk.Button()
             btn.set_size_request(45, 45)
             btn.set_tooltip_text(name)
-            cls_name = f"color-btn-{hex_val.strip('#')}"
-            btn.add_css_class(cls_name)
+            
+            context = btn.get_style_context()
+            provider = Gtk.CssProvider()
+            css = f"button {{ background-color: {hex_val}; border-radius: 22px; }}"
+            # Add border if it's black to be visible in dark mode
+            if hex_val == "#000000":
+                css = f"button {{ background-color: {hex_val}; border-radius: 22px; border: 1px solid #777; }}"
+            try:
+                provider.load_from_string(css)
+            except AttributeError:
+                provider.load_from_data(css.encode())
+            context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
             
             btn.connect("clicked", self.on_color_clicked, hex_val, name)
             flowbox.insert(btn, -1)

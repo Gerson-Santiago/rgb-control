@@ -7,7 +7,7 @@ import logging
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, Gio, GLib, Gdk
+from gi.repository import Gtk, Adw, Gio, GLib
 
 log_dir = os.path.join(GLib.get_user_cache_dir(), "rgb-control")
 os.makedirs(log_dir, exist_ok=True)
@@ -35,19 +35,10 @@ class SplashWindow(Gtk.Window):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         
         try:
-            filename = get_asset_path("logo.svg")
+            filename = get_asset_path("544bd05c31a56c8347682a790975c619.gif")
             picture = Gtk.Picture.new_for_filename(filename)
             picture.set_content_fit(Gtk.ContentFit.CONTAIN)
-            picture.set_size_request(120, 120)
-            picture.add_css_class("splash-logo")
-            
-            center_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-            center_box.set_halign(Gtk.Align.CENTER)
-            center_box.set_valign(Gtk.Align.CENTER)
-            center_box.set_vexpand(True)
-            center_box.append(picture)
-            
-            box.append(center_box)
+            box.append(picture)
         except Exception:
             label = Gtk.Label(label="Carregando RGB Control...")
             label.set_margin_top(50)
@@ -79,30 +70,14 @@ class RgbControlApp(Adw.Application):
         )
 
     def do_activate(self):
-        if self.get_windows():
-            self.get_windows()[0].present()
-            return
-
-        # Load external CSS for the whole app
-        css_path = get_asset_path("rgb_control/style.css")
-        if not os.path.exists(css_path):
-            css_path = get_asset_path("style.css")
-            
-        if os.path.exists(css_path):
-            provider = Gtk.CssProvider()
-            provider.load_from_path(css_path)
-            Gtk.StyleContext.add_provider_for_display(
-                Gdk.Display.get_default(),
-                provider,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-            )
-
         # Show splash first
         splash = SplashWindow(self, self.on_splash_finished)
         splash.present()
 
     def on_splash_finished(self):
-        win = MainWindow(application=self)
+        win = self.props.active_window
+        if not win or isinstance(win, SplashWindow):
+            win = MainWindow(application=self)
         win.present()
 
 def main():
