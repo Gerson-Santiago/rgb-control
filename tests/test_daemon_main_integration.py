@@ -26,8 +26,8 @@ class TestDaemonMainIntegration(unittest.TestCase):
         main()
         mock_kill.assert_called_with(1234, signal.SIGUSR1)
 
-    @patch('evdev.list_devices', return_value=['/dev/input/event0'])
-    @patch('evdev.InputDevice')
+    @patch('rgb_daemon.main.list_devices', return_value=['/dev/input/event0'])
+    @patch('rgb_daemon.main.InputDevice')
     def test_buscar_devices_discovery(self, mock_device, mock_list):
         dev = mock_device.return_value
         dev.info.vendor = 0x1915
@@ -36,7 +36,7 @@ class TestDaemonMainIntegration(unittest.TestCase):
         tecl, cons = buscar_devices()
         self.assertIsNotNone(cons)
 
-    @patch('evdev.list_devices', return_value=[])
+    @patch('rgb_daemon.main.list_devices', return_value=[])
     def test_buscar_devices_empty(self, mock_list):
         tecl, cons = buscar_devices()
         self.assertIsNone(tecl)
@@ -52,13 +52,11 @@ class TestDaemonMainIntegration(unittest.TestCase):
 
     @patch('argparse.ArgumentParser.parse_args')
     @patch('builtins.print')
-    @patch('pathlib.Path.exists', return_value=True)
-    @patch('pathlib.Path.read_text', return_value="off")
     @patch('rgb_daemon.main.STATUS_FILE')
-    def test_main_cli_status(self, mock_status_path, mock_read, mock_exists, mock_print, mock_args):
+    def test_main_cli_status(self, mock_status_file, mock_print, mock_args):
         mock_args.return_value = MagicMock(toggle=False, status=True, list=False)
-        mock_status_path.exists.return_value = True
-        mock_status_path.read_text.return_value = "off"
+        mock_status_file.exists.return_value = True
+        mock_status_file.read_text.return_value = "off"
         main()
         mock_print.assert_any_call("MODO LED: OFF")
 
