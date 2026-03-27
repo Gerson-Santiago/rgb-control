@@ -8,6 +8,12 @@ class TestDaemonDomain(unittest.TestCase):
         self.assertEqual(state.color_index, 8)
         self.assertEqual(state.get_current_color().name, "Branco")
 
+    def test_invalid_hex_raises_error(self):
+        with self.assertRaisesRegex(ValueError, "deve ter 6 caracteres"):
+            Color("Curta", "FF")
+        with self.assertRaisesRegex(ValueError, "não alfanumérico hex"):
+            Color("Lixo", "ZZZZZZ")
+
     def test_next_color_cycling(self):
         state = DaemonState(color_index=len(PALETTE) - 1)
         color = state.next_color()

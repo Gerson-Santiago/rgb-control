@@ -7,7 +7,7 @@ import logging
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, Gio, GLib, Gdk
+from gi.repository import Gtk, Adw, Gio, GLib, Gdk # pyright: ignore[reportAttributeAccessIssue]
 
 log_dir = os.path.join(GLib.get_user_cache_dir(), "rgb-control")
 os.makedirs(log_dir, exist_ok=True)
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 try:
     from rgb_control.window import MainWindow, get_asset_path
 except ImportError:
-    from window import MainWindow, get_asset_path
+    from rgb_control.window import MainWindow, get_asset_path
 
 class SplashWindow(Gtk.Window):
     def __init__(self, application, on_ready_callback):

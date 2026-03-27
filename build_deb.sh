@@ -2,10 +2,13 @@
 set -e
 
 PKG_NAME="rgb-control"
-VERSION="1.0.10"
+VERSION=$(grep -m 1 "^version = " pyproject.toml | cut -d '"' -f 2)
 REV="1"
 ARCH="all"
 DEB_DIR="${PKG_NAME}_${VERSION}-${REV}_${ARCH}"
+
+echo ">> Executando Pipeline de Qualidade (Clean Architecture) <<"
+./run_tests.sh
 
 echo "Building Debian package: $DEB_DIR"
 

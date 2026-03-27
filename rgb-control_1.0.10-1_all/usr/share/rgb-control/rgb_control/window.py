@@ -4,7 +4,7 @@ import os
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib, Gio, Gdk
+from gi.repository import Gtk, Adw, GLib, Gio, Gdk # pyright: ignore[reportAttributeAccessIssue]
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 try:
     from rgb_control.backend import Backend
 except ImportError:
-    from backend import Backend
+    from rgb_control.backend import Backend
 
 def get_asset_path(filename):
     """Retorna o caminho do asset, buscando localmente ou na estrutura do .deb"""
