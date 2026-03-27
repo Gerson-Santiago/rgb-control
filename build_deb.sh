@@ -2,7 +2,7 @@
 set -e
 
 PKG_NAME="rgb-control"
-VERSION="1.0.8"
+VERSION="1.0.9"
 REV="1"
 ARCH="all"
 DEB_DIR="${PKG_NAME}_${VERSION}-${REV}_${ARCH}"
@@ -28,6 +28,28 @@ Depends: python3, python3-gi, python3-gi-cairo, gir1.2-gtk-4.0, gir1.2-adw-1
 Maintainer: Sant <sant@local>
 Description: Interface Gráfica moderna em GTK4 para controle do OpenRGB com integrações.
 EOF
+
+# Create DEBIAN/postinst (atualiza cache de ícones)
+cat <<EOF > "$DEB_DIR/DEBIAN/postinst"
+#!/bin/sh
+set -e
+if [ "\$1" = "configure" ]; then
+    gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
+    update-desktop-database -q || true
+fi
+EOF
+chmod +x "$DEB_DIR/DEBIAN/postinst"
+
+# Create DEBIAN/postrm (limpa cache)
+cat <<EOF > "$DEB_DIR/DEBIAN/postrm"
+#!/bin/sh
+set -e
+if [ "\$1" = "remove" ] || [ "\$1" = "purge" ]; then
+    gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
+    update-desktop-database -q || true
+fi
+EOF
+chmod +x "$DEB_DIR/DEBIAN/postrm"
 
 # Copy source python packages
 cp -r src/rgb_control "$DEB_DIR/usr/share/$PKG_NAME/"
