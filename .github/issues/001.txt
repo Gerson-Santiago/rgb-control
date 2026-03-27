@@ -1,0 +1,1 @@
+ao buscar o app RGB Control no menu do Debian ainda está quadrado e não o circulo

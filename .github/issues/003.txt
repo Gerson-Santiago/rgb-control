@@ -1,0 +1,5 @@
+Entre abrir o app/software e logo após clicar em abrir tem um modal de abertura do 
+sistema/app o modal deveria ter cantos arredondados como o resto do app/software.
+
+ e tbm deviaria o circulo do .png ao centro do modal de abertura do sistema/app
+ algo basico sem fallback de .svg pois vou deletar 

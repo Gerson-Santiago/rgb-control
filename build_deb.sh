@@ -2,7 +2,7 @@
 set -e
 
 PKG_NAME="rgb-control"
-VERSION="1.0.7"
+VERSION="1.0.8"
 REV="1"
 ARCH="all"
 DEB_DIR="${PKG_NAME}_${VERSION}-${REV}_${ARCH}"
@@ -14,7 +14,6 @@ rm -rf "$DEB_DIR"
 mkdir -p "$DEB_DIR/DEBIAN"
 mkdir -p "$DEB_DIR/usr/bin"
 mkdir -p "$DEB_DIR/usr/share/applications"
-mkdir -p "$DEB_DIR/usr/share/icons/hicolor/scalable/apps"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/256x256/apps"
 mkdir -p "$DEB_DIR/usr/share/$PKG_NAME"
 
@@ -60,9 +59,8 @@ Categories=Utility;Settings;HardwareSettings;
 Keywords=rgb;led;openrgb;color;lighting;
 EOF
 
-# Copy Icons - PNG como principal (256x256), SVG como fallback (scalable)
+# Copy Icons - PNG (256x256)
 cp "assets/logo.png" "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/rgb-control.png"
-cp "assets/logo.svg" "$DEB_DIR/usr/share/icons/hicolor/scalable/apps/rgb-control.svg"
 
 # Build .deb
 echo "Running dpkg-deb --build..."
