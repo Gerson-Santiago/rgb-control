@@ -72,12 +72,15 @@ class MainWindow(Adw.ApplicationWindow):
         # 3. Conteúdo Principal com Clamp (Centralização Responsiva)
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_vexpand(True)
+        scrolled.set_hexpand(True)
         
         clamp = Adw.Clamp()
         clamp.set_maximum_size(500) # Mantém os controles elegantes no centro
         clamp.set_tightening_threshold(400)
+        clamp.set_hexpand(True)
         
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
+        main_box.set_hexpand(True)
         main_box.set_margin_top(32)
         main_box.set_margin_bottom(32)
         main_box.set_margin_start(16)
@@ -183,8 +186,16 @@ class MainWindow(Adw.ApplicationWindow):
         custom_row.add_suffix(picker_btn)
         custom_group.add(custom_row)
         
-        # Unificando o Flowerbox no grupo via um widget genérico se necessário
-        lighting_group.add(palette_box)
+        # Adw.PreferencesGroup.add() aceita qualquer Gtk.Widget — mas para
+        # garantir que o flowbox preencha corretamente, encapsulamos numa ActionRow
+        palette_row = Adw.ActionRow()
+        palette_row.set_activatable(False)
+        # Centraliza e expande o flowbox dentro da row
+        palette_box.set_hexpand(True)
+        palette_box.set_valign(Gtk.Align.CENTER)
+        palette_box.set_halign(Gtk.Align.CENTER)
+        palette_row.set_child(palette_box)
+        lighting_group.add(palette_row)
         
         main_box.append(lighting_group)
         main_box.append(custom_group)
@@ -197,9 +208,15 @@ class MainWindow(Adw.ApplicationWindow):
         GLib.timeout_add(2000, self.update_status_ui)
 
     def load_custom_css(self):
-        """Carrega o arquivo style.css se ele existir"""
-        css_path = get_asset_path("style.css")
-        if os.path.exists(css_path):
+        """Carrega o arquivo style.css — busca no mesmo dir do window.py e em assets/"""
+        # Prioridade 1: mesmo diretório de window.py (src/rgb_control/style.css)
+        own_dir = os.path.dirname(os.path.abspath(__file__))
+        candidates = [
+            os.path.join(own_dir, "style.css"),
+            get_asset_path("style.css"),
+        ]
+        css_path = next((p for p in candidates if os.path.exists(p)), None)
+        if css_path:
             provider = Gtk.CssProvider()
             provider.load_from_path(css_path)
             Gtk.StyleContext.add_provider_for_display(
@@ -208,6 +225,8 @@ class MainWindow(Adw.ApplicationWindow):
                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
             )
             logger.info(f"CSS carregado de: {css_path}")
+        else:
+            logger.warning("style.css não encontrado — usando estilos inline apenas")
 
     def setup_actions(self, app):
         theme_light = Gio.SimpleAction.new("theme_light", None)
