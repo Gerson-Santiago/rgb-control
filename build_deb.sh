@@ -15,6 +15,7 @@ mkdir -p "$DEB_DIR/DEBIAN"
 mkdir -p "$DEB_DIR/usr/bin"
 mkdir -p "$DEB_DIR/usr/share/applications"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/scalable/apps"
+mkdir -p "$DEB_DIR/usr/share/icons/hicolor/256x256/apps"
 mkdir -p "$DEB_DIR/usr/share/$PKG_NAME"
 
 # Create DEBIAN/control
@@ -59,7 +60,8 @@ Categories=Utility;Settings;HardwareSettings;
 Keywords=rgb;led;openrgb;color;lighting;
 EOF
 
-# Copy Icon
+# Copy Icons - PNG como principal (256x256), SVG como fallback (scalable)
+cp "assets/logo.png" "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/rgb-control.png"
 cp "assets/logo.svg" "$DEB_DIR/usr/share/icons/hicolor/scalable/apps/rgb-control.svg"
 
 # Build .deb

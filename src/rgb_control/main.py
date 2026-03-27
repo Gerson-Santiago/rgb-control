@@ -35,10 +35,13 @@ class SplashWindow(Gtk.Window):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         
         try:
-            filename = get_asset_path("logo.svg")
-            picture = Gtk.Picture.new_for_filename(filename)
+            # PNG circular com fundo transparente é o ideal para o splash
+            logo_file = get_asset_path("logo.png")
+            if not logo_file or not os.path.exists(logo_file):
+                logo_file = get_asset_path("logo.svg")
+            picture = Gtk.Picture.new_for_filename(logo_file)
             picture.set_content_fit(Gtk.ContentFit.CONTAIN)
-            picture.set_size_request(120, 120)
+            picture.set_size_request(160, 160)
             picture.add_css_class("splash-logo")
             
             center_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
