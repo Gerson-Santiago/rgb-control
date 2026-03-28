@@ -51,24 +51,13 @@ class TestGuiBackend(unittest.TestCase):
         mock_kill.assert_called_with(1234, 10)
 
     @patch('subprocess.Popen')
-    @patch('os.path.exists', return_value=True)
-    def test_apply_color_script(self, mock_exists, mock_popen):
-        # Mocking existence of rbg.sh
+    def test_apply_color_direct(self, mock_popen):
+        # Agora o backend deve chamar openrgb diretamente
         self.backend.apply_color("FF0000", "Vermelho")
         mock_popen.assert_called()
         args = mock_popen.call_args[0][0]
-        self.assertIn("bash", args)
-        self.assertIn("vermelho", args)
-
-    @patch('subprocess.Popen')
-    @patch('os.path.exists', side_effect=lambda p: p == "/usr/bin/openrgb" or "openrgb" in p)
-    def test_apply_color_fallback(self, mock_exists, mock_popen):
-        # Mocking absence of rbg.sh and existence of openrgb
-        with patch('os.path.exists', return_value=False):
-            self.backend.apply_color("FF0000", "Vermelho")
-            mock_popen.assert_called()
-            args = mock_popen.call_args[0][0]
-            self.assertIn("openrgb", args)
+        self.assertIn("openrgb", args)
+        self.assertIn("FF0000", args)
 
     @patch('os.path.exists', return_value=True)
     @patch('builtins.open', mock_open(read_data="line1\nline2\nline3\n"))

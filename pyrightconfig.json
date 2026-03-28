@@ -1,9 +1,0 @@
-{
-  "include": ["src", "tests"],
-  "exclude": ["**/__pycache__"],
-  "extraPaths": ["src"],
-  "pythonVersion": "3.13",
-  "typeCheckingMode": "basic",
-  "reportMissingImports": true,
-  "reportMissingTypeStubs": false
-}
