@@ -60,9 +60,9 @@ class Backend:
             res = subprocess.run(["openrgb", "--device", "0", "--mode", "static", "--color", color],
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
-            # Se falhar (código de saída não for 0), tenta via sudo (pedirá senha silenciosamente no tty ou falhará caso sem polkit)
+            # Se falhar (código de saída não for 0), tenta via pkexec (exibe o popup gráfico pedindo senha)
             if res.returncode != 0:
-                subprocess.Popen(["sudo", "openrgb", "--device", "0", "--mode", "static", "--color", color],
+                subprocess.Popen(["pkexec", "openrgb", "--device", "0", "--mode", "static", "--color", color],
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception as e:
             print(f"Erro ao aplicar cor na GUI: {e}")
