@@ -54,7 +54,7 @@ class MainWindow(Adw.ApplicationWindow):
         
         # 2. HeaderBar
         self.header = Adw.HeaderBar()
-        self.header.set_title_widget(Adw.WindowTitle(title="OpenRBG", subtitle="Controle de Iluminação"))
+        self.header.set_title_widget(Adw.WindowTitle(title="RGB Control", subtitle="Controle de Iluminação"))
         
         # Menu
         menu_button = Gtk.MenuButton()
@@ -199,6 +199,18 @@ class MainWindow(Adw.ApplicationWindow):
         
         main_box.append(lighting_group)
         main_box.append(custom_group)
+        
+        # Leitura da Versão embutida
+        v_path = get_asset_path("version.txt")
+        v_str = "v1.0.0"
+        if v_path and os.path.exists(v_path):
+            with open(v_path, "r") as f:
+                v_str = f.read().strip()
+                
+        version_label = Gtk.Label(label=f"RGB Control • {v_str}")
+        version_label.add_css_class("dim-label")
+        version_label.set_margin_top(16)
+        main_box.append(version_label)
         
         clamp.set_child(main_box)
         scrolled.set_child(clamp)

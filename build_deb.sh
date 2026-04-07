@@ -7,6 +7,9 @@ REV="1"
 ARCH="all"
 DEB_DIR="${PKG_NAME}_${VERSION}-${REV}_${ARCH}"
 
+# Grava a versão empacotada para que a GUI possa exibi-la na base (rodapé)
+echo "v${VERSION}" > assets/version.txt
+
 echo ">> Executando Pipeline de Qualidade (Clean Architecture) <<"
 ./run_tests.sh
 
