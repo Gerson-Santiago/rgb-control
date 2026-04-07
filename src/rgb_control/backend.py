@@ -51,14 +51,19 @@ class Backend:
 
     def apply_color(self, hex_val: str, name: str) -> None:
         """
-        Aplica a cor imediatamente via openrgb.
-        Substitui o rbg.sh legado por chamada nativa.
+        Aplica a cor via openrgb nativamente.
+        Contém fallback de sudo para dispositivos que exigem permissão root (igual ao rbg.sh).
         """
         color = hex_val.lstrip("#")
         try:
-            # Tenta comando direto sem bloquear a UI (Popen)
-            subprocess.Popen(["openrgb", "--device", "0", "--mode", "static", "--color", color],
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # Tenta rodar sem sudo primeiro
+            res = subprocess.run(["openrgb", "--device", "0", "--mode", "static", "--color", color],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Se falhar (código de saída não for 0), tenta via sudo (pedirá senha silenciosamente no tty ou falhará caso sem polkit)
+            if res.returncode != 0:
+                subprocess.Popen(["sudo", "openrgb", "--device", "0", "--mode", "static", "--color", color],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception as e:
             print(f"Erro ao aplicar cor na GUI: {e}")
 
