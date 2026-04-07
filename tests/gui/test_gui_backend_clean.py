@@ -50,14 +50,35 @@ class TestGuiBackend(unittest.TestCase):
         self.backend.set_led_mode(True)
         mock_kill.assert_called_with(1234, 10)
 
+    @patch('subprocess.run')
     @patch('subprocess.Popen')
-    def test_apply_color_direct(self, mock_popen):
-        # Agora o backend deve chamar openrgb diretamente
+    def test_apply_color_direct_success(self, mock_popen, mock_run):
+        # Configura openrgb primário para sucesso (returncode 0)
+        mock_run.return_value.returncode = 0
         self.backend.apply_color("FF0000", "Vermelho")
+        
+        # Verifica se chamou a via primária normal
+        mock_run.assert_called()
+        args = mock_run.call_args[0][0]
+        self.assertIn("openrgb", args)
+        self.assertNotIn("pkexec", args)
+        
+        # Como o código foi 0, NÃO deve ter acionado fallback
+        mock_popen.assert_not_called()
+
+    @patch('subprocess.run')
+    @patch('subprocess.Popen')
+    def test_apply_color_direct_fallback_pkexec(self, mock_popen, mock_run):
+        # Configura openrgb primário simulando bloqueio usb/udev (returncode 1)
+        mock_run.return_value.returncode = 1
+        self.backend.apply_color("000000", "Preto")
+        
+        # Popen DEVE ter sido acionado pelo fallback
         mock_popen.assert_called()
         args = mock_popen.call_args[0][0]
+        self.assertIn("pkexec", args)
         self.assertIn("openrgb", args)
-        self.assertIn("FF0000", args)
+        self.assertIn("000000", args)
 
     @patch('os.path.exists', return_value=True)
     @patch('builtins.open', mock_open(read_data="line1\nline2\nline3\n"))
