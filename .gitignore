@@ -16,3 +16,5 @@ htmlcov/
 .controle_led.pid
 .controle_led.status
 MagicMock/
+__pycache__/
+*.log
