@@ -12,10 +12,13 @@ DEVICE_ID=0
 declare -A COLORS
 COLORS=(
     ["branco"]="FFFFFF"
+    ["branca"]="FFFFFF"
     ["white"]="FFFFFF"
     ["preto"]="000000"
     ["black"]="000000"
     ["off"]="000000"
+    ["desligar"]="000000"
+    ["desligado"]="000000"
     ["vermelho"]="FF0000"
     ["red"]="FF0000"
     ["verde"]="00FF00"

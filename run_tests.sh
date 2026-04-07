@@ -12,6 +12,11 @@ echo "🔍 Rodando Type Checking (Pyright)..."
 pyright src/
 echo "✅ Type Checking OK!"
 
+# 1.5. Bash CLI Tests
+echo "🖥️ Rodando Testes do Wrapper Bash (CLI)..."
+./tests/integration/test_rbg_cli.sh
+echo "✅ Bash CLI Tests OK!"
+
 # 2. Testes e Coverage Global
 echo "📊 Rodando Suíte Completa e Consolidando Coverage..."
 pytest tests/ -v --tb=short --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=70 -p no:warnings
