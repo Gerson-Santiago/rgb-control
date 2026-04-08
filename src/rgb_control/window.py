@@ -287,13 +287,14 @@ class MainWindow(Adw.ApplicationWindow):
         self.update_cpu_indicator("#00F2EA")
 
     def update_cpu_indicator(self, hex_val: str):
-        """Atualiza a Ventoinha 3D GTK. Provedor injeta todas as especificações e Keyframes usando o input de cor atual"""
+        """Atualiza a Ventoinha 3D GTK mapeada fielmente da cópia HTML da prototipagem (Em Escala 0.45x para UI Control)"""
         color_str = hex_val.strip()
         css = f"""
         .fan {{
-            min-width: 150px; min-height: 150px;
+            min-width: 70px; min-height: 70px;
             border-radius: 50%;
-            animation: spin 3s linear infinite;
+            background: #2a2a2a;
+            animation: spin 1s linear infinite;
         }}
         .fan-paused {{
             animation-play-state: paused;
@@ -304,20 +305,21 @@ class MainWindow(Adw.ApplicationWindow):
             opacity: 0.6;
         }}
         .fan-hub {{
+            min-width: 45px; min-height: 45px;
+            background: #fff;
             border-radius: 50%;
-            background: #2a2a2a;
-            border: 4px solid {color_str};
-            box-shadow: 0 0 20px {color_str};
+            border: 6px double {color_str};
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         }}
         .blade {{
-            min-width: 80px; min-height: 25px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 15px;
-            box-shadow: 0 4px 10px {color_str};
+            min-width: 90px; min-height: 45px;
+            background: #fff;
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         }}
-        .b1 {{ transform: rotate(0deg) translate(35px, 0); }}
-        .b2 {{ transform: rotate(120deg) translate(35px, 0); }}
-        .b3 {{ transform: rotate(240deg) translate(35px, 0); }}
+        .b1 {{ transform: rotate(0deg) translate(70px, 0); }}
+        .b2 {{ transform: rotate(120deg) translate(70px, 0); }}
+        .b3 {{ transform: rotate(240deg) translate(70px, 0); }}
         
         @keyframes spin {{
             0%   {{ transform: rotate(0deg); }}
@@ -332,7 +334,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.cpu_hex_label = Gtk.Label()
             self.cpu_hex_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
             self.cpu_hex_label.add_css_class("dim-label")
-            self.cpu_fan_overlay.get_parent().append(self.cpu_hex_label) # Anexa o titulo logo abaixo da caixa do fan
+            self.cpu_fan_overlay.get_parent().append(self.cpu_hex_label)
 
     def load_custom_css(self):
         """Carrega o arquivo style.css — busca no mesmo dir do window.py e em assets/"""
