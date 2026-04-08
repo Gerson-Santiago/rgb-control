@@ -136,19 +136,48 @@ class MainWindow(Adw.ApplicationWindow):
         indicator_box.set_margin_top(16)
         indicator_box.set_margin_bottom(16)
         
-        # Circulo principal simulando LED
-        self.cpu_led = Gtk.Box()
-        self.cpu_led.set_size_request(80, 80)
-        self.cpu_led.set_halign(Gtk.Align.CENTER)
-        self.cpu_led.add_css_class("cpu-led-circle")
+        # Ventoinha Component Factory (Embutida e Animada)
+        self.cpu_fan_overlay = Gtk.Overlay()
+        self.cpu_fan_overlay.set_size_request(150, 150)
+        self.cpu_fan_overlay.set_halign(Gtk.Align.CENTER)
         
-        # Display em texto Hexadecimal
-        self.cpu_hex_label = Gtk.Label()
-        self.cpu_hex_label.set_markup("<span font_family='monospace' size='large' weight='bold'>#00F2EA</span>")
-        self.cpu_hex_label.add_css_class("dim-label")
+        # O Motor central que girará!
+        self.fan_spinner = Gtk.Overlay()
+        self.fan_spinner.add_css_class("fan")
         
-        indicator_box.append(self.cpu_led)
-        indicator_box.append(self.cpu_hex_label)
+        # Resplendor/Brilho de fundo conectado na energia da Cor
+        self.fan_glow = Gtk.Box()
+        self.fan_glow.set_halign(Gtk.Align.FILL)
+        self.fan_glow.set_valign(Gtk.Align.FILL)
+        self.fan_glow.add_css_class("fan-glow")
+        self.fan_spinner.add_overlay(self.fan_glow)
+        
+        # Pass (Hélices Mecânicas)
+        b1 = Gtk.Box(); b1.add_css_class("blade"); b1.add_css_class("b1")
+        b1.set_halign(Gtk.Align.CENTER); b1.set_valign(Gtk.Align.CENTER)
+        self.fan_spinner.add_overlay(b1)
+        
+        b2 = Gtk.Box(); b2.add_css_class("blade"); b2.add_css_class("b2")
+        b2.set_halign(Gtk.Align.CENTER); b2.set_valign(Gtk.Align.CENTER)
+        self.fan_spinner.add_overlay(b2)
+        
+        b3 = Gtk.Box(); b3.add_css_class("blade"); b3.add_css_class("b3")
+        b3.set_halign(Gtk.Align.CENTER); b3.set_valign(Gtk.Align.CENTER)
+        self.fan_spinner.add_overlay(b3)
+        
+        # Eixo Central Escudo do Fan
+        self.fan_hub = Gtk.Box()
+        self.fan_hub.add_css_class("fan-hub")
+        self.fan_hub.set_halign(Gtk.Align.CENTER)
+        self.fan_hub.set_valign(Gtk.Align.CENTER)
+        self.fan_hub.set_size_request(50, 50)
+        
+        # Montagem do chassi principal
+        self.cpu_fan_overlay.set_child(self.fan_spinner)
+        self.cpu_fan_overlay.add_overlay(self.fan_hub)
+        
+        indicator_box.append(self.cpu_fan_overlay)
+        
         
         # Provedor CSS dinamico isolado para evitar recompilar TODO o estilo global
         self.cpu_css_provider = Gtk.CssProvider()
@@ -258,11 +287,52 @@ class MainWindow(Adw.ApplicationWindow):
         self.update_cpu_indicator("#00F2EA")
 
     def update_cpu_indicator(self, hex_val: str):
-        """Injeta a nova cor simulando o brilho (glow) através do border-radius e box-shadow no componente do LED"""
+        """Atualiza a Ventoinha 3D GTK. Provedor injeta todas as especificações e Keyframes usando o input de cor atual"""
         color_str = hex_val.strip()
-        css = f".cpu-led-circle {{ background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), {color_str} 30%, {color_str} 70%, rgba(0,0,0,0.5)); border-radius: 50%; box-shadow: 0px 0px 25px 2px {color_str}, inset 0px 0px 8px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.3); }}"
+        css = f"""
+        .fan {{
+            min-width: 150px; min-height: 150px;
+            border-radius: 50%;
+            animation: spin 3s linear infinite;
+        }}
+        .fan-paused {{
+            animation-play-state: paused;
+        }}
+        .fan-glow {{
+            border-radius: 50%;
+            background: radial-gradient(circle at center, {color_str} 0%, rgba(0,0,0,0) 70%);
+            opacity: 0.6;
+        }}
+        .fan-hub {{
+            border-radius: 50%;
+            background: #2a2a2a;
+            border: 4px solid {color_str};
+            box-shadow: 0 0 20px {color_str};
+        }}
+        .blade {{
+            min-width: 80px; min-height: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 4px 10px {color_str};
+        }}
+        .b1 {{ transform: rotate(0deg) translate(35px, 0); }}
+        .b2 {{ transform: rotate(120deg) translate(35px, 0); }}
+        .b3 {{ transform: rotate(240deg) translate(35px, 0); }}
+        
+        @keyframes spin {{
+            0%   {{ transform: rotate(0deg); }}
+            100% {{ transform: rotate(360deg); }}
+        }}
+        """
         self.cpu_css_provider.load_from_data(css.encode())
-        self.cpu_hex_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
+        self.cpu_hex_label = getattr(self, 'cpu_hex_label', None)
+        if hasattr(self, 'cpu_hex_label') and self.cpu_hex_label is not None:
+            self.cpu_hex_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
+        else:
+            self.cpu_hex_label = Gtk.Label()
+            self.cpu_hex_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
+            self.cpu_hex_label.add_css_class("dim-label")
+            self.cpu_fan_overlay.get_parent().append(self.cpu_hex_label) # Anexa o titulo logo abaixo da caixa do fan
 
     def load_custom_css(self):
         """Carrega o arquivo style.css — busca no mesmo dir do window.py e em assets/"""
@@ -340,6 +410,15 @@ class MainWindow(Adw.ApplicationWindow):
             if self.switch_svc.get_active() != svc_active:
                 logger.info(f"Sincronizando Switch Serviço para: {svc_active}")
                 self.switch_svc.set_active(svc_active)
+                
+            # Interromper / Congelar visualmente a ventoinha se o serviço subjacente estiver desativado!
+            if svc_active:
+                if self.fan_spinner.has_css_class("fan-paused"):
+                    self.fan_spinner.remove_css_class("fan-paused")
+            else:
+                if not self.fan_spinner.has_css_class("fan-paused"):
+                    self.fan_spinner.add_css_class("fan-paused")
+                
                 
             if self.switch_mode.get_active() != mode_active:
                 logger.info(f"Sincronizando Switch Modo para: {mode_active}")
