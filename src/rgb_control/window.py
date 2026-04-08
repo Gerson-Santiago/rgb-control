@@ -138,7 +138,7 @@ class MainWindow(Adw.ApplicationWindow):
         
         # Ventoinha Component Factory (Embutida e Animada)
         self.cpu_fan_overlay = Gtk.Overlay()
-        self.cpu_fan_overlay.set_size_request(150, 150)
+        self.cpu_fan_overlay.set_size_request(250, 250)
         self.cpu_fan_overlay.set_halign(Gtk.Align.CENTER)
         
         # O Motor central que girará!
@@ -291,9 +291,9 @@ class MainWindow(Adw.ApplicationWindow):
         color_str = hex_val.strip()
         css = f"""
         .fan {{
-            min-width: 70px; min-height: 70px;
+            min-width: 75px; min-height: 75px;
             border-radius: 50%;
-            background: #2a2a2a;
+            background: #ddd;
             animation: spin 1s linear infinite;
         }}
         .fan-paused {{
@@ -302,24 +302,25 @@ class MainWindow(Adw.ApplicationWindow):
         .fan-glow {{
             border-radius: 50%;
             background: radial-gradient(circle at center, {color_str} 0%, rgba(0,0,0,0) 70%);
-            opacity: 0.6;
+            opacity: 0.3;
         }}
         .fan-hub {{
-            min-width: 45px; min-height: 45px;
+            min-width: 50px; min-height: 50px;
             background: #fff;
             border-radius: 50%;
-            border: 6px double {color_str};
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            border: 7px double {color_str};
+            box-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
         }}
         .blade {{
-            min-width: 90px; min-height: 45px;
+            min-width: 100px; min-height: 50px;
             background: #fff;
             border-radius: 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+            transform-origin: 50% 50%;
         }}
-        .b1 {{ transform: rotate(0deg) translate(70px, 0); }}
-        .b2 {{ transform: rotate(120deg) translate(70px, 0); }}
-        .b3 {{ transform: rotate(240deg) translate(70px, 0); }}
+        .b1 {{ transform: rotate(0deg) translate(75px, 0); }}
+        .b2 {{ transform: rotate(120deg) translate(75px, 0); }}
+        .b3 {{ transform: rotate(240deg) translate(75px, 0); }}
         
         @keyframes spin {{
             0%   {{ transform: rotate(0deg); }}
