@@ -60,6 +60,23 @@ python3 mvp.py --list     # Lista devices detectados
 python3 -m pytest tests/ -v
 ```
 
+### 🛠️ Desenvolvimento & Qualidade
+
+O projeto utiliza uma arquitetura de QA **Gold Standard (v1.0.22)**, com blindagem de cobertura, testes de propriedade e monitoramento de memória.
+
+-   **Manual de Testes**: Consulte [docs/TESTS.md](docs/TESTS.md) para detalhes técnicos exaustivos.
+-   **Suite de Testes**: Execute o gate de qualidade com `./run_tests.sh`.
+-   **Dependências de QA**:
+    ```bash
+    pip install pytest-cov pytest-asyncio hypothesis pyfakefs mypy pyright
+    ```
+
+### 🤝 Contribuição
+1.  Faça um fork do projeto.
+2.  Crie uma branch para sua modificação (`git checkout -b feature/nova-feature`).
+3.  **Certifique-se de passar no Portão de Qualidade** (`./run_tests.sh`) antes de enviar.
+4.  Envie um Pull Request.
+
 ## Estrutura
 
 ```
