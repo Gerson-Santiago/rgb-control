@@ -126,6 +126,41 @@ class MainWindow(Adw.ApplicationWindow):
         
         main_box.append(system_group)
         
+        # Grupo EXTRA: Cor Atual do CPU (Indicador Dinâmico)
+        indicator_group = Adw.PreferencesGroup()
+        indicator_group.set_title("Cor Atual do CPU")
+        
+        # Elementos visuais do indicador
+        indicator_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        indicator_box.set_halign(Gtk.Align.CENTER)
+        indicator_box.set_margin_top(16)
+        indicator_box.set_margin_bottom(16)
+        
+        # Circulo principal simulando LED
+        self.cpu_led = Gtk.Box()
+        self.cpu_led.set_size_request(80, 80)
+        self.cpu_led.set_halign(Gtk.Align.CENTER)
+        self.cpu_led.add_css_class("cpu-led-circle")
+        
+        # Display em texto Hexadecimal
+        self.cpu_hex_label = Gtk.Label()
+        self.cpu_hex_label.set_markup("<span font_family='monospace' size='large' weight='bold'>#00F2EA</span>")
+        self.cpu_hex_label.add_css_class("dim-label")
+        
+        indicator_box.append(self.cpu_led)
+        indicator_box.append(self.cpu_hex_label)
+        
+        # Provedor CSS dinamico isolado para evitar recompilar TODO o estilo global
+        self.cpu_css_provider = Gtk.CssProvider()
+        Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), self.cpu_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        
+        indicator_row = Adw.ActionRow()
+        indicator_row.set_activatable(False)
+        indicator_row.set_child(indicator_box)
+        indicator_group.add(indicator_row)
+        
+        main_box.append(indicator_group)
+        
         # Grupo 2: Paleta de Cores
         lighting_group = Adw.PreferencesGroup()
         lighting_group.set_title("Paleta de Cores")
@@ -218,6 +253,16 @@ class MainWindow(Adw.ApplicationWindow):
         
         self.setup_actions(application)
         GLib.timeout_add(2000, self.update_status_ui)
+        
+        # Inicializa o estado visual do LED com a cor padrão (Ciano Exemplo)
+        self.update_cpu_indicator("#00F2EA")
+
+    def update_cpu_indicator(self, hex_val: str):
+        """Injeta a nova cor simulando o brilho (glow) através do border-radius e box-shadow no componente do LED"""
+        color_str = hex_val.strip()
+        css = f".cpu-led-circle {{ background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), {color_str} 30%, {color_str} 70%, rgba(0,0,0,0.5)); border-radius: 50%; box-shadow: 0px 0px 25px 2px {color_str}, inset 0px 0px 8px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.3); }}"
+        self.cpu_css_provider.load_from_data(css.encode())
+        self.cpu_hex_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
 
     def load_custom_css(self):
         """Carrega o arquivo style.css — busca no mesmo dir do window.py e em assets/"""
@@ -274,12 +319,14 @@ class MainWindow(Adw.ApplicationWindow):
 
     def on_color_clicked(self, widget, hex_val, name):
         logger.info(f"Cor predefinida escolhida: {name} ({hex_val})")
+        self.update_cpu_indicator(hex_val)
         self.backend.apply_color(hex_val, name)
 
     def on_custom_color_selected(self, picker_btn, param):
         rgba = picker_btn.get_rgba()
         r, g, b = int(rgba.red * 255), int(rgba.green * 255), int(rgba.blue * 255)
         hex_val = f"#{r:02X}{g:02X}{b:02X}"
+        self.update_cpu_indicator(hex_val)
         self.backend.apply_color(hex_val, "Custom")
 
     def update_status_ui(self):
