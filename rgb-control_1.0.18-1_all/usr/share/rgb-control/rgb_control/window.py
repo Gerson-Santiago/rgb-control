@@ -136,28 +136,34 @@ class MainWindow(Adw.ApplicationWindow):
         indicator_box.set_margin_top(16)
         indicator_box.set_margin_bottom(16)
         
-        # Ventoinha Component Factory (Embutida e Animada independentemente)
+        # Ventoinha Component Factory (Embutida e Animada)
         self.cpu_fan_overlay = Gtk.Overlay()
         self.cpu_fan_overlay.set_size_request(250, 250)
         self.cpu_fan_overlay.set_halign(Gtk.Align.CENTER)
         
-        # Fundo do Motor
-        self.fan_bg = Gtk.Box()
-        self.fan_bg.set_halign(Gtk.Align.CENTER)
-        self.fan_bg.set_valign(Gtk.Align.CENTER)
-        self.fan_bg.add_css_class("fan-bg")
-        self.cpu_fan_overlay.set_child(self.fan_bg)
+        # O Motor central que girará!
+        self.fan_spinner = Gtk.Overlay()
+        self.fan_spinner.add_css_class("fan")
         
-        # Pass (Hélices Mecânicas controladas atomicamente)
-        self.blades = []
-        for i in range(1, 4):
-            b = Gtk.Box()
-            b.add_css_class("blade")
-            b.add_css_class(f"b{i}")
-            b.set_halign(Gtk.Align.CENTER)
-            b.set_valign(Gtk.Align.CENTER)
-            self.cpu_fan_overlay.add_overlay(b)
-            self.blades.append(b)
+        # Resplendor/Brilho de fundo conectado na energia da Cor
+        self.fan_glow = Gtk.Box()
+        self.fan_glow.set_halign(Gtk.Align.FILL)
+        self.fan_glow.set_valign(Gtk.Align.FILL)
+        self.fan_glow.add_css_class("fan-glow")
+        self.fan_spinner.add_overlay(self.fan_glow)
+        
+        # Pass (Hélices Mecânicas)
+        b1 = Gtk.Box(); b1.add_css_class("blade"); b1.add_css_class("b1")
+        b1.set_halign(Gtk.Align.CENTER); b1.set_valign(Gtk.Align.CENTER)
+        self.fan_spinner.add_overlay(b1)
+        
+        b2 = Gtk.Box(); b2.add_css_class("blade"); b2.add_css_class("b2")
+        b2.set_halign(Gtk.Align.CENTER); b2.set_valign(Gtk.Align.CENTER)
+        self.fan_spinner.add_overlay(b2)
+        
+        b3 = Gtk.Box(); b3.add_css_class("blade"); b3.add_css_class("b3")
+        b3.set_halign(Gtk.Align.CENTER); b3.set_valign(Gtk.Align.CENTER)
+        self.fan_spinner.add_overlay(b3)
         
         # Eixo Central Escudo do Fan
         self.fan_hub = Gtk.Box()
@@ -295,14 +301,19 @@ class MainWindow(Adw.ApplicationWindow):
             color_str = "#FF0000"
             
         css = f"""
-        .fan-bg {{
+        .fan {{
             min-width: 75px; min-height: 75px;
             border-radius: 50%;
             background: radial-gradient(circle at center, rgba({r},{g},{b},0.95) 0%, rgba({int(r*0.2)},{int(g*0.2)},{int(b*0.2)},0.8) 100%);
-            box-shadow: 0 0 45px rgba({r},{g},{b}, 0.5);
+            animation: spin 1s linear infinite;
         }}
         .fan-paused {{
             animation-play-state: paused;
+        }}
+        .fan-glow {{
+            border-radius: 50%;
+            background: radial-gradient(circle at center, rgba({r},{g},{b}, 0.5) 0%, rgba(0,0,0,0) 70%);
+            opacity: 0.8;
         }}
         .fan-hub {{
             min-width: 50px; min-height: 50px;
@@ -318,21 +329,13 @@ class MainWindow(Adw.ApplicationWindow):
             box-shadow: 0 0 15px rgba({r},{g},{b}, 0.6);
             transform-origin: 50% 50%;
         }}
-        .b1 {{ animation: spin1 1s linear infinite; }}
-        .b2 {{ animation: spin2 1s linear infinite; }}
-        .b3 {{ animation: spin3 1s linear infinite; }}
+        .b1 {{ transform: rotate(0deg) translate(75px, 0); }}
+        .b2 {{ transform: rotate(120deg) translate(75px, 0); }}
+        .b3 {{ transform: rotate(240deg) translate(75px, 0); }}
         
-        @keyframes spin1 {{
-            0%   {{ transform: rotate(0deg) translate(75px, 0); }}
-            100% {{ transform: rotate(360deg) translate(75px, 0); }}
-        }}
-        @keyframes spin2 {{
-            0%   {{ transform: rotate(120deg) translate(75px, 0); }}
-            100% {{ transform: rotate(480deg) translate(75px, 0); }}
-        }}
-        @keyframes spin3 {{
-            0%   {{ transform: rotate(240deg) translate(75px, 0); }}
-            100% {{ transform: rotate(600deg) translate(75px, 0); }}
+        @keyframes spin {{
+            0%   {{ transform: rotate(0deg); }}
+            100% {{ transform: rotate(360deg); }}
         }}
         """
         self.cpu_css_provider.load_from_data(css.encode())
@@ -424,13 +427,11 @@ class MainWindow(Adw.ApplicationWindow):
                 
             # Interromper / Congelar visualmente a ventoinha se o serviço subjacente estiver desativado!
             if svc_active:
-                for b in self.blades:
-                    if b.has_css_class("fan-paused"):
-                        b.remove_css_class("fan-paused")
+                if self.fan_spinner.has_css_class("fan-paused"):
+                    self.fan_spinner.remove_css_class("fan-paused")
             else:
-                for b in self.blades:
-                    if not b.has_css_class("fan-paused"):
-                        b.add_css_class("fan-paused")
+                if not self.fan_spinner.has_css_class("fan-paused"):
+                    self.fan_spinner.add_css_class("fan-paused")
                 
                 
             if self.switch_mode.get_active() != mode_active:
