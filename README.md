@@ -1,6 +1,11 @@
 # openrbg — Controle Desktop Moderno para Gabinetes Gaming 🎨🎮🐧
 
+![Version](https://img.shields.io/badge/version-1.0.22-blue)
+![Quality Gate](https://img.shields.io/badge/quality--gate-passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-73%25-success)
+
 Solução profissional (v1.0.22) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos, integrando um **Air Mouse XING WEI 2.4G USB** (Lelong LE-7278) como controle remoto nativo no Linux.
+
 
 Construído com **Python 3.13**, **GTK4 / Libadwaita** e **Clean Architecture**.
 

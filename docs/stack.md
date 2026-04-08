@@ -1,6 +1,9 @@
-# Stack Tecnológica e Padrões de Projeto (v1.0.22)
+# Stack Tecnológica e Padrões de Projeto (v1.1)
 
-Este documento serve como a **"Fonte Única de Verdade"** para a infraestrutura técnica do projeto `openrbg`. Ele organiza a stack, dependências, padrões de codificação e processos operacionais.
+Este documento serve como a **"Fonte Única de Verdade"** para a infraestrutura técnica do projeto `openrbg`. 
+
+> [!IMPORTANT]
+> Este documento é auditado automaticamente pelo script `scripts/docs_sync_check.py`. Descompassos de versão ou dependências causarão falha no Gate de Qualidade.
 
 ---
 
@@ -17,77 +20,52 @@ Este documento serve como a **"Fonte Única de Verdade"** para a infraestrutura 
 
 ---
 
-## 📦 Dependências e Requisitos
-
-### Runtime (Produção)
-Para rodar o sistema no Linux (Debian/Ubuntu):
-- `python3-evdev`: Leitura do Air Mouse.
-- `python3-gi`: Bindings do GTK4.
-- `libadwaita-1-0`: Componentes visuais GNOME modernos.
-- `dunst`: Notificações OSD (On-Screen Display).
-- `openrgb`: Backend de controle de hardware.
-- `pkexec` (PolicyKit): Elevação de privilégios para acesso ao hardware.
-
-### Desenvolvimento (QA)
-Instaladas via `pip install .[dev]`:
-- `pytest-cov`, `pytest-asyncio`, `pytest-mock`, `pyfakefs`.
-- `hypothesis`: Testes de propriedade.
-- `mypy`, `pyright`: Checagem estática de tipos.
-- `ruff`, `black`: Formatação e linting.
-
----
-
 ## 📐 Padrões de Codificação e Design
 
 ### Arquitetura (Clean Architecture)
-Seguimos rigorosamente a separação de camadas:
-1.  **Domain**: Regras de negócio puras (ex: lógica de cores, estados da ventoinha). Sem dependências externas.
-2.  **Application**: Casos de uso (ex: alternar modo LED, navegar na paleta). Orquestra os serviços.
-3.  **Infrastructure**: Implementações concretas (ex: chamadas `subprocess` para OpenRGB, leitura de `/dev/input`).
-4.  **Presentation (GUI)**: Camada Libadwaita reativa e isolada.
+Seguimos a separação estrita de camadas para garantir testabilidade:
+1.  **Domain**: Regras puras.
+2.  **Application**: Casos de uso.
+3.  **Infrastructure**: Acesso a hardware e arquivos.
+4.  **Presentation**: Interface gráfica reativa.
 
-### Nomenclatura e Estilo
-- **PEP 8**: Seguido via Ruff/Black.
-- **Classes**: `PascalCase` (Ex: `MainWindow`, `RgbDaemon`).
-- **Funções/Variáveis**: `snake_case` (Ex: `update_status_ui`, `hex_val`).
-- **Constantes**: `UPPER_SNAKE_CASE` (Ex: `STATUS_FILE`).
-- **Tipagem**: `Type Hints` obrigatórios e estritos (`mypy --strict`).
+### Convenção de Commits Documentais
+Para garantir rastreabilidade, use o padrão:
+```bash
+docs(stack): atualização da stack para v<versão> - <descrição breve>
+```
 
 ---
 
-## 🏗️ Processos de Build, Setup e Deploy
+## 📝 Notas de Migração (Legacy MVP -> Gold)
 
-### 1. Setup de Desenvolvimento
-```bash
-git clone https://github.com/Gerson-Santiago/rgb-control.git
-pip install -e .[dev]
-```
+Se você está acostumado com a versão inicial (`mvp.py`), atente-se às mudanças:
+-   **Remoção do `mvp.py`**: A lógica foi dividida entre `src/rgb_control` (GUI) e `src/rgb_daemon` (Lógica remota).
+-   **Configuração via Constantes**: Caminhos de arquivos de status não são mais hardcoded; use as constantes em `backend.py`.
+-   **Eventos Evdev**: A descoberta do Air Mouse agora é dinâmica e resiliente a mudanças de `/dev/input/eventX`.
 
-### 2. Execução Local (Modo Dev)
-```bash
-PYTHONPATH=src python3 src/rgb_control/main.py   # Roda a GUI
-PYTHONPATH=src python3 src/rgb_daemon/main.py    # Roda o Daemon
-```
+---
 
-### 3. Build do Pacote (.deb)
-O script `build_deb.sh` automatiza a criação do instalador Debian:
+## ✅ Checklist de Inclusão (Manutenção)
+
+Sempre que adicionar uma nova dependência ou funcionalidade core, verifique:
+1.  [ ] **`pyproject.toml`**: Adicione a dependência em `dependencies` ou `optional-dependencies`.
+2.  [ ] **`docs/stack.md`**: Atualize as tabelas de tecnologias e dependências de runtime.
+3.  [ ] **`scripts/docs_sync_check.py`**: Verifique se a nova versão está sincronizada.
+4.  [ ] **`build_deb.sh`**: Atualize o campo `Depends` no arquivo `DEBIAN/control` gerado.
+
+---
+
+## 🏗️ Processos Operacionais
+
+### 1. Build do Pacote (.deb)
 ```bash
 ./build_deb.sh
-sudo apt install ./builds/rgb-control_1.0.22-1_all.deb
+sudo apt install ./builds/rgb-control_$(cat version)-1_all.deb
 ```
 
-### 4. Deploy do Serviço
-O daemon deve rodar como um serviço de sistema para persistência:
+### 2. Deploy do Serviço
 ```bash
 sudo systemctl enable openrbg.service
 sudo systemctl start openrbg.service
 ```
-
----
-
-## 🔄 Manutenção da Documentação
-
-Para manter este documento útil:
-1.  **Sincronização de Versão**: Sempre que atualizar o `pyproject.toml`, verifique se o cabeçalho deste arquivo reflete a nova versão.
-2.  **Novas Deps**: Qualquer `import` de biblioteca externa deve ser registrado na seção de Dependências.
-3.  **Refatoração**: Se mudar a topologia de pastas em `src/`, atualize a seção de Arquitetura.
