@@ -166,8 +166,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.fan_hub.set_valign(Gtk.Align.CENTER)
         self.fan_hub.set_size_request(50, 50)
         
-        # Montagem do chassi principal
-        self.cpu_fan_overlay.set_child(self.fan_spinner)
+        # Montagem do chassi principal inferior/intermediário
         self.cpu_fan_overlay.add_overlay(self.fan_hub)
         
         indicator_box.append(self.cpu_fan_overlay)
