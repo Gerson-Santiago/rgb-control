@@ -9,8 +9,9 @@ class TestDaemonMainIntegration(unittest.TestCase):
     @patch('argparse.ArgumentParser.parse_args')
     @patch('rgb_daemon.main.buscar_devices')
     @patch('rgb_daemon.main.FileStatusStorage')
+    @patch('rgb_daemon.main.run_daemon', new_callable=MagicMock)
     @patch('asyncio.run')
-    def test_main_daemon_start(self, mock_run, mock_storage, mock_search, mock_args):
+    def test_main_daemon_start(self, mock_run, mock_run_daemon, mock_storage, mock_search, mock_args):
         mock_args.return_value = MagicMock(toggle=False, status=False, list=False)
         mock_search.return_value = (MagicMock(), MagicMock())
         with patch('os.getpid', return_value=1234):

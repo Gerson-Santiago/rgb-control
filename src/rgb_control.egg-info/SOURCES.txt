@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/__init__.py
+src/rgb_control/__init__.py
+src/rgb_control/backend.py
+src/rgb_control/main.py
+src/rgb_control/window.py
+src/rgb_control.egg-info/PKG-INFO
+src/rgb_control.egg-info/SOURCES.txt
+src/rgb_control.egg-info/dependency_links.txt
+src/rgb_control.egg-info/requires.txt
+src/rgb_control.egg-info/top_level.txt
+src/rgb_daemon/__init__.py
+src/rgb_daemon/application.py
+src/rgb_daemon/domain.py
+src/rgb_daemon/infrastructure.py
+src/rgb_daemon/main.py
