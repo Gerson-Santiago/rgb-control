@@ -283,17 +283,28 @@ class MainWindow(Adw.ApplicationWindow):
         self.setup_actions(application)
         GLib.timeout_add(2000, self.update_status_ui)
         
-        # Inicializa o estado visual do LED com a cor padrão (Ciano Exemplo)
-        self.update_cpu_indicator("#00F2EA")
+        # Inicializa o estado visual lendo o cache global do daemon na memoria
+        startup_color = self.backend.get_current_color()
+        self.update_cpu_indicator(startup_color)
 
     def update_cpu_indicator(self, hex_val: str):
-        """Atualiza a Ventoinha 3D GTK mapeada fielmente da cópia HTML da prototipagem (Em Escala 0.45x para UI Control)"""
-        color_str = hex_val.strip()
+        """Atualiza a Ventoinha 3D GTK com Glow Radiação do Fundo (Estética avançada)"""
+        color_str = hex_val.strip().upper()
+        
+        # Gera RGBA tuple base para color-blending no GTK CSS
+        try:
+            r = int(color_str[1:3], 16)
+            g = int(color_str[3:5], 16)
+            b = int(color_str[5:7], 16)
+        except:
+            r, g, b = 255, 0, 0 # Fallback safety
+            color_str = "#FF0000"
+            
         css = f"""
         .fan {{
             min-width: 75px; min-height: 75px;
             border-radius: 50%;
-            background: #ddd;
+            background: radial-gradient(circle at center, rgba({r},{g},{b},0.95) 0%, rgba({int(r*0.2)},{int(g*0.2)},{int(b*0.2)},0.8) 100%);
             animation: spin 1s linear infinite;
         }}
         .fan-paused {{
@@ -301,21 +312,21 @@ class MainWindow(Adw.ApplicationWindow):
         }}
         .fan-glow {{
             border-radius: 50%;
-            background: radial-gradient(circle at center, {color_str} 0%, rgba(0,0,0,0) 70%);
-            opacity: 0.3;
+            background: radial-gradient(circle at center, rgba({r},{g},{b}, 0.5) 0%, rgba(0,0,0,0) 70%);
+            opacity: 0.8;
         }}
         .fan-hub {{
             min-width: 50px; min-height: 50px;
             background: #fff;
             border-radius: 50%;
             border: 7px double {color_str};
-            box-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 10px rgba({r},{g},{b}, 0.8);
         }}
         .blade {{
             min-width: 100px; min-height: 50px;
-            background: #fff;
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 25px;
-            box-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 15px rgba({r},{g},{b}, 0.6);
             transform-origin: 50% 50%;
         }}
         .b1 {{ transform: rotate(0deg) translate(75px, 0); }}

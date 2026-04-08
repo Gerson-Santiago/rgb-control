@@ -64,7 +64,9 @@ apply_color() {
     if openrgb --device $DEVICE_ID --mode static --color "$color" >/dev/null 2>&1 || \
        sudo openrgb --device $DEVICE_ID --mode static --color "$color" >/dev/null 2>&1; then
         echo -e "\033[32m✅ ${name:-#$color}\033[0m"
+        echo "#$color" > /tmp/.controle_led.color
     else
+        echo -e "\033[31m❌ Falha ao aplicar cor (verifique o device id ou openrgb-daemon)\033[0m"
         echo -e "\033[31m❌ Falha ao aplicar cor.\033[0m"
     fi
 }

@@ -5,6 +5,7 @@ class Backend:
     def __init__(self):
         # Caminho fixo para o arquivo de status (IPC simples entre GUI e Daemon)
         self.status_file = "/tmp/.controle_led.status"
+        self.color_file = "/tmp/.controle_led.color"
         # rbg.sh pode estar na raiz, em assets/ ou no path
         self.root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -66,6 +67,25 @@ class Backend:
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception as e:
             print(f"Erro ao aplicar cor na GUI: {e}")
+            
+        try:
+            with open(self.color_file, "w") as f:
+                f.write(f"#{color}")
+        except Exception:
+            pass
+
+    def get_current_color(self) -> str:
+        """Lê o código hexadecimal da cor sincronizada em memória."""
+        if os.path.exists(self.color_file):
+            try:
+                with open(self.color_file, "r") as f:
+                    v = f.read().strip()
+                    if v.startswith("#") and len(v) == 7:
+                        return v
+            except:
+                pass
+        return "#FF0000" # Vermelho default de fabrica
+
 
     def get_daemon_logs(self, limit: int = 20) -> list[str]:
         """Lê as últimas N linhas do log do daemon"""
