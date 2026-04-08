@@ -1,7 +1,7 @@
 import unittest
 import os
 from unittest.mock import MagicMock, patch
-from gi.repository import Gtk, Adw, Gio, Gdk
+from gi.repository import Gtk, Adw, Gio, Gdk, GLib
 from rgb_control.window import MainWindow
 
 class TestCssLoading(unittest.TestCase):
@@ -72,9 +72,19 @@ class TestWindowCallbacks(unittest.TestCase):
         with patch('rgb_control.window.Backend') as self.mock_backend_cls:
             self.mock_backend = self.mock_backend_cls.return_value
             self.mock_backend.get_current_color.return_value = "#FF0000"
+            self.mock_backend.is_service_active.return_value = False
+            self.mock_backend.is_led_mode_active.return_value = False
             
             with patch('rgb_control.window.get_asset_path', return_value=""):
                 self.window = MainWindow(application=self.app)
+
+    def test_on_service_notify_failure_reverts_switch(self):
+        """Testa se o switch do serviço reverte o estado quando o backend falha."""
+        self.mock_backend.set_service_state.return_value = False
+        # Assumindo que começa False
+        self.window.switch_svc.set_active(True)
+        # O efeito de reversão deve ser síncrono na mesma thread de UI
+        self.assertFalse(self.window.switch_svc.get_active())
 
     def test_core_ui_widgets_are_bound_and_valid(self):
         """Verifica se os componentes principais foram instanciados corretamente."""

@@ -1,0 +1,4 @@
+# file: /home/sant/Área de trabalho/PROJETOS/openrbg/src/rgb_daemon/domain.py
+# hypothesis_version: 6.151.9
+
+[0.0, '000000', '0000FF', '00F2EA', '00FF00', 'AA00FF', 'Amarelo', 'Ambar', 'Azul', 'Branco', 'Ciano', 'Desligar', 'FF0000', 'FF5500', 'FFB200', 'FFFF00', 'FFFFFF', 'Laranja', 'Roxo', 'Verde', 'Vermelho']

@@ -111,7 +111,7 @@ class MainWindow(Adw.ApplicationWindow):
         system_group.set_title("Configurações do Serviço")
         
         self.switch_svc = Adw.SwitchRow()
-        self.switch_svc.set_title("Serviço OpenRBG (Background)")
+        self.switch_svc.set_title("Serviço openrgb (Background)")
         self.switch_svc.set_subtitle("Gerencia a conexão com o hardware")
         self.switch_svc.set_active(self.backend.is_service_active())
         self.switch_svc.connect("notify::active", self.on_service_notify)

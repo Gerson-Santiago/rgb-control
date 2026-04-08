@@ -4,7 +4,7 @@
 # OpenRGB Unified Controller
 # ==============================================================================
 
-PROJECT_DIR="/home/sant/Área de trabalho/PROJETOS/openrbg"
+PROJECT_DIR="/home/sant/Área de trabalho/PROJETOS/openrgb"
 COLOR_GUM="#00f2ea"
 DEVICE_ID=0
 

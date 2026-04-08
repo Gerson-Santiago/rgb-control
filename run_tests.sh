@@ -13,12 +13,13 @@ pyright src/
 echo "✅ Pyright OK!"
 
 echo "🔍 Rodando Strict Type Checking (Mypy)..."
-python3 -m mypy --strict src/ || true
+# Usa MYPYPATH para resolver pacotes internos e evitar duplicidade de nomes
+MYPYPATH=src python3 -m mypy --strict -p rgb_daemon -p rgb_control
 echo "✅ Mypy OK!"
 
 # 1.5. Bash CLI Tests
 echo "🖥️ Rodando Testes do Wrapper Bash (CLI)..."
-./tests/integration/test_rbg_cli.sh
+./tests/integration/test_rgb_cli.sh
 echo "✅ Bash CLI Tests OK!"
 
 # 2. Testes e Coverage Global

@@ -20,7 +20,8 @@ def test_daemon_gui_status_sync(app_instance, fake_filesystem):
     # Mock do backend para usar os arquivos do fake_filesystem através das constantes
     with patch('rgb_control.backend.Backend.STATUS_FILE', status_file), \
          patch('rgb_control.backend.Backend.PID_FILE', pid_file), \
-         patch('rgb_control.backend.subprocess.run') as mock_run:
+         patch('rgb_control.backend.subprocess.run') as mock_run, \
+         patch('rgb_control.backend.subprocess.Popen') as mock_popen:
         
         backend = Backend()
         # Mock do systemctl is-active para o backend
@@ -55,7 +56,9 @@ def test_gui_signals_daemon_toggle(app_instance, fake_filesystem):
     
     with patch('os.kill') as mock_kill, \
          patch('rgb_control.backend.Backend.PID_FILE', pid_file), \
-         patch('rgb_control.backend.Backend.STATUS_FILE', status_file):
+         patch('rgb_control.backend.Backend.STATUS_FILE', status_file), \
+         patch('rgb_control.backend.subprocess.run'), \
+         patch('rgb_control.backend.subprocess.Popen'):
         
         backend = Backend()
         backend.set_led_mode(True) # Isso deve disparar o sinal se o PID existe

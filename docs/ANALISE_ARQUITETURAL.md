@@ -126,7 +126,7 @@ pyproject.toml          ← New-style
 **Problema:** Dupla manutenção.  
 **Solução:** Consolidar em `pyproject.toml` com `[project.optional-dependencies]`.
 
-### 6. **rbg.sh Sem Validação Robusta**
+### 6. **rgb.sh Sem Validação Robusta**
 
 **Atual:**
 ```bash
@@ -170,7 +170,7 @@ rm pyrightconfig.json
 - Adicionar property-based tests com Hypothesis (+3%)
 - Testar error paths em domain (+2%)
 
-### Prioridade 4: Refatorar rbg.sh
+### Prioridade 4: Refatorar rgb.sh
 Mover lógica para Python:
 ```python
 # src/rgb_daemon/infrastructure.py
@@ -220,11 +220,11 @@ class RGBHardwareController:
   [ ] Criar GitHub Actions workflow (.github/workflows/test.yml)
   [ ] Versioning automático com git tags
 
-[5] Refatoração de rbg.sh
+[5] Refatoração de rgb.sh
   [ ] Mover lógica para RGBHardwareController
   [ ] Adicionar logging estruturado
   [ ] Testes unitários para hardware abstraction
-  [ ] rbg.sh torna-se simples wrapper
+  [ ] rgb.sh torna-se simples wrapper
 
 [6] Documentação
   [ ] Adicionar docstrings em type hints
@@ -253,7 +253,7 @@ class RGBHardwareController:
 1. Type checking muito permissivo (basic → strict)
 2. Consolidação de configs (remover duplicatas)
 3. Coverage ainda baixa (~75%, alvo 80%+)
-4. rbg.sh deveria ser mais testável (mover para Python)
+4. rgb.sh deveria ser mais testável (mover para Python)
 
 🚀 **Com essas mudanças, você sobe de 7.5 para 9.2/10 em 2 semanas.**
 
@@ -268,4 +268,4 @@ Qual desses você quer que eu execute agora?
 3. **Novo `src/rgb_daemon/domain.py`** com type hints + docstrings
 4. **Testes adicionais** para coverage 80%+
 5. **GitHub Actions CI workflow**
-6. **Refatoração de `rbg.sh` → Python**
+6. **Refatoração de `rgb.sh` → Python**

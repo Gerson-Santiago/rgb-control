@@ -1,17 +1,19 @@
+import gi # type: ignore[import-untyped]
 import gi
 import os
+from typing import Optional, Any, Tuple, List, Union
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib, Gio, Gdk # pyright: ignore[reportAttributeAccessIssue]
+from gi.repository import Gtk, Adw, GLib, Gio, Gdk # type: ignore[import-untyped]
 import logging
 from rgb_control.backend import Backend
 from rgb_control.utils import hex_to_rgba_tuple
 
 logger = logging.getLogger(__name__)
 
-def get_asset_path(filename):
+def get_asset_path(filename: str) -> str:
     """Retorna o caminho do asset, buscando localmente ou na estrutura do .deb"""
     # __file__ is src/rgb_control/window.py -> dirname is src/rgb_control -> dirname(dirname) is src/
     src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,14 +33,14 @@ def get_asset_path(filename):
         
     return os.path.join(root_dir, filename)
 
-class MainWindow(Adw.ApplicationWindow):
-    def __init__(self, application):
+class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
+    def __init__(self, application: Gtk.Application) -> None:
         self._updating_ui = False # Previne loops infinitos de sinais
         super().__init__(application=application)
         self.set_title("RGB Control")
         # Tamanho mais generoso e ergonômico
         self.set_default_size(550, 750)
-        self.cpu_hex_label = None # Inicialização segura
+        self.cpu_hex_label: Optional[Gtk.Label] = None # Inicialização segura
 
         
         logger.info("Carregando interface Libadwaita Premium...")
@@ -110,20 +112,27 @@ class MainWindow(Adw.ApplicationWindow):
         system_group.set_title("Configurações do Serviço")
         
         self.switch_svc = Adw.SwitchRow()
-        self.switch_svc.set_title("Serviço OpenRBG (Background)")
+        self.switch_svc.set_title("Serviço openrgb (Background)")
         self.switch_svc.set_subtitle("Gerencia a conexão com o hardware")
         self.switch_svc.set_active(self.backend.is_service_active())
-        self.switch_svc.connect("notify::active", self.on_service_notify)
+        self._svc_handler_id = self.switch_svc.connect("notify::active", self.on_service_notify)
         system_group.add(self.switch_svc)
         
-        self.switch_mode = Adw.SwitchRow()
-        self.switch_mode.set_title("Modo de Captura LED")
-        self.switch_mode.set_subtitle("Permite controle via Air Mouse")
-        self.switch_mode.set_active(self.backend.is_led_mode_active())
-        self.switch_mode.connect("notify::active", self.on_mode_notify)
-        system_group.add(self.switch_mode)
-        
         main_box.append(system_group)
+
+        # Grupo 2: Controle Remoto (MODULAR)
+        remote_group = Adw.PreferencesGroup()
+        remote_group.set_title("Controle Remoto")
+        remote_group.set_description("Gerencie a captura de botões do Air Mouse")
+
+        self.switch_mode = Adw.SwitchRow()
+        self.switch_mode.set_title("Ativar Captura Remota")
+        self.switch_mode.set_subtitle("Permite mudar cores via ← → ou Vol±")
+        self.switch_mode.set_active(self.backend.is_led_mode_active())
+        self._mode_handler_id = self.switch_mode.connect("notify::active", self.on_mode_notify)
+        remote_group.add(self.switch_mode)
+
+        main_box.append(remote_group)
         
         # Grupo EXTRA: Cor Atual do CPU (Indicador Dinâmico)
         indicator_group = Adw.PreferencesGroup()
@@ -286,9 +295,9 @@ class MainWindow(Adw.ApplicationWindow):
         startup_color = self.backend.get_current_color()
         self.update_cpu_indicator(startup_color)
 
-    def update_cpu_indicator(self, hex_val: str):
+    def update_cpu_indicator(self, hex_val: str) -> None:
         """Atualiza a Ventoinha 3D GTK com Glow Radiação do Fundo (Estética avançada)"""
-        r, g, b = hex_to_rgba_tuple(hex_val)
+        r, g, b, a = hex_to_rgba_tuple(hex_val)
         color_str = f"#{r:02X}{g:02X}{b:02X}"
 
 
@@ -336,14 +345,17 @@ class MainWindow(Adw.ApplicationWindow):
         if self.cpu_hex_label is not None:
             self.cpu_hex_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
         else:
-            self.cpu_hex_label = Gtk.Label()
-            self.cpu_hex_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
-            self.cpu_hex_label.add_css_class("dim-label")
+            new_label = Gtk.Label()
+            new_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
+            new_label.add_css_class("dim-label")
+            self.cpu_hex_label = new_label
             # Procura o overlay parent para append
-            self.cpu_fan_overlay.get_parent().append(self.cpu_hex_label)
+            parent = self.cpu_fan_overlay.get_parent()
+            if parent is not None:
+                parent.append(self.cpu_hex_label)
 
 
-    def load_custom_css(self):
+    def load_custom_css(self) -> None:
         """Carrega o arquivo style.css — busca no mesmo dir do window.py e em assets/"""
         # Prioridade 1: mesmo diretório de window.py (src/rgb_control/style.css)
         own_dir = os.path.dirname(os.path.abspath(__file__))
@@ -364,9 +376,9 @@ class MainWindow(Adw.ApplicationWindow):
         else:
             logger.warning("style.css não encontrado — usando estilos inline apenas")
 
-    def setup_actions(self, app):
+    def setup_actions(self, app: Gtk.Application) -> None:
         theme_light = Gio.SimpleAction.new("theme_light", None)
-        theme_light.connect("activate", lambda a,p: Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_LIGHT))
+        theme_light.connect("activate", lambda a, p: Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_LIGHT))
         app.add_action(theme_light)
         
         theme_dark = Gio.SimpleAction.new("theme_dark", None)
@@ -377,40 +389,46 @@ class MainWindow(Adw.ApplicationWindow):
         theme_system.connect("activate", lambda a,p: Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.DEFAULT))
         app.add_action(theme_system)
 
-    def on_service_notify(self, row, param):
+    def on_service_notify(self, row: Adw.SwitchRow, param: Any) -> None:
         if self._updating_ui:
             return
+        
         state = row.get_active()
         logger.info(f"Toggle Serviço solicitado: {state}")
-        success = self.backend.set_service_state(state)
-        if not success:
-             logger.warning("Falha ao mudar estado do serviço no systemd")
-             self._updating_ui = True
-             row.set_active(not state)
-             self._updating_ui = False
-        self._updating_ui = False
+        
+        # Bloqueio estrito de reentrada durante a operação e possível reversão
+        self._updating_ui = True
+        try:
+            success = self.backend.set_service_state(state)
+            if not success:
+                 logger.warning("Falha ao mudar estado do serviço no systemd")
+                 self.switch_svc.handler_block(self._svc_handler_id)
+                 row.set_active(not state)
+                 self.switch_svc.handler_unblock(self._svc_handler_id)
+        finally:
+            self._updating_ui = False
 
 
-    def on_mode_notify(self, row, param):
+    def on_mode_notify(self, row: Adw.SwitchRow, param: Any) -> None:
         if self._updating_ui:
             return
         state = row.get_active()
         logger.info(f"Toggle Modo solicitado: {state}")
         self.backend.set_led_mode(state)
 
-    def on_color_clicked(self, widget, hex_val, name):
+    def on_color_clicked(self, widget: Gtk.Button, hex_val: str, name: str) -> None:
         logger.info(f"Cor predefinida escolhida: {name} ({hex_val})")
         self.update_cpu_indicator(hex_val)
         self.backend.apply_color(hex_val, name)
 
-    def on_custom_color_selected(self, picker_btn, param):
+    def on_custom_color_selected(self, picker_btn: Gtk.ColorDialogButton, param: Any) -> None:
         rgba = picker_btn.get_rgba()
         r, g, b = int(rgba.red * 255), int(rgba.green * 255), int(rgba.blue * 255)
         hex_val = f"#{r:02X}{g:02X}{b:02X}"
         self.update_cpu_indicator(hex_val)
         self.backend.apply_color(hex_val, "Custom")
 
-    def update_status_ui(self):
+    def update_status_ui(self) -> bool:
         # Sincroniza estado UI -> Background sem disparar sinais recursivos
         try:
             svc_active = self.backend.is_service_active()
@@ -420,7 +438,9 @@ class MainWindow(Adw.ApplicationWindow):
             
             if self.switch_svc.get_active() != svc_active:
                 logger.info(f"Sincronizando Switch Serviço para: {svc_active}")
+                self.switch_svc.handler_block(self._svc_handler_id)
                 self.switch_svc.set_active(svc_active)
+                self.switch_svc.handler_unblock(self._svc_handler_id)
                 
             # Interromper / Congelar visualmente a ventoinha se o serviço subjacente estiver desativado!
             if svc_active:
@@ -433,7 +453,9 @@ class MainWindow(Adw.ApplicationWindow):
                 
             if self.switch_mode.get_active() != mode_active:
                 logger.info(f"Sincronizando Switch Modo para: {mode_active}")
+                self.switch_mode.handler_block(self._mode_handler_id)
                 self.switch_mode.set_active(mode_active)
+                self.switch_mode.handler_unblock(self._mode_handler_id)
                 
             self._updating_ui = False
         except Exception as e:

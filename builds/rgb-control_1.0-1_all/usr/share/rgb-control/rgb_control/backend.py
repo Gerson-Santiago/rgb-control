@@ -14,7 +14,7 @@ class Backend:
     def is_service_active(self) -> bool:
         """Verifica se o systemctl list-units ou is-active retorna active"""
         try:
-            res = subprocess.run(["systemctl", "is-active", "openrbg.service"], capture_output=True, text=True)
+            res = subprocess.run(["systemctl", "is-active", "openrgb.service"], capture_output=True, text=True)
             return res.stdout.strip() == "active"
         except Exception:
             return False
@@ -23,7 +23,7 @@ class Backend:
         """Usa pkexec para subir privilegios e iniciar/parar o serviço"""
         try:
             action = "start" if active else "stop"
-            res = subprocess.run(["pkexec", "systemctl", action, "openrbg.service"], capture_output=True)
+            res = subprocess.run(["pkexec", "systemctl", action, "openrgb.service"], capture_output=True)
             return res.returncode == 0
         except Exception:
             return False
@@ -58,16 +58,16 @@ class Backend:
             print("Erro mode_toggle:", e)
 
     def apply_color(self, hex_val: str, name: str) -> None:
-        # Busca o rbg.sh local ou instalado
-        script_path = "/usr/bin/rbg.sh"
+        # Busca o rgb.sh local ou instalado
+        script_path = "/usr/bin/rgb.sh"
         if not os.path.exists(script_path):
-            local_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "rbg.sh")
+            local_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "rgb.sh")
             if os.path.exists(local_path):
                 script_path = local_path
         
         name_cor = name.lower().replace("desligar", "off").replace("âmbar", "ambar")
         
-        # Prioriza via bash rbg.sh (por usar o mesmo padrão validado)
+        # Prioriza via bash rgb.sh (por usar o mesmo padrão validado)
         if os.path.exists(script_path):
             try:
                 subprocess.Popen(["bash", script_path, name_cor])

@@ -1,4 +1,4 @@
-# openrbg — Controle Desktop Moderno para Gabinetes Gaming 🎨🎮🐧
+# openrgb — Controle Desktop Moderno para Gabinetes Gaming 🎨🎮🐧
 
 ![Version](https://img.shields.io/badge/version-1.0.22-blue)
 ![Quality Gate](https://img.shields.io/badge/quality--gate-passed-brightgreen)

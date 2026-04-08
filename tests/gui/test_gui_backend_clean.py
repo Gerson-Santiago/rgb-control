@@ -19,6 +19,11 @@ class TestGuiBackend(unittest.TestCase):
         self.assertFalse(self.backend.is_service_active())
 
     @patch('subprocess.run')
+    def test_set_service_state_exception(self, mock_run):
+        mock_run.side_effect = Exception("systemd error")
+        self.assertFalse(self.backend.set_service_state(True))
+
+    @patch('subprocess.run')
     def test_set_service_state_success(self, mock_run):
         mock_run.return_value.returncode = 0
         self.assertTrue(self.backend.set_service_state(True))
@@ -87,6 +92,13 @@ class TestGuiBackend(unittest.TestCase):
         self.assertEqual(len(logs), 2)
         self.assertEqual(logs[0], "line2")
         self.assertEqual(logs[1], "line3")
+
+    @patch('os.path.exists', return_value=True)
+    def test_get_daemon_logs_exception(self, mock_exists):
+        """Testa se o log retorna mensagem de erro em caso de falha na leitura."""
+        with patch('builtins.open', side_effect=Exception("Disk error")):
+            logs = self.backend.get_daemon_logs()
+            self.assertIn("Erro ao ler log", logs[0])
 
     @patch('os.path.exists', return_value=False)
     def test_get_daemon_logs_no_file(self, mock_exists):

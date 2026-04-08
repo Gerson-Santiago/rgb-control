@@ -4,9 +4,10 @@ After=network.target
 
 [Service]
 Type=simple
+Environment=PYTHONPATH="/home/sant/Área de trabalho/PROJETOS/openrgb/src"
 # Caminho absoluto para o python e para o seu script
-ExecStart=/usr/bin/python3 "/home/sant/Área de trabalho/PROJETOS/openrbg/src/rgb_daemon/main.py"
-WorkingDirectory=/home/sant/Área de trabalho/PROJETOS/openrbg
+ExecStart=/usr/bin/python3 "/home/sant/Área de trabalho/PROJETOS/openrgb/src/rgb_daemon/main.py"
+WorkingDirectory=/home/sant/Área de trabalho/PROJETOS/openrgb
 Restart=always
 RestartSec=5
 User=root

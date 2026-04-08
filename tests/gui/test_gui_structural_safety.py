@@ -46,6 +46,14 @@ class TestMainWindowStructureSafety(unittest.TestCase):
         # Para GTK4, inspecionamos os children se necessário, mas aqui basta verificar a atribuição
         self.assertTrue(hasattr(self.window, 'fan_spinner'))
 
+    def test_update_cpu_indicator_logic(self):
+        """Valida que a atualização do indicador de CPU (hex label) funciona sem crashes."""
+        # Forçamos a criação do label se ele não existir
+        self.window.update_cpu_indicator("#00FF00")
+        self.assertIsNotNone(self.window.cpu_hex_label)
+        # O markup deve conter a cor
+        self.assertIn("00FF00", self.window.cpu_hex_label.get_label())
+
     def test_startup_does_not_crash(self):
         """Teste de fumaça (Smoke Test) para garantir que o __init__ não levanta exceções."""
         from gi.repository import Adw, Gio

@@ -1,4 +1,4 @@
-cd /home/sant/Área\ de\ trabalho/PROJETOS/openrbg
+cd /home/sant/Área\ de\ trabalho/PROJETOS/openrgb
 find . -type f \
   ! -path "*/.git/*" \
   ! -path "*/__pycache__/*" \

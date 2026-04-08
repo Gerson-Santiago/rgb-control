@@ -5,13 +5,13 @@ class Backend:
     def __init__(self):
         # Caminho fixo para o arquivo de status (IPC simples entre GUI e Daemon)
         self.status_file = "/tmp/.controle_led.status"
-        # rbg.sh pode estar na raiz, em assets/ ou no path
+        # rgb.sh pode estar na raiz, em assets/ ou no path
         self.root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     def is_service_active(self) -> bool:
         """Verifica se o systemctl list-units ou is-active retorna active"""
         try:
-            res = subprocess.run(["systemctl", "is-active", "openrbg.service"], capture_output=True, text=True)
+            res = subprocess.run(["systemctl", "is-active", "openrgb.service"], capture_output=True, text=True)
             return res.stdout.strip() == "active"
         except Exception:
             return False
@@ -20,7 +20,7 @@ class Backend:
         """Usa pkexec para subir privilegios e iniciar/parar o serviço"""
         try:
             action = "start" if active else "stop"
-            res = subprocess.run(["pkexec", "systemctl", action, "openrbg.service"], capture_output=True)
+            res = subprocess.run(["pkexec", "systemctl", action, "openrgb.service"], capture_output=True)
             return res.returncode == 0
         except Exception:
             return False
@@ -52,7 +52,7 @@ class Backend:
     def apply_color(self, hex_val: str, name: str) -> None:
         """
         Aplica a cor via openrgb nativamente.
-        Contém fallback de sudo para dispositivos que exigem permissão root (igual ao rbg.sh).
+        Contém fallback de sudo para dispositivos que exigem permissão root (igual ao rgb.sh).
         """
         color = hex_val.lstrip("#")
         try:

@@ -15,7 +15,7 @@ Requires-Dist: pyright>=1.1.350; extra == "dev"
 Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
 Requires-Dist: mypy>=1.9.0; extra == "dev"
 
-# openrbg — Controle de LEDs via Air Mouse 🎨🎮🐧
+# openrgb — Controle de LEDs via Air Mouse 🎨🎮🐧
 
 Daemon Python para controlar LEDs do gabinete **ASUS TUF Gaming** usando um **Air Mouse XING WEI 2.4G USB** (Lelong LE-7278) no Linux.
 
@@ -80,9 +80,9 @@ python3 -m pytest tests/ -v
 ## Estrutura
 
 ```
-openrbg/
+openrgb/
 ├── mvp.py          # Daemon principal
-├── rbg.sh          # Script de aplicação de cores (OpenRGB)
+├── rgb.sh          # Script de aplicação de cores (OpenRGB)
 ├── tests/
 │   └── test_mvp.py # Suite de testes (pytest)
 ├── docs/

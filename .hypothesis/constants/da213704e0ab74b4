@@ -1,0 +1,4 @@
+# file: /home/sant/Área de trabalho/PROJETOS/openrbg/src/rgb_control/main.py
+# hypothesis_version: 6.151.9
+
+[160, 300, 400, 2500, '--version', '/tmp/rgb_crash.txt', '1', '4.0', 'Adw', 'Gtk', 'RGB Control v1.0.5', '__main__', 'app.log', 'logo.png', 'rgb-control', 'splash-box', 'splash-window', 'style.css', 'w']

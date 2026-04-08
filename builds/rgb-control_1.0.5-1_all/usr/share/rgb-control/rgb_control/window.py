@@ -79,7 +79,7 @@ class MainWindow(Adw.ApplicationWindow):
         daemon_group.set_title("Configurações do Serviço")
         
         row_svc = Adw.ActionRow()
-        row_svc.set_title("Serviço OpenRBG (Background)")
+        row_svc.set_title("Serviço openrgb (Background)")
         row_svc.set_subtitle("Gerencia o daemon do Air Mouse via systemctl")
         self.switch_svc = Gtk.Switch()
         self.switch_svc.set_valign(Gtk.Align.CENTER)

@@ -1,5 +1,5 @@
 import sys
-import gi
+import gi # type: ignore[import-untyped]
 import os
 import traceback
 import logging
@@ -7,7 +7,8 @@ import logging
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, Gio, GLib, Gdk # pyright: ignore[reportAttributeAccessIssue]
+from typing import Optional, Any, Callable
+from gi.repository import Gtk, Adw, Gio, GLib, Gdk # type: ignore[import-untyped]
 
 log_dir = os.path.join(GLib.get_user_cache_dir(), "rgb-control")
 os.makedirs(log_dir, exist_ok=True)
@@ -24,8 +25,8 @@ try:
 except ImportError:
     from rgb_control.window import MainWindow, get_asset_path
 
-class SplashWindow(Gtk.Window):
-    def __init__(self, application, on_ready_callback):
+class SplashWindow(Gtk.Window): # type: ignore[misc]
+    def __init__(self, application: Gtk.Application, on_ready_callback: Callable[[], None]) -> None:
         super().__init__(application=application)
         self.set_title("Loading RGB Control...")
         self.set_default_size(400, 300)
@@ -61,7 +62,7 @@ class SplashWindow(Gtk.Window):
         # Display splash for 2.5 seconds
         GLib.timeout_add(2500, self._finish_splash)
 
-    def _finish_splash(self):
+    def _finish_splash(self) -> bool:
         try:
             self.on_ready()
             self.destroy()
@@ -73,14 +74,14 @@ class SplashWindow(Gtk.Window):
             self.destroy()
         return False
 
-class RgbControlApp(Adw.Application):
-    def __init__(self, application_id='com.github.sant.rgbcontrol'):
+class RgbControlApp(Adw.Application): # type: ignore[misc]
+    def __init__(self, application_id: str = 'com.github.sant.rgbcontrol') -> None:
         super().__init__(
             application_id=application_id, 
             flags=Gio.ApplicationFlags.FLAGS_NONE
         )
 
-    def do_activate(self):
+    def do_activate(self) -> None:
         if self.get_windows():
             self.get_windows()[0].present()
             return
@@ -103,18 +104,18 @@ class RgbControlApp(Adw.Application):
         splash = SplashWindow(self, self.on_splash_finished)
         splash.present()
 
-    def on_splash_finished(self):
+    def on_splash_finished(self) -> None:
         win = MainWindow(application=self)
         win.present()
 
-def main():
+def main() -> int:
     import sys
     if "--version" in sys.argv:
         print("RGB Control v1.0.5")
         return 0
     logger.info("Iniciando RGB Control App...")
     app = RgbControlApp()
-    return app.run([sys.argv[0]])
+    return int(app.run([sys.argv[0]]))
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -7,9 +7,9 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable
 
-from evdev import InputDevice, ecodes, list_devices  # type: ignore[import]
+from evdev import InputDevice, ecodes, list_devices
 
 from rgb_daemon.domain import DaemonState, PALETTE
 from rgb_daemon.application import DaemonUseCases
@@ -46,13 +46,15 @@ def buscar_devices() -> tuple[Optional[InputDevice], Optional[InputDevice]]:
         except Exception: pass
     return tecl, cons
 
-async def listener_teclado(dev: InputDevice, use_cases: DaemonUseCases, stop_ev: asyncio.Event):
+async def listener_teclado(dev: InputDevice, use_cases: DaemonUseCases, stop_ev: asyncio.Event) -> None:
+    """Monitora teclado: OK (long-press) e setas/volume para cores."""
     log.info("🎹 Listener Teclado pronto")
     LONG_PRESS_TIME = 3.0
     async for ev in dev.async_read_loop():
         if stop_ev.is_set(): break
         if ev.type != ecodes.EV_KEY: continue
 
+        # Lógica de Long-Press no OK (Enter)
         if ev.code == ecodes.KEY_ENTER:
             if ev.value == 1:
                 use_cases.state.ok_press_time = asyncio.get_event_loop().time()
@@ -64,36 +66,33 @@ async def listener_teclado(dev: InputDevice, use_cases: DaemonUseCases, stop_ev:
                     if dur >= LONG_PRESS_TIME:
                         use_cases.toggle_mode(dev)
 
+        # Atalhos de Cor (apenas se ativo)
         elif ev.value == 1 and use_cases.state.is_active:
-            if ev.code in (ecodes.KEY_RIGHT, ecodes.KEY_UP):
+            if ev.code in (ecodes.KEY_RIGHT, ecodes.KEY_UP, ecodes.KEY_VOLUMEUP):
                 use_cases.next_color()
-            elif ev.code in (ecodes.KEY_LEFT, ecodes.KEY_DOWN):
+            elif ev.code in (ecodes.KEY_LEFT, ecodes.KEY_DOWN, ecodes.KEY_VOLUMEDOWN):
                 use_cases.prev_color()
 
-async def listener_consumer(dev: InputDevice, use_cases: DaemonUseCases, dev_tecl: Optional[InputDevice], stop_ev: asyncio.Event):
+async def listener_consumer(dev: InputDevice, use_cases: DaemonUseCases, dev_tecl: Optional[InputDevice], stop_ev: asyncio.Event) -> None:
+    """Monitora Consumer Control: Microfone (toggle) e Volume."""
     log.info("🎛️  Listener Consumer pronto")
     KEY_MIC = 582
     KEY_HOME_ALT = 172
 
     async for ev in dev.async_read_loop():
         if stop_ev.is_set(): break
+        # No consumer, focamos apenas no KEY DOWN (value=1)
         if ev.type != ecodes.EV_KEY or ev.value != 1: continue
 
+        # Toggle via Microfone ou Home
         if ev.code in (KEY_MIC, KEY_HOME_ALT):
-            now = time.monotonic()
-            if now - use_cases.state.last_click_time > 1.0:
-                use_cases.state.mic_clicks = 1
-            else:
-                use_cases.state.mic_clicks += 1
-            use_cases.state.last_click_time = now
-
-            if use_cases.state.mic_clicks == 1:
-                use_cases.toggle_mode(dev_tecl)
-                use_cases.state.mic_clicks = 0
+            # Clique único ativa/desativa
+            use_cases.toggle_mode(dev_tecl)
             continue
 
         if not use_cases.state.is_active: continue
 
+        # Navegação de cores (Volume e Back)
         if ev.code == ecodes.KEY_VOLUMEUP:
             use_cases.next_color()
         elif ev.code == ecodes.KEY_VOLUMEDOWN:
@@ -101,18 +100,31 @@ async def listener_consumer(dev: InputDevice, use_cases: DaemonUseCases, dev_tec
         elif ev.code == ecodes.KEY_BACK:
             use_cases.toggle_mode(dev_tecl)
 
-async def run_daemon(dev_tecl: InputDevice, dev_cons: Optional[InputDevice], use_cases: DaemonUseCases):
+def handle_signal(s: int, use_cases: DaemonUseCases, dev_tecl: Optional[InputDevice], status_file: Path, stop_ev: asyncio.Event) -> None:
+    """Processa sinais SIGUSR1 (sincronia) e SIGINT/SIGTERM (parada)."""
+    if s == signal.SIGUSR1:
+        # Sincroniza o estado lendo do arquivo (permite que a GUI force ON/OFF)
+        try:
+            if status_file.exists():
+                status = status_file.read_text().strip()
+                use_cases.set_active(status == "on", dev_tecl)
+            else:
+                use_cases.toggle_mode(dev_tecl)
+        except Exception as e:
+            log.error("Erro ao processar sinal SIGUSR1: %s", e)
+            use_cases.toggle_mode(dev_tecl)
+    else:
+        stop_ev.set()
+
+async def run_daemon(dev_tecl: InputDevice, dev_cons: Optional[InputDevice], use_cases: DaemonUseCases) -> None:
     stop_ev = asyncio.Event()
     loop = asyncio.get_event_loop()
 
-    def _on_sig(s: int) -> None:
-        if s == signal.SIGUSR1:
-            use_cases.toggle_mode(dev_tecl)
-        else:
-            stop_ev.set()
-
     for s in (signal.SIGINT, signal.SIGTERM, signal.SIGUSR1):
-        loop.add_signal_handler(s, _on_sig, s)
+        # Usamos uma função nomeada parcial para satisfazer a tipagem estrita
+        def create_handler(sig: int) -> Callable[[], None]:
+            return lambda: handle_signal(sig, use_cases, dev_tecl, STATUS_FILE, stop_ev)
+        loop.add_signal_handler(s, create_handler(s))
 
     tasks = [asyncio.create_task(listener_teclado(dev_tecl, use_cases, stop_ev))]
     if dev_cons:
@@ -120,9 +132,11 @@ async def run_daemon(dev_tecl: InputDevice, dev_cons: Optional[InputDevice], use
 
     await stop_ev.wait()
     for t in tasks: t.cancel()
+    
+    # Garantir que o device seja solto ao encerrar
     if use_cases.state.is_grabbed:
         try: dev_tecl.ungrab()
-        except: pass
+        except Exception: pass
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Clean RGB Daemon")

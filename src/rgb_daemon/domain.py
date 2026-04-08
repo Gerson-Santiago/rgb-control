@@ -6,7 +6,7 @@ class Color:
     name: str
     hex_code: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if len(self.hex_code) != 6:
             raise ValueError(f"Hex code inválido: {self.hex_code} (deve ter 6 caracteres)")
         try:

@@ -14,9 +14,9 @@ chmod +x /tmp/mock_bin/sudo
 export PATH="/tmp/mock_bin:$PATH"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && cd ../.. && pwd)"
-RBG="$SCRIPT_DIR/rbg.sh"
+RBG="$SCRIPT_DIR/rgb.sh"
 
-echo "🧪 Running integration tests for rbg.sh CLI wrapper..."
+echo "🧪 Running integration tests for rgb.sh CLI wrapper..."
 
 # Test valid targets
 for col in "Branca" "Desligar" "Desligado" "Branco" "off"; do

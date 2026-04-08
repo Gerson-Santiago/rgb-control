@@ -1,6 +1,6 @@
 # Arquitetura de QA Gold Standard (v1.0.22)
 
-Este documento detalha o sistema de blindagem de qualidade implementado no projeto `openrbg`. O objetivo é garantir que o software seja resiliente, livre de vazamentos de memória e protegido contra mudanças que quebrem o comportamento esperado.
+Este documento detalha o sistema de blindagem de qualidade implementado no projeto `openrgb`. O objetivo é garantir que o software seja resiliente, livre de vazamentos de memória e protegido contra mudanças que quebrem o comportamento esperado.
 
 ## 🛡️ Os 12 Eixos de Defesa
 

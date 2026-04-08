@@ -49,7 +49,7 @@ class NotifyOSD(OSDProvider):
 class OpenRGBColorApplicator(ColorApplicator):
     """
     Aplica cores via comando openrgb direto.
-    Substitui a dependência do script rbg.sh legado.
+    Substitui a dependência do script rgb.sh legado.
     """
     def __init__(self, device_id: int = 0, user: str = "sant"):
         self.device_id = device_id

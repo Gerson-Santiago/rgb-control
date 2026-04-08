@@ -1,6 +1,6 @@
 # Stack Tecnológica e Padrões de Projeto (v1.1)
 
-Este documento serve como a **"Fonte Única de Verdade"** para a infraestrutura técnica do projeto `openrbg`. 
+Este documento serve como a **"Fonte Única de Verdade"** para a infraestrutura técnica do projeto `openrgb`. 
 
 > [!IMPORTANT]
 > Este documento é auditado automaticamente pelo script `scripts/docs_sync_check.py`. Descompassos de versão ou dependências causarão falha no Gate de Qualidade.
@@ -66,6 +66,6 @@ sudo apt install ./builds/rgb-control_$(cat version)-1_all.deb
 
 ### 2. Deploy do Serviço
 ```bash
-sudo systemctl enable openrbg.service
-sudo systemctl start openrbg.service
+sudo systemctl enable openrgb.service
+sudo systemctl start openrgb.service
 ```

@@ -63,8 +63,8 @@ cp -r src/rgb_daemon "$DEB_DIR/usr/share/$PKG_NAME/"
 
 # Copy assets
 cp -r assets "$DEB_DIR/usr/share/$PKG_NAME/"
-cp "rbg.sh" "$DEB_DIR/usr/bin/rbg.sh"
-chmod +x "$DEB_DIR/usr/bin/rbg.sh"
+cp "rgb.sh" "$DEB_DIR/usr/bin/rgb.sh"
+chmod +x "$DEB_DIR/usr/bin/rgb.sh"
 
 # Create /usr/bin/rgb-control wrapper (mesmo diretório para assets)
 cat <<EOF > "$DEB_DIR/usr/bin/rgb-control"

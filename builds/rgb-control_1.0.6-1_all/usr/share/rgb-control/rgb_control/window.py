@@ -44,7 +44,7 @@ class MainWindow(Adw.ApplicationWindow):
         
         # 2. HeaderBar
         self.header = Adw.HeaderBar()
-        self.header.set_title_widget(Adw.WindowTitle(title="OpenRBG", subtitle="Controle de LEDs"))
+        self.header.set_title_widget(Adw.WindowTitle(title="openrgb", subtitle="Controle de LEDs"))
         
         # Menu
         menu_button = Gtk.MenuButton()
@@ -92,7 +92,7 @@ class MainWindow(Adw.ApplicationWindow):
         
         # Row: Daemon
         daemon_row = Adw.SwitchRow()
-        daemon_row.set_title("Serviço OpenRBG")
+        daemon_row.set_title("Serviço openrgb")
         daemon_row.set_subtitle("Execução em segundo plano (systemd)")
         daemon_row.set_active(self.backend.is_service_active())
         daemon_row.connect("notify::active", self.on_service_notify)
