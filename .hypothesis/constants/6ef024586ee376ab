@@ -1,0 +1,4 @@
+# file: /home/sant/Área de trabalho/PROJETOS/openrbg/src/rgb_control/window.py
+# hypothesis_version: 6.151.9
+
+[160, 250, 255, 400, 500, 550, 750, 2000, '#000000', '#0000FF', '#00F2EA', '#00FF00', '#AA00FF', '#FF0000', '#FF5500', '#FFB200', '#FFFF00', '#FFFFFF', '1', '4.0', 'Adw', 'Amarelo', 'Ambar', 'Azul', 'Branco', 'Ciano', 'Cor Atual do CPU', 'Cor Avançada', 'Cor Personalizada', 'Custom', 'Desativar', 'Gtk', 'Laranja', 'Modo de Captura LED', 'Padrão do Sistema', 'Paleta de Cores', 'RGB Control', 'Roxo', 'Tema Claro', 'Tema Escuro', 'Verde', 'Vermelho', 'activate', 'app.theme_dark', 'app.theme_light', 'app.theme_system', 'assets', 'b1', 'b2', 'b3', 'blade', 'clicked', 'color-btn', 'dim-label', 'fan', 'fan-glow', 'fan-hub', 'fan-paused', 'logo-main', 'logo.png', 'notify::active', 'notify::rgba', 'open-menu-symbolic', 'r', 'rgb_control/assets', 'style.css', 'theme_dark', 'theme_light', 'theme_system', 'v1.0.0', 'version.txt']

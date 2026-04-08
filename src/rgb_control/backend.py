@@ -2,12 +2,17 @@ import subprocess
 import os
 
 class Backend:
+    STATUS_FILE = "/tmp/.controle_led.status"
+    COLOR_FILE = "/tmp/.controle_led.color"
+    PID_FILE = "/tmp/.controle_led.pid"
+
     def __init__(self):
         # Caminho fixo para o arquivo de status (IPC simples entre GUI e Daemon)
-        self.status_file = "/tmp/.controle_led.status"
-        self.color_file = "/tmp/.controle_led.color"
+        self.status_file = self.STATUS_FILE
+        self.color_file = self.COLOR_FILE
         # rbg.sh pode estar na raiz, em assets/ ou no path
         self.root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
     def is_service_active(self) -> bool:
         """Verifica se o systemctl list-units ou is-active retorna active"""
@@ -42,10 +47,10 @@ class Backend:
             with open(self.status_file, "w") as f:
                 f.write("on" if active else "off")
                 
-            pid_file = "/tmp/.controle_led.pid"
-            if os.path.exists(pid_file):
-                with open(pid_file, "r") as p:
+            if os.path.exists(self.PID_FILE):
+                with open(self.PID_FILE, "r") as p:
                     pid = int(p.read().strip())
+
                 os.kill(pid, 10) # SIGUSR1
         except Exception as e:
             print("Erro mode_toggle:", e)

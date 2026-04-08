@@ -1,0 +1,4 @@
+# file: /usr/lib/python3/dist-packages/gi/_gtktemplate.py
+# hypothesis_version: 6.151.9
+
+['%r not supported', '4.0', 'Handler %s not found', 'Template', '__gtype_name__', 'filename', 'internal', 'resource_path', 'string', 'utf-8']

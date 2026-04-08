@@ -6,13 +6,10 @@ gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Adw, GLib, Gio, Gdk # pyright: ignore[reportAttributeAccessIssue]
 import logging
+from rgb_control.backend import Backend
+from rgb_control.utils import hex_to_rgba_tuple
 
 logger = logging.getLogger(__name__)
-
-try:
-    from rgb_control.backend import Backend
-except ImportError:
-    from rgb_control.backend import Backend
 
 def get_asset_path(filename):
     """Retorna o caminho do asset, buscando localmente ou na estrutura do .deb"""
@@ -41,6 +38,8 @@ class MainWindow(Adw.ApplicationWindow):
         self.set_title("RGB Control")
         # Tamanho mais generoso e ergonômico
         self.set_default_size(550, 750)
+        self.cpu_hex_label = None # Inicialização segura
+
         
         logger.info("Carregando interface Libadwaita Premium...")
         self.backend = Backend()
@@ -289,16 +288,10 @@ class MainWindow(Adw.ApplicationWindow):
 
     def update_cpu_indicator(self, hex_val: str):
         """Atualiza a Ventoinha 3D GTK com Glow Radiação do Fundo (Estética avançada)"""
-        color_str = hex_val.strip().upper()
-        
-        # Gera RGBA tuple base para color-blending no GTK CSS
-        try:
-            r = int(color_str[1:3], 16)
-            g = int(color_str[3:5], 16)
-            b = int(color_str[5:7], 16)
-        except:
-            r, g, b = 255, 0, 0 # Fallback safety
-            color_str = "#FF0000"
+        r, g, b = hex_to_rgba_tuple(hex_val)
+        color_str = f"#{r:02X}{g:02X}{b:02X}"
+
+
             
         css = f"""
         .fan {{
@@ -339,14 +332,16 @@ class MainWindow(Adw.ApplicationWindow):
         }}
         """
         self.cpu_css_provider.load_from_data(css.encode())
-        self.cpu_hex_label = getattr(self, 'cpu_hex_label', None)
-        if hasattr(self, 'cpu_hex_label') and self.cpu_hex_label is not None:
+        
+        if self.cpu_hex_label is not None:
             self.cpu_hex_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
         else:
             self.cpu_hex_label = Gtk.Label()
             self.cpu_hex_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
             self.cpu_hex_label.add_css_class("dim-label")
+            # Procura o overlay parent para append
             self.cpu_fan_overlay.get_parent().append(self.cpu_hex_label)
+
 
     def load_custom_css(self):
         """Carrega o arquivo style.css — busca no mesmo dir do window.py e em assets/"""
@@ -393,6 +388,8 @@ class MainWindow(Adw.ApplicationWindow):
              self._updating_ui = True
              row.set_active(not state)
              self._updating_ui = False
+        self._updating_ui = False
+
 
     def on_mode_notify(self, row, param):
         if self._updating_ui:

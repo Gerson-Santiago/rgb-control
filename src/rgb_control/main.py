@@ -74,9 +74,9 @@ class SplashWindow(Gtk.Window):
         return False
 
 class RgbControlApp(Adw.Application):
-    def __init__(self):
+    def __init__(self, application_id='com.github.sant.rgbcontrol'):
         super().__init__(
-            application_id='com.github.sant.rgbcontrol', 
+            application_id=application_id, 
             flags=Gio.ApplicationFlags.FLAGS_NONE
         )
 

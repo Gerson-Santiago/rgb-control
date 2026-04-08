@@ -1,0 +1,4 @@
+# file: /home/sant/Área de trabalho/PROJETOS/openrbg/src/rgb_daemon/main.py
+# hypothesis_version: 6.151.9
+
+[1.0, 3.0, 172, 582, 4133, 6421, '  ✅ Consumer → %s', '  ✅ Teclado  → %s', '--list', '--status', '--toggle', '.cache', 'Clean RGB Daemon', '__main__', 'composite device', 'consumer', 'daemon.log', 'off', 'rgb-control', 'rgb_daemon', 'store_true', 'teclado']

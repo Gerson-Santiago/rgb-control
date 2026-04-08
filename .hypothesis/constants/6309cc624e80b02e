@@ -1,0 +1,4 @@
+# file: /home/sant/Área de trabalho/PROJETOS/openrbg/src/rgb_daemon/infrastructure.py
+# hypothesis_version: 6.151.9
+
+['#', '--color', '--device', '--mode', '-h', '-i', '-t', '-u', '3000', 'Executando: %s', 'env', 'normal', 'notify-send', 'openrgb', 'sant', 'static', 'sudo']
