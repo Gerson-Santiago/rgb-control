@@ -1,92 +1,62 @@
-# openrbg — Controle de LEDs via Air Mouse 🎨🎮🐧
+# openrbg — Controle Desktop Moderno para Gabinetes Gaming 🎨🎮🐧
 
-Daemon Python para controlar LEDs do gabinete **ASUS TUF Gaming** usando um **Air Mouse XING WEI 2.4G USB** (Lelong LE-7278) no Linux.
+Solução profissional (v1.0.22) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos, integrando um **Air Mouse XING WEI 2.4G USB** (Lelong LE-7278) como controle remoto nativo no Linux.
 
-## Requisitos
+Construído com **Python 3.13**, **GTK4 / Libadwaita** e **Clean Architecture**.
 
+---
+
+## ✨ Funcionalidades Principais
+-   **Interface Premium**: Interface gráfica moderna baseada em GNOME/Libadwaita.
+-   **Controle Dual**: Gerenciamento via GUI (Janela) ou CLI (Terminal).
+-   **Remoto Air Mouse**: Mapeamento de botões de controle remoto para alternar cores e estados.
+-   **OSD (Dunst)**: Feedback visual na tela ao alternar modos de LED.
+-   **Alta Fidelidade**: Suite de testes com 66+ validações (Property-based, Memory Stress, Contract).
+
+## 🚀 Instalação e Requisitos
+
+### Dependências de Sistema
 ```bash
-sudo apt install python3-evdev dunst
+sudo apt install python3-evdev python3-gi libadwaita-1-0 dunst openrgb
 ```
 
-> O **dunst** é necessário para o OSD visual (modal de ativação como o indicador de volume).
-
-## Uso
-
+### Instalação (Padrão Debian)
+Baixe o último release `.deb` e instale:
 ```bash
-# Iniciar o daemon (requer root para ler /dev/input/event*)
-sudo python3 mvp.py
-
-# Controlar via CLI
-python3 mvp.py --toggle   # Alterna MODO LED
-python3 mvp.py --status   # Mostra estado atual
-python3 mvp.py --list     # Lista devices detectados
+sudo apt install ./builds/rgb-control_1.0.22-1_all.deb
 ```
 
-## Botões do Controle
+## 🎮 Operação com Air Mouse
 
 | Botão | Ação |
 |---|---|
-| 🎙️ **Microfone** | Ativar / Desativar MODO LED |
-| 🏠 **Home** | Ativar / Desativar MODO LED |
-| ➡️ Seta Direita / ➕ Vol+ | Próxima cor |
-| ⬅️ Seta Esquerda / ➖ Vol− | Cor anterior |
+| 🎙️ / 🏠 | Ativar / Desativar MODO LED |
+| ➡️ / ➕ Vol+ | Próxima cor |
+| ⬅️ / ➖ Vol− | Cor anterior |
 | ↩️ Back | Desativar MODO LED |
-| **OK (3s)** | Toggle (fallback) |
 
-## Paleta de Cores
+## 🛠️ Desenvolvimento e Qualidade
 
-| Índice | Nome | Hex |
-|---|---|---|
-| 0 | Vermelho | `FF0000` |
-| 1 | Laranja | `FF5500` |
-| 2 | Amarelo | `FFFF00` |
-| 3 | Verde | `00FF00` |
-| 4 | Ciano | `00F2EA` |
-| 5 | Azul | `0000FF` |
-| 6 | Roxo | `AA00FF` |
-| 7 | Âmbar | `FFB200` |
-| 8 | Branco | `FFFFFF` |
-| 9 | Desligar | `000000` |
+Este projeto segue padrões de **QA Gold Standard**. Para contribuir ou rodar em modo desenvolvedor:
 
-## Hardware Detectado
+1.  **Manual Técnico de Stack**: Consulte [docs/stack.md](docs/stack.md).
+2.  **Guia de Blindagem de Testes**: Consulte [docs/TESTS.md](docs/TESTS.md).
+3.  **Portão de Qualidade**: Execute `./run_tests.sh` para validar toda a arquitetura.
 
-- **Vendor ID:** `0x1915` / **Product ID:** `0x1025`
-- **Teclado:** `/dev/input/event11` — XING WEI 2.4G USB USB Composite Device
-- **Consumer Control:** `/dev/input/event13` — XING WEI 2.4G USB USB Composite Device Consumer Control
-
-## Testes
-
+### Setup de Desenvolvimento
 ```bash
-python3 -m pytest tests/ -v
+git clone https://github.com/Gerson-Santiago/rgb-control.git
+pip install -e .[dev]
+./run_tests.sh
 ```
 
-### 🛠️ Desenvolvimento & Qualidade
+---
 
-O projeto utiliza uma arquitetura de QA **Gold Standard (v1.0.22)**, com blindagem de cobertura, testes de propriedade e monitoramento de memória.
+## 🏗️ Estrutura do Projeto
+-   **`src/rgb_control/`**: Aplicação de interface gráfica (GTK4).
+-   **`src/rgb_daemon/`**: Daemon de monitoramento de hardware e evdev.
+-   **`tests/`**: Suite exaustiva de testes automatizados.
+-   **`docs/`**: Documentação técnica detalhada.
 
--   **Manual de Testes**: Consulte [docs/TESTS.md](docs/TESTS.md) para detalhes técnicos exaustivos.
--   **Suite de Testes**: Execute o gate de qualidade com `./run_tests.sh`.
--   **Dependências de QA**:
-    ```bash
-    pip install pytest-cov pytest-asyncio hypothesis pyfakefs mypy pyright
-    ```
-
-### 🤝 Contribuição
-1.  Faça um fork do projeto.
-2.  Crie uma branch para sua modificação (`git checkout -b feature/nova-feature`).
-3.  **Certifique-se de passar no Portão de Qualidade** (`./run_tests.sh`) antes de enviar.
-4.  Envie um Pull Request.
-
-## Estrutura
-
-```
-openrbg/
-├── mvp.py          # Daemon principal
-├── rbg.sh          # Script de aplicação de cores (OpenRGB)
-├── tests/
-│   └── test_mvp.py # Suite de testes (pytest)
-├── docs/
-│   ├── log1.md     # evtest event11 (teclado)
-│   └── log2.md     # evtest event13 (consumer)
-└── requirements.txt
-```
+---
+**Status: ESTÁVEL & BLINDADO 🛡️**

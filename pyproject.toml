@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rgb-control"
-version = "1.0.21"
+version = "1.0.22"
 description = "Modern Desktop RGB Control - Clean Architecture"
 readme = "README.md"
 requires-python = ">=3.11"
