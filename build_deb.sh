@@ -5,7 +5,7 @@ PKG_NAME="rgb-control"
 VERSION=$(grep -m 1 "^version = " pyproject.toml | cut -d '"' -f 2)
 REV="1"
 ARCH="all"
-DEB_DIR="${PKG_NAME}_${VERSION}-${REV}_${ARCH}"
+DEB_DIR="builds/${PKG_NAME}_${VERSION}-${REV}_${ARCH}"
 
 # Grava a versão empacotada para que a GUI possa exibi-la na base (rodapé)
 echo "v${VERSION}" > assets/version.txt

@@ -80,7 +80,7 @@ class TestWindowCallbacks(unittest.TestCase):
 
     def test_on_service_notify_failure_reverts_switch(self):
         """Testa se o switch do serviço reverte o estado quando o backend falha."""
-        self.mock_backend.set_service_state.return_value = False
+        self.mock_backend.set_service_state.side_effect = lambda state: not state
         # Assumindo que começa False
         self.window.switch_svc.set_active(True)
         # O efeito de reversão deve ser síncrono na mesma thread de UI
