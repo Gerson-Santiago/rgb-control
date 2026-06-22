@@ -36,4 +36,31 @@ if [[ "$output" != *"❌ Erro"* ]]; then
 fi
 echo "✅ Passed: Invalid keywords error"
 
+# Test version flag
+output=$(bash "$RBG" "-v" 2>&1)
+if [[ "$output" != *"RGB Controller v"* ]]; then
+    echo "❌ Fail: Expected version output for '-v', got '$output'"
+    exit 1
+fi
+output=$(bash "$RBG" "--version" 2>&1)
+if [[ "$output" != *"RGB Controller v"* ]]; then
+    echo "❌ Fail: Expected version output for '--version', got '$output'"
+    exit 1
+fi
+echo "✅ Passed: Version flags"
+
+# Test help flag
+output=$(bash "$RBG" "-h" 2>&1)
+if [[ "$output" != *"Uso: rgb"* || "$output" != *"Cores predefinidas"* ]]; then
+    echo "❌ Fail: Expected help menu for '-h', got '$output'"
+    exit 1
+fi
+output=$(bash "$RBG" "--help" 2>&1)
+if [[ "$output" != *"Uso: rgb"* || "$output" != *"Cores predefinidas"* ]]; then
+    echo "❌ Fail: Expected help menu for '--help', got '$output'"
+    exit 1
+fi
+echo "✅ Passed: Help flags"
+
 echo "🎯 All bash CLI tests passed."
+

@@ -1,4 +1,4 @@
-# Arquitetura de QA Gold Standard (v1.0.22)
+# Arquitetura de QA Gold Standard (v1.1.0)
 
 Este documento detalha o sistema de blindagem de qualidade implementado no projeto `openrgb`. O objetivo é garantir que o software seja resiliente, livre de vazamentos de memória e protegido contra mudanças que quebrem o comportamento esperado.
 
@@ -22,6 +22,11 @@ O projeto utiliza uma estratégia de defesa em profundidade, dividida em quatro 
 *   **Contrato Daemon ↔ GUI**: Validado em `tests/integration/test_daemon_gui_contract.py`. Garante que as mudanças de estado no disco (status files) e sinais de sistema (SIGUSR1) sejam corretamente interpretados entre os dois processos independentes.
 *   **Coverage Ratchet**: Implementado via `scripts/coverage_ratchet.py`. O sistema "trava" o threshold de cobertura; qualquer novo código que diminua a cobertura global (atualmente 73.19%) bloqueará automaticamente o commit.
 *   **Mypy Strict & Pyright**: Todos os arquivos devem passar na checagem estática de tipos rigorosa.
+
+### 5. Integridade de Branding e Empacotamento (Branding & Packaging)
+*   **Consistência de Identidade e Assets**: O teste [test_branding_and_packaging.py](file:///home/sant/Área de trabalho/PROJETOS/openrgb/tests/unit/test_branding_and_packaging.py) garante que todos os arquivos gráficos essenciais (SVG e PNG de backup) existam e que as janelas e telas de splash de fato carreguem a versão vetorial correta.
+*   **Conformidade Desktop e GNOME**: O mesmo arquivo de testes valida se o nome do arquivo `.desktop` gerado no build coincide perfeitamente com o `application_id` configurado no GTK, evitando regressões que possam quebrar a renderização do ícone no GNOME Dock.
+*   **Integridade da CLI**: O script de testes [test_rgb_cli.sh](file:///home/sant/Área de trabalho/PROJETOS/openrgb/tests/integration/test_rgb_cli.sh) valida se as flags de versão (`-v`/`--version`) e ajuda (`-h`/`--help`) funcionam, e se a lista de cores predefinidas é formatada corretamente em linhas de 4 em 4 cores.
 
 ---
 

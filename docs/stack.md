@@ -37,6 +37,21 @@ docs(stack): atualização da stack para v<versão> - <descrição breve>
 
 ---
 
+## 📦 Diretrizes de Empacotamento e Identidade Visual (GNOME/Debian)
+
+Para garantir que o aplicativo integre-se perfeitamente com desktops Linux modernos (especialmente o GNOME Shell do Debian/Ubuntu):
+
+1.  **Pareamento de Janela (GNOME Dock):**
+    O ID do aplicativo GTK4 (`com.github.sant.rgbcontrol`) declarado na inicialização em [main.py](file:///home/sant/Área de trabalho/PROJETOS/openrgb/src/rgb_control/main.py) deve coincidir exatamente com o nome do arquivo `.desktop` gerado em `/usr/share/applications/com.github.sant.rgbcontrol.desktop`. Isso garante que a barra de tarefas do GNOME reconheça e atribua o ícone correto à janela ativa.
+2.  **Distribuição de Ícones Híbridos:**
+    Para garantir alta definição em telas modernas sem perder a compatibilidade e robustez de renderizadores antigos, o pacote instala:
+    *   O ícone vetorial escalável em `/usr/share/icons/hicolor/scalable/apps/rgb-control.svg`.
+    *   Um fallback rasterizado em `/usr/share/icons/hicolor/256x256/apps/rgb-control.png`.
+3.  **Histórico de Compilações (builds/):**
+    O script [build_deb.sh](file:///home/sant/Área de trabalho/PROJETOS/openrgb/build_deb.sh) executa uma rotina de limpeza ao final da compilação. Ele utiliza ordenação semântica por versão (`sort -V`) para manter no diretório `builds/` exclusivamente a versão atual do build e as 3 versões anteriores mais recentes, removendo versões legadas obsoletas automaticamente.
+
+---
+
 ## 📝 Notas de Migração (Legacy MVP -> Gold)
 
 Se você está acostumado com a versão inicial (`mvp.py`), atente-se às mudanças:
