@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 .venv/
 .hypothesis/
+*.egg-info/
 
 # Cobertura
 .coverage
@@ -18,9 +19,9 @@ coverage.json
 .controle_led.pid
 .controle_led.status
 MagicMock/
-__pycache__/
 *.log
+
 # Debian Packages
 *.deb
-rgb-control_*_all/
+builds/rgb-control_*_all/
 assets/version.txt

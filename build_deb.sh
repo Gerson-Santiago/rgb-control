@@ -71,11 +71,11 @@ cp -r src/rgb_daemon "$DEB_DIR/usr/share/$PKG_NAME/"
 
 # Copy assets
 cp -r assets "$DEB_DIR/usr/share/$PKG_NAME/"
-cp "rgb.sh" "$DEB_DIR/usr/bin/rgb.sh"
+cp "packaging/rgb.sh" "$DEB_DIR/usr/bin/rgb.sh"
 chmod +x "$DEB_DIR/usr/bin/rgb.sh"
 
 # Copy systemd service
-cp "rgb-control-daemon.service" "$DEB_DIR/lib/systemd/system/rgb-control-daemon.service"
+cp "packaging/rgb-control-daemon.service" "$DEB_DIR/lib/systemd/system/rgb-control-daemon.service"
 
 # Create /usr/bin/rgb-control wrapper (mesmo diretório para assets)
 cat <<EOF > "$DEB_DIR/usr/bin/rgb-control"
@@ -115,4 +115,3 @@ for deb in $(ls builds/${PKG_NAME}_*.deb 2>/dev/null | sort -V | head -n -4); do
     rm -f "$deb"
     rm -rf "${deb%.deb}"
 done
-

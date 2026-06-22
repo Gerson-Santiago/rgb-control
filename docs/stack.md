@@ -1,4 +1,4 @@
-# Stack Tecnológica e Padrões de Projeto (v1.1.3)
+# Stack Tecnológica e Padrões de Projeto (v1.1.4)
 
 Este documento serve como a **"Fonte Única de Verdade"** para a infraestrutura técnica do projeto `openrgb`. 
 

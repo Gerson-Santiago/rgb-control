@@ -83,7 +83,7 @@ class TestBrandingAndPackagingConsistency(unittest.TestCase):
 
     def test_systemd_service_packaged(self):
         """Garante que o arquivo de serviço do daemon existe e é empacotado no build_deb.sh."""
-        service_file = os.path.join(self.root_dir, "rgb-control-daemon.service")
+        service_file = os.path.join(self.root_dir, "packaging", "rgb-control-daemon.service")
         self.assertTrue(os.path.exists(service_file), f"Arquivo de serviço ausente: {service_file}")
         
         build_deb_sh = os.path.join(self.root_dir, "build_deb.sh")

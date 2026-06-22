@@ -14,7 +14,7 @@ chmod +x /tmp/mock_bin/sudo
 export PATH="/tmp/mock_bin:$PATH"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && cd ../.. && pwd)"
-RBG="$SCRIPT_DIR/rgb.sh"
+RBG="$SCRIPT_DIR/packaging/rgb.sh"
 
 echo "🧪 Running integration tests for rgb.sh CLI wrapper..."
 
@@ -63,4 +63,3 @@ fi
 echo "✅ Passed: Help flags"
 
 echo "🎯 All bash CLI tests passed."
-

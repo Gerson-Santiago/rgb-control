@@ -62,9 +62,9 @@ def main():
         "flag --version"
     )
     
-    # 4. rgb.sh
+    # 4. packaging/rgb.sh
     check_file_contains(
-        root / "rgb.sh",
+        root / "packaging" / "rgb.sh",
         f'echo "RGB Controller v{version}"',
         "flag --version"
     )
@@ -86,9 +86,9 @@ def main():
         "introdução vX.Y.Z"
     )
     
-    # 6. comandos/atualizar.sh
+    # 6. scripts/atualizar.sh
     check_file_contains(
-        root / "comandos" / "atualizar.sh",
+        root / "scripts" / "atualizar.sh",
         f"rgb-control_{version}-1_all.deb",
         "comando de atualização"
     )

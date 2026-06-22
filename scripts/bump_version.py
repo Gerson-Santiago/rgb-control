@@ -94,8 +94,8 @@ def main():
         main_py_path.write_text(new_content, encoding="utf-8")
         print("  ✅ src/rgb_control/main.py atualizado")
         
-    # 5. rgb.sh
-    rgb_sh_path = root / "rgb.sh"
+    # 5. packaging/rgb.sh
+    rgb_sh_path = root / "packaging" / "rgb.sh"
     if rgb_sh_path.exists():
         content = rgb_sh_path.read_text(encoding="utf-8")
         new_content = content.replace(
@@ -103,7 +103,7 @@ def main():
             f'echo "RGB Controller v{new_version}"'
         )
         rgb_sh_path.write_text(new_content, encoding="utf-8")
-        print("  ✅ rgb.sh atualizado")
+        print("  ✅ packaging/rgb.sh atualizado")
         
     # 6. README.md
     readme_path = root / "README.md"
@@ -122,8 +122,8 @@ def main():
         readme_path.write_text(new_content, encoding="utf-8")
         print("  ✅ README.md atualizado")
         
-    # 7. comandos/atualizar.sh
-    atualizar_path = root / "comandos" / "atualizar.sh"
+    # 7. scripts/atualizar.sh
+    atualizar_path = root / "scripts" / "atualizar.sh"
     if atualizar_path.exists():
         content = atualizar_path.read_text(encoding="utf-8")
         new_content = content.replace(
@@ -131,7 +131,7 @@ def main():
             f"rgb-control_{new_version}-1_all.deb"
         )
         atualizar_path.write_text(new_content, encoding="utf-8")
-        print("  ✅ comandos/atualizar.sh atualizado")
+        print("  ✅ scripts/atualizar.sh atualizado")
         
     print("\n🔍 Executando verificação de sincronia documental...")
     import subprocess

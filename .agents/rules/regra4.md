@@ -16,11 +16,11 @@ Cada compilação gera um arquivo com a nomenclatura `rgb-control_X.Y.Z-R_ARCH.d
 Sempre que a versão for incrementada no `pyproject.toml` (fonte única de verdade), ela deve ser atualizada de forma correspondente nos seguintes locais:
 1.  **`pyproject.toml`**: campo `version = "X.Y.Z"`.
 2.  **`src/rgb_control/main.py`**: flag de CLI `--version` imprimindo `RGB Control vX.Y.Z`.
-3.  **`rgb.sh`**: CLI wrapper imprimindo `RGB Controller vX.Y.Z`.
+3.  **`packaging/rgb.sh`**: CLI wrapper imprimindo `RGB Controller vX.Y.Z`.
 4.  **`README.md`**: badges e links das instruções de instalação apontando para a nova build.
 5.  **`docs/stack.md`**: cabeçalho do documento `(vX.Y.Z)`.
 6.  **`docs/TESTS.md`**: cabeçalho do documento `(vX.Y.Z)`.
-7.  **`comandos/atualizar.sh`**: comando de reinstalação com o novo nome de pacote deb.
+7.  **`scripts/atualizar.sh`**: comando de reinstalação com o novo nome de pacote deb.
 
 ### 3. Trava de Segurança no Pipeline
 *   O script `run_tests.sh` executa automaticamente a auditoria de versão via `python3 scripts/docs_sync_check.py`.
@@ -31,4 +31,3 @@ Para evitar erros manuais de sincronização ao alterar a versão:
 *   **Ação**: Execute o script de automação passando a nova versão como parâmetro.
 *   **Comando**: `python3 scripts/bump_version.py X.Y.Z` (onde `X.Y.Z` é a nova versão pretendida).
 *   **Comportamento**: O script atualiza todos os 7 locais identificados acima e roda a auditoria `docs_sync_check.py` automaticamente para garantir a conformidade dos documentos.
-
