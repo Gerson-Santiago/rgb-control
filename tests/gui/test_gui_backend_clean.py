@@ -76,14 +76,14 @@ class TestGuiBackend(unittest.TestCase):
     def test_apply_color_direct_fallback_pkexec(self, mock_popen, mock_run):
         # Configura openrgb primário simulando bloqueio usb/udev (returncode 1)
         mock_run.return_value.returncode = 1
-        self.backend.apply_color("000000", "Preto")
+        self.backend.apply_color("FF0000", "Vermelho")
         
         # Popen DEVE ter sido acionado pelo fallback
         mock_popen.assert_called()
         args = mock_popen.call_args[0][0]
         self.assertIn("pkexec", args)
         self.assertIn("openrgb", args)
-        self.assertIn("000000", args)
+        self.assertIn("FF0000", args)
 
     @patch('os.path.exists', return_value=True)
     @patch('builtins.open', mock_open(read_data="line1\nline2\nline3\n"))

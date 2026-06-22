@@ -61,8 +61,15 @@ apply_color() {
         return 1
     fi
     
-    if openrgb --device $DEVICE_ID --mode static --color "$color" >/dev/null 2>&1 || \
-       sudo openrgb --device $DEVICE_ID --mode static --color "$color" >/dev/null 2>&1; then
+    local mode="static"
+    local color_args=("--color" "$color")
+    if [[ "$color" == "000000" ]]; then
+        mode="off"
+        color_args=()
+    fi
+    
+    if openrgb --device $DEVICE_ID --mode "$mode" "${color_args[@]}" >/dev/null 2>&1 || \
+       sudo openrgb --device $DEVICE_ID --mode "$mode" "${color_args[@]}" >/dev/null 2>&1; then
         echo -e "\033[32m✅ ${name:-#$color}\033[0m"
         echo "#$color" > /tmp/.controle_led.color
     else
@@ -109,7 +116,7 @@ run_menu() {
 
 # Lógica Principal
 if [[ "$1" == "-v" || "$1" == "--version" ]]; then
-    echo "RGB Controller v1.1.4"
+    echo "RGB Controller v1.1.5"
     exit 0
 fi
 

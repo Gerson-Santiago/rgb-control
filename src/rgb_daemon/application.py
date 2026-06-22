@@ -41,6 +41,11 @@ class DaemonUseCases:
                 except Exception:
                     log.warning("⚠️ Grab falhou")
             self.storage.save_status("on")
+            
+            # Aplica a cor atual ao ativar
+            color = self.state.get_current_color()
+            self.applicator.apply(color.hex_code, color.name)
+            
             self.osd.notify(
                 "🟢  MODO LED",
                 "ATIVO — use ← → ou Vol± para cores",
@@ -56,6 +61,10 @@ class DaemonUseCases:
                 except Exception:
                     pass
             self.storage.save_status("off")
+            
+            # Desliga fisicamente os LEDs ao desativar
+            self.applicator.apply("000000", "Desligar")
+            
             self.osd.notify(
                 "⚫  MODO LED",
                 "MODO LED — Desativado",

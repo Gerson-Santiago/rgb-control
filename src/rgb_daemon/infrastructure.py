@@ -63,27 +63,29 @@ class OpenRGBColorApplicator(ColorApplicator):
         Tenta via SDK server local primeiro, e faz fallback para acesso direto se falhar.
         """
         color = hex_code.lstrip("#")
-        log.info("Tentando aplicar cor %s (#%s) no dispositivo %s", name, color, self.device_id)
+        mode = "off" if color == "000000" else "static"
+        color_args = [] if color == "000000" else ["--color", color]
+        log.info("Tentando aplicar cor %s (#%s) no dispositivo %s (modo %s)", name, color, self.device_id, mode)
         
         # 1. Tenta via servidor SDK (sem --noautoconnect)
-        cmd_sdk = ["openrgb", "--device", str(self.device_id), "--mode", "static", "--color", color]
+        cmd_sdk = ["openrgb", "--device", str(self.device_id), "--mode", mode] + color_args
         try:
             log.info("Executando (via SDK Server): %s", " ".join(cmd_sdk))
             res = subprocess.run(cmd_sdk, capture_output=True, text=True, timeout=5)
             if res.returncode == 0:
-                log.info("Cor #%s aplicada com sucesso via SDK Server (stdout: %s)", color, res.stdout.strip() if res.stdout else "nenhuma saída")
+                log.info("Cor #%s aplicada com sucesso via SDK Server (modo %s)", color, mode)
                 return True
             log.warning("Conexão via SDK Server falhou (código de saída %d): %s. Tentando acesso direto...", res.returncode, res.stderr.strip() if res.stderr else "sem saída")
         except Exception as e:
             log.warning("Erro ao tentar conectar via SDK Server: %s. Tentando acesso direto...", e)
 
         # 2. Fallback: Acesso direto ao hardware (com --noautoconnect)
-        cmd_direct = ["openrgb", "--noautoconnect", "--device", str(self.device_id), "--mode", "static", "--color", color]
+        cmd_direct = ["openrgb", "--noautoconnect", "--device", str(self.device_id), "--mode", mode] + color_args
         try:
             log.info("Executando (Acesso Direto): %s", " ".join(cmd_direct))
             res = subprocess.run(cmd_direct, capture_output=True, text=True, timeout=5)
             if res.returncode == 0:
-                log.info("Cor #%s aplicada com sucesso via Acesso Direto (stdout: %s)", color, res.stdout.strip() if res.stdout else "nenhuma saída")
+                log.info("Cor #%s aplicada com sucesso via Acesso Direto (modo %s)", color, mode)
                 return True
             log.error("OpenRGB falhou no acesso direto (código de saída %d). Erro: %s", res.returncode, res.stderr.strip() if res.stderr else "sem mensagem de erro")
             return False

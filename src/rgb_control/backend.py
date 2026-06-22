@@ -61,19 +61,21 @@ class Backend:
         Tenta via SDK server local primeiro, e faz fallback para acesso direto (com e sem pkexec).
         """
         color = hex_val.lstrip("#")
+        mode = "off" if color == "000000" else "static"
+        color_args = [] if color == "000000" else ["--color", color]
         try:
             # 1. Tenta rodar normal via servidor local (sem --noautoconnect)
-            cmd = ["openrgb", "--device", "0", "--mode", "static", "--color", color]
+            cmd = ["openrgb", "--device", "0", "--mode", mode] + color_args
             res = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
             # 2. Se falhar, tenta com --noautoconnect (acesso direto local como usuário)
             if res.returncode != 0:
-                cmd = ["openrgb", "--noautoconnect", "--device", "0", "--mode", "static", "--color", color]
+                cmd = ["openrgb", "--noautoconnect", "--device", "0", "--mode", mode] + color_args
                 res = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 
             # 3. Se ainda falhar, tenta via pkexec (acesso root direto local)
             if res.returncode != 0:
-                pk_cmd = ["pkexec", "openrgb", "--noautoconnect", "--device", "0", "--mode", "static", "--color", color]
+                pk_cmd = ["pkexec", "openrgb", "--noautoconnect", "--device", "0", "--mode", mode] + color_args
                 subprocess.Popen(pk_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception as e:
             print(f"Erro ao aplicar cor na GUI: {e}")

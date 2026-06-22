@@ -111,7 +111,7 @@ class RgbControlApp(Adw.Application): # type: ignore[misc]
 def main() -> int:
     import sys
     if "--version" in sys.argv:
-        print("RGB Control v1.1.4")
+        print("RGB Control v1.1.5")
         return 0
     logger.info("Iniciando RGB Control App...")
     app = RgbControlApp()
