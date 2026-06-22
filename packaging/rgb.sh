@@ -4,7 +4,6 @@
 # OpenRGB Unified Controller
 # ==============================================================================
 
-PROJECT_DIR="/home/sant/Área de trabalho/PROJETOS/openrgb"
 COLOR_GUM="#00f2ea"
 DEVICE_ID=0
 
@@ -73,8 +72,7 @@ apply_color() {
         echo -e "\033[32m✅ ${name:-#$color}\033[0m"
         echo "#$color" > /tmp/.controle_led.color
     else
-        echo -e "\033[31m❌ Falha ao aplicar cor (verifique o device id ou openrgb-daemon)\033[0m"
-        echo -e "\033[31m❌ Falha ao aplicar cor.\033[0m"
+        echo -e "\033[31m❌ Falha ao aplicar cor (verifique o device id ou openrgb-daemon).\033[0m"
     fi
 }
 
@@ -116,7 +114,7 @@ run_menu() {
 
 # Lógica Principal
 if [[ "$1" == "-v" || "$1" == "--version" ]]; then
-    echo "RGB Controller v1.1.6"
+    echo "RGB Controller v1.1.7"
     exit 0
 fi
 
