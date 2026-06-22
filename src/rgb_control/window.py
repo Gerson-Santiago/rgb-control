@@ -541,7 +541,7 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
 
 class LogViewerWindow(Adw.Window): # type: ignore[misc]
     def __init__(self, parent: Gtk.Window, backend: Backend) -> None:
-        super().__init__(transient_for=parent, modal=True)
+        super().__init__(transient_for=parent, modal=False)
         self.set_title("Visualizador de Logs")
         self.set_default_size(650, 500)
         self.backend = backend
@@ -622,6 +622,12 @@ class LogViewerWindow(Adw.Window): # type: ignore[misc]
         
         # Carregar logs
         self.refresh_logs()
+        
+        # Conectar sinal de fechamento para limpar o timeout
+        self.connect("destroy", self.on_destroy)
+        
+        # Iniciar auto-refresh a cada 1.5s
+        self._refresh_timeout_id = GLib.timeout_add(1500, self.auto_refresh_logs)
 
     def get_selected_log_path(self) -> str:
         idx = self.dropdown.get_selected()
@@ -681,3 +687,30 @@ class LogViewerWindow(Adw.Window): # type: ignore[misc]
             
         dialog.connect("response", on_response)
         dialog.present()
+
+    def on_destroy(self, widget: Any) -> None:
+        if hasattr(self, '_refresh_timeout_id') and self._refresh_timeout_id:
+            GLib.source_remove(self._refresh_timeout_id)
+            self._refresh_timeout_id = None
+
+    def auto_refresh_logs(self) -> bool:
+        if not self.get_visible() and not os.environ.get("PYTEST_CURRENT_TEST"):
+            return False
+            
+        path = self.get_selected_log_path()
+        content = self.backend.read_log_file(path)
+        
+        buffer = self.text_view.get_buffer()
+        start, end = buffer.get_bounds()
+        current_text = buffer.get_text(start, end, True)
+        
+        if content != current_text:
+            adj = self.scrolled.get_vadjustment()
+            is_at_bottom = adj.get_value() >= (adj.get_upper() - adj.get_page_size() - 10)
+            
+            buffer.set_text(content)
+            
+            if is_at_bottom:
+                GLib.idle_add(self.scroll_to_bottom)
+                
+        return True

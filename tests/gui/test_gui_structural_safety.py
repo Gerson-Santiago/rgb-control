@@ -125,3 +125,33 @@ class TestLogViewerWindow(unittest.TestCase):
         mock_dialog_cls.assert_called_once()
         mock_dialog.present.assert_called_once()
 
+    def test_on_destroy(self):
+        """Valida que o temporizador do auto-refresh é removido no fechamento da janela."""
+        self.log_win._refresh_timeout_id = 999
+        with patch('gi.repository.GLib.source_remove') as mock_remove:
+            self.log_win.on_destroy(None)
+            mock_remove.assert_called_once_with(999)
+            self.assertIsNone(self.log_win._refresh_timeout_id)
+
+    @patch('gi.repository.GLib.idle_add')
+    def test_auto_refresh_logs_no_change(self, mock_idle_add):
+        """Verifica que o auto-refresh não atualiza o TextView se o conteúdo do log for idêntico."""
+        buffer = self.log_win.text_view.get_buffer()
+        buffer.set_text("mock log line 1\nmock log line 2")
+        
+        res = self.log_win.auto_refresh_logs()
+        self.assertTrue(res)
+        mock_idle_add.assert_not_called()
+
+    @patch('gi.repository.GLib.idle_add')
+    def test_auto_refresh_logs_with_change(self, mock_idle_add):
+        """Valida que o auto-refresh atualiza o buffer caso o conteúdo do log mude."""
+        buffer = self.log_win.text_view.get_buffer()
+        buffer.set_text("old data")
+        
+        res = self.log_win.auto_refresh_logs()
+        self.assertTrue(res)
+        
+        start, end = buffer.get_bounds()
+        self.assertEqual(buffer.get_text(start, end, True), "mock log line 1\nmock log line 2")
+
