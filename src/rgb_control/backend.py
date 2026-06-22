@@ -58,15 +58,20 @@ class Backend:
     def apply_color(self, hex_val: str, name: str) -> None:
         """
         Aplica a cor via openrgb nativamente.
-        Usa --noautoconnect para evitar o erro de timeout do SDK.
+        Tenta via SDK server local primeiro, e faz fallback para acesso direto (com e sem pkexec).
         """
         color = hex_val.lstrip("#")
         try:
-            # Tenta rodar sem sudo primeiro, com --noautoconnect
-            cmd = ["openrgb", "--noautoconnect", "--device", "0", "--mode", "static", "--color", color]
+            # 1. Tenta rodar normal via servidor local (sem --noautoconnect)
+            cmd = ["openrgb", "--device", "0", "--mode", "static", "--color", color]
             res = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
-            # Se falhar (código de saída não for 0), tenta via pkexec
+            # 2. Se falhar, tenta com --noautoconnect (acesso direto local como usuário)
+            if res.returncode != 0:
+                cmd = ["openrgb", "--noautoconnect", "--device", "0", "--mode", "static", "--color", color]
+                res = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+            # 3. Se ainda falhar, tenta via pkexec (acesso root direto local)
             if res.returncode != 0:
                 pk_cmd = ["pkexec", "openrgb", "--noautoconnect", "--device", "0", "--mode", "static", "--color", color]
                 subprocess.Popen(pk_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

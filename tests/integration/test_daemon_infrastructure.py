@@ -30,21 +30,36 @@ class TestDaemonInfrastructure(unittest.TestCase):
         self.assertTrue(result)
         args = mock_run.call_args[0][0]
         self.assertIn("openrgb", args)
-        self.assertIn("--noautoconnect", args)
+        self.assertNotIn("--noautoconnect", args)
         self.assertIn("0", args)
         self.assertIn("FF0000", args)
 
     @patch('subprocess.run')
+    def test_openrgb_applicator_fallback_success(self, mock_run):
+        applicator = OpenRGBColorApplicator(device_id=0, user="testuser")
+        mock_run.side_effect = [
+            MagicMock(returncode=1, stderr="Server down"),
+            MagicMock(returncode=0, stdout="Direct success")
+        ]
+        
+        result = applicator.apply("FF0000", "Vermelho")
+        self.assertTrue(result)
+        self.assertEqual(mock_run.call_count, 2)
+        
+        args_direct = mock_run.call_args_list[1][0][0]
+        self.assertIn("--noautoconnect", args_direct)
+
+    @patch('subprocess.run')
     def test_openrgb_applicator_failure_logging(self, mock_run):
         applicator = OpenRGBColorApplicator(device_id=0, user="testuser")
-        # Simula falha do comando openrgb
+        # Simula falha em ambas as tentativas
         mock_run.return_value.returncode = 1
         mock_run.return_value.stderr = "Error: Device not found"
         
         result = applicator.apply("FF0000", "Vermelho")
         
         self.assertFalse(result)
-        self.assertEqual(mock_run.call_count, 1)
+        self.assertEqual(mock_run.call_count, 2)
 
     def test_file_status_storage(self):
         mock_status = MagicMock()
