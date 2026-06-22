@@ -63,24 +63,23 @@ class OpenRGBColorApplicator(ColorApplicator):
         Usa --noautoconnect para evitar falhas de conexão com o SDK server inexistente.
         """
         color = hex_code.lstrip("#")
+        log.info("Tentando aplicar cor %s (#%s) no dispositivo %s", name, color, self.device_id)
         try:
             # --noautoconnect evita o erro "Connection attempt failed" se não houver servidor
             cmd = ["openrgb", "--noautoconnect", "--device", str(self.device_id), "--mode", "static", "--color", color]
-            log.debug("Executando: %s", " ".join(cmd))
+            log.info("Executando: %s", " ".join(cmd))
             
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             
             if res.returncode == 0:
+                log.info("Cor #%s aplicada com sucesso ao dispositivo %s (stdout: %s)", color, self.device_id, res.stdout.strip() if res.stdout else "nenhuma saída")
                 return True
             
-            # Se falhou, logamos o erro para diagnóstico
-            log.warning("OpenRGB falhou (code %d): %s", res.returncode, res.stderr.strip())
-            
-            # Tentativa de fallback (alguns sistemas exigem sudo explícito mesmo para root em certos caminhos)
-            # Mas geralmente, se o daemon é root, apenas rodar direto já é o ideal.
+            # Se falhou, logamos o erro para diagnóstico em nível ERROR
+            log.error("OpenRGB falhou (código de saída %d). Erro: %s", res.returncode, res.stderr.strip() if res.stderr else "sem mensagem de erro")
             return False
         except Exception as e:
-            log.error("Erro fatal ao aplicar cor: %s", e)
+            log.error("Erro fatal ao executar openrgb: %s", e)
             return False
 
 class FileStatusStorage(StatusStorage):

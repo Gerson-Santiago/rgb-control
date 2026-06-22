@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from gi.repository import Gtk, Adw, Gio
-from rgb_control.window import MainWindow
+from rgb_control.window import MainWindow, LogViewerWindow
 
 class TestMainWindowStructureSafety(unittest.TestCase):
     """
@@ -38,6 +38,7 @@ class TestMainWindowStructureSafety(unittest.TestCase):
         self.assertIsInstance(self.window.row_controller, Adw.ActionRow)
         self.assertIsInstance(self.window.label_controller_status, Gtk.Label)
         self.assertIsInstance(self.window.fan_spinner, Gtk.Overlay)
+        self.assertIsInstance(self.window.btn_logs, Gtk.Button)
 
     def test_fan_cooler_rendering_layers(self):
         """Verifica se a ventoinha dinâmica possui as camadas de glow necessárias."""
@@ -63,3 +64,64 @@ class TestMainWindowStructureSafety(unittest.TestCase):
         with patch('rgb_control.window.Backend') as mock_backend_cls:
              mock_backend_cls.return_value.get_current_color.return_value = "#000000"
              MainWindow(application=app)
+
+
+class TestLogViewerWindow(unittest.TestCase):
+    """Testes de unidade para a tela modal LogViewerWindow."""
+
+    def setUp(self):
+        self.app = Adw.Application(application_id=f"com.test.logviewer.{id(self)}", flags=Gio.ApplicationFlags.FLAGS_NONE)
+        self.mock_backend = MagicMock()
+        self.mock_backend.get_current_color.return_value = "#FF0000"
+        self.mock_backend.get_daemon_log_path.return_value = "/tmp/mock-daemon.log"
+        self.mock_backend.get_gui_log_path.return_value = "/tmp/mock-gui.log"
+        self.mock_backend.read_log_file.return_value = "mock log line 1\nmock log line 2"
+        
+        # Mocks para o GTK rodar sem DISPLAY em headless
+        with patch('rgb_control.window.get_asset_path', return_value=""):
+             self.main_win = MainWindow(application=self.app)
+             self.log_win = LogViewerWindow(parent=self.main_win, backend=self.mock_backend)
+
+    def test_log_viewer_widgets(self):
+        """Verifica a inicialização e os tipos dos widgets do LogViewerWindow."""
+        self.assertIsInstance(self.log_win.dropdown, Gtk.DropDown)
+        self.assertIsInstance(self.log_win.btn_refresh, Gtk.Button)
+        self.assertIsInstance(self.log_win.btn_copy, Gtk.Button)
+        self.assertIsInstance(self.log_win.btn_clear, Gtk.Button)
+        self.assertIsInstance(self.log_win.text_view, Gtk.TextView)
+
+    def test_get_selected_log_path(self):
+        """Valida que o caminho do log correto é retornado de acordo com o DropDown."""
+        # Selecionado idx 0 (Daemon)
+        self.log_win.dropdown.set_selected(0)
+        self.assertEqual(self.log_win.get_selected_log_path(), "/tmp/mock-daemon.log")
+        
+        # Selecionado idx 1 (GUI)
+        self.log_win.dropdown.set_selected(1)
+        self.assertEqual(self.log_win.get_selected_log_path(), "/tmp/mock-gui.log")
+
+    def test_refresh_logs(self):
+        """Verifica se os logs são carregados no buffer do TextView."""
+        self.log_win.refresh_logs()
+        self.mock_backend.read_log_file.assert_called()
+        buffer = self.log_win.text_view.get_buffer()
+        start, end = buffer.get_bounds()
+        self.assertIn("mock log line 1", buffer.get_text(start, end, True))
+
+    @patch('gi.repository.Gdk.Display.get_default')
+    def test_on_copy_clicked(self, mock_get_default):
+        """Valida que os logs são salvos na área de transferência ao clicar em copiar."""
+        mock_clipboard = MagicMock()
+        mock_get_default.return_value.get_clipboard.return_value = mock_clipboard
+        
+        self.log_win.on_copy_clicked(self.log_win.btn_copy)
+        mock_clipboard.set_text.assert_called_with("mock log line 1\nmock log line 2")
+
+    @patch('gi.repository.Adw.MessageDialog')
+    def test_on_clear_clicked(self, mock_dialog_cls):
+        """Garante que a confirmação de limpeza dos logs é disparada."""
+        mock_dialog = mock_dialog_cls.return_value
+        self.log_win.on_clear_clicked(self.log_win.btn_clear)
+        mock_dialog_cls.assert_called_once()
+        mock_dialog.present.assert_called_once()
+

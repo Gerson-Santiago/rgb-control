@@ -69,6 +69,13 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         menu.append_section(None, theme_section)
         menu_button.set_menu_model(menu)
         self.header.pack_end(menu_button)
+        
+        # Botão de visualização de logs (ícone de terminal)
+        self.btn_logs = Gtk.Button()
+        self.btn_logs.set_icon_name("utilities-terminal-symbolic")
+        self.btn_logs.set_tooltip_text("Visualizar logs do sistema")
+        self.btn_logs.connect("clicked", self.on_view_logs_clicked)
+        self.header.pack_end(self.btn_logs)
         self.toolbar_view.add_top_bar(self.header)
         
         # 3. Conteúdo Principal com Clamp (Centralização Responsiva)
@@ -525,3 +532,152 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
             self._updating_ui = False
             
         return True
+
+    def on_view_logs_clicked(self, button: Gtk.Button) -> None:
+        """Abre o modal visualizador de logs"""
+        log_window = LogViewerWindow(self, self.backend)
+        log_window.present()
+
+
+class LogViewerWindow(Adw.Window): # type: ignore[misc]
+    def __init__(self, parent: Gtk.Window, backend: Backend) -> None:
+        super().__init__(transient_for=parent, modal=True)
+        self.set_title("Visualizador de Logs")
+        self.set_default_size(650, 500)
+        self.backend = backend
+        
+        # Conteúdo principal
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.set_content(box)
+        
+        # HeaderBar do modal
+        header = Adw.HeaderBar()
+        header.set_show_back_button(False)
+        box.append(header)
+        
+        # Barra de ferramentas para controles
+        control_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        control_bar.set_margin_start(12)
+        control_bar.set_margin_end(12)
+        control_bar.set_margin_top(8)
+        control_bar.set_margin_bottom(8)
+        
+        # DropDown para seleção de logs
+        self.dropdown = Gtk.DropDown.new_from_strings([
+            "Log do Daemon (Background)",
+            "Log do Aplicativo (GUI)"
+        ])
+        self.dropdown.connect("notify::selected", self.on_log_type_changed)
+        control_bar.append(self.dropdown)
+        
+        # Espaçador
+        spacer = Gtk.Box()
+        spacer.set_hexpand(True)
+        control_bar.append(spacer)
+        
+        # Botão Atualizar
+        self.btn_refresh = Gtk.Button()
+        self.btn_refresh.set_icon_name("view-refresh-symbolic")
+        self.btn_refresh.set_tooltip_text("Atualizar logs")
+        self.btn_refresh.connect("clicked", lambda b: self.refresh_logs())
+        control_bar.append(self.btn_refresh)
+        
+        # Botão Copiar
+        self.btn_copy = Gtk.Button()
+        self.btn_copy.set_icon_name("edit-copy-symbolic")
+        self.btn_copy.set_tooltip_text("Copiar para a área de transferência")
+        self.btn_copy.connect("clicked", self.on_copy_clicked)
+        control_bar.append(self.btn_copy)
+        
+        # Botão Limpar
+        self.btn_clear = Gtk.Button()
+        self.btn_clear.set_icon_name("user-trash-symbolic")
+        self.btn_clear.set_tooltip_text("Limpar logs do arquivo")
+        self.btn_clear.add_css_class("destructive-action")
+        self.btn_clear.connect("clicked", self.on_clear_clicked)
+        control_bar.append(self.btn_clear)
+        
+        box.append(control_bar)
+        
+        # TextView para exibição
+        self.scrolled = Gtk.ScrolledWindow()
+        self.scrolled.set_vexpand(True)
+        self.scrolled.set_hexpand(True)
+        self.scrolled.set_margin_start(12)
+        self.scrolled.set_margin_end(12)
+        self.scrolled.set_margin_bottom(12)
+        self.scrolled.add_css_class("card")
+        
+        self.text_view = Gtk.TextView()
+        self.text_view.set_editable(False)
+        self.text_view.set_monospace(True)
+        self.text_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        self.text_view.set_margin_top(8)
+        self.text_view.set_margin_bottom(8)
+        self.text_view.set_margin_start(8)
+        self.text_view.set_margin_end(8)
+        
+        self.scrolled.set_child(self.text_view)
+        box.append(self.scrolled)
+        
+        # Carregar logs
+        self.refresh_logs()
+
+    def get_selected_log_path(self) -> str:
+        idx = self.dropdown.get_selected()
+        if idx == 0:
+            return self.backend.get_daemon_log_path()
+        else:
+            return self.backend.get_gui_log_path()
+
+    def refresh_logs(self) -> None:
+        path = self.get_selected_log_path()
+        content = self.backend.read_log_file(path)
+        
+        buffer = self.text_view.get_buffer()
+        buffer.set_text(content)
+        
+        # Rolar para o fim após o GTK renderizar
+        GLib.idle_add(self.scroll_to_bottom)
+
+    def scroll_to_bottom(self) -> bool:
+        adj = self.scrolled.get_vadjustment()
+        adj.set_value(adj.get_upper() - adj.get_page_size())
+        return False
+
+    def on_log_type_changed(self, dropdown: Gtk.DropDown, param: Any) -> None:
+        self.refresh_logs()
+
+    def on_copy_clicked(self, button: Gtk.Button) -> None:
+        buffer = self.text_view.get_buffer()
+        start, end = buffer.get_bounds()
+        text = buffer.get_text(start, end, True)
+        
+        clipboard = Gdk.Display.get_default().get_clipboard()
+        clipboard.set_text(text)
+        
+        # Feedback visual
+        button.set_icon_name("object-select-symbolic")
+        GLib.timeout_add(1000, lambda: button.set_icon_name("edit-copy-symbolic") or False)
+
+    def on_clear_clicked(self, button: Gtk.Button) -> None:
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading="Limpar Logs",
+            body="Tem certeza que deseja apagar todo o conteúdo deste arquivo de log? Esta operação não pode ser desfeita."
+        )
+        dialog.add_response("cancel", "Cancelar")
+        dialog.add_response("clear", "Limpar")
+        dialog.set_response_appearance("clear", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.set_close_attempt_response_id("cancel")
+        
+        def on_response(d: Adw.MessageDialog, response_id: str) -> None:
+            if response_id == "clear":
+                path = self.get_selected_log_path()
+                self.backend.clear_log_file(path)
+                self.refresh_logs()
+            d.destroy()
+            
+        dialog.connect("response", on_response)
+        dialog.present()

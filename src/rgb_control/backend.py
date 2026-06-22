@@ -126,3 +126,35 @@ class Backend:
         except Exception:
             pass
         return False
+
+    def get_daemon_log_path(self) -> str:
+        if os.path.exists("/var/log/rgb-control-daemon.log"):
+            return "/var/log/rgb-control-daemon.log"
+        if os.path.exists("/tmp/rgb-control-daemon.log"):
+            return "/tmp/rgb-control-daemon.log"
+        return os.path.expanduser("~/.cache/rgb-control/daemon.log")
+
+    def get_gui_log_path(self) -> str:
+        return os.path.expanduser("~/.cache/rgb-control/app.log")
+
+    def read_log_file(self, path: str) -> str:
+        """Retorna todo o conteúdo do arquivo de log"""
+        if not os.path.exists(path):
+            return f"Arquivo de log não encontrado em: {path}"
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception as e:
+            return f"Erro ao ler log: {e}"
+
+    def clear_log_file(self, path: str) -> bool:
+        """Limpa o conteúdo do arquivo de log"""
+        if not os.path.exists(path):
+            return False
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("")
+            return True
+        except Exception:
+            return False
+

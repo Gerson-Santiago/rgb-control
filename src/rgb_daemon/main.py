@@ -19,10 +19,28 @@ from rgb_daemon.infrastructure import NotifyOSD, OpenRGBColorApplicator, FileSta
 BASE_DIR = Path(__file__).parent.parent.parent
 PID_FILE = Path("/tmp/.controle_led.pid")
 STATUS_FILE = Path("/tmp/.controle_led.status")
-LOG_DIR = Path.home() / ".cache" / "rgb-control"
-LOG_FILE = LOG_DIR / "daemon.log"
+LOG_FILE = Path("/var/log/rgb-control-daemon.log")
 
-LOG_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    # Garante que o arquivo de log exista e seja gravável por todos (incluindo o usuário da GUI)
+    if not LOG_FILE.exists():
+        LOG_FILE.touch()
+    os.chmod(LOG_FILE, 0o666)
+except Exception:
+    # Se falhar (ex: rodando testes como usuário não-root), tenta no /tmp
+    LOG_FILE = Path("/tmp/rgb-control-daemon.log")
+    try:
+        if not LOG_FILE.exists():
+            LOG_FILE.touch()
+        os.chmod(LOG_FILE, 0o666)
+    except Exception:
+        # Último recurso
+        LOG_FILE = Path.home() / ".cache" / "rgb-control" / "daemon.log"
+        try:
+            LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)s  %(message)s",
@@ -176,8 +194,14 @@ def main() -> None:
         asyncio.run(run_daemon(dev_tecl, dev_cons, use_cases))
     except KeyboardInterrupt: pass
     finally:
-        PID_FILE.unlink(missing_ok=True)
-        STATUS_FILE.unlink(missing_ok=True)
+        try:
+            PID_FILE.unlink(missing_ok=True)
+        except Exception:
+            pass
+        try:
+            STATUS_FILE.unlink(missing_ok=True)
+        except Exception:
+            pass
         log.info("⏹️  Daemon encerrado.")
 
 if __name__ == "__main__":

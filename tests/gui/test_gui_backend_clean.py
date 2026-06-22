@@ -105,5 +105,57 @@ class TestGuiBackend(unittest.TestCase):
         logs = self.backend.get_daemon_logs()
         self.assertEqual(logs, ["Arquivo de log não encontrado."])
 
+    @patch('os.path.exists')
+    def test_get_daemon_log_path(self, mock_exists):
+        # Caso 1: existe em /var/log
+        mock_exists.side_effect = lambda p: p == "/var/log/rgb-control-daemon.log"
+        self.assertEqual(self.backend.get_daemon_log_path(), "/var/log/rgb-control-daemon.log")
+        
+        # Caso 2: existe apenas no /tmp
+        mock_exists.side_effect = lambda p: p == "/tmp/rgb-control-daemon.log"
+        self.assertEqual(self.backend.get_daemon_log_path(), "/tmp/rgb-control-daemon.log")
+        
+        # Caso 3: nenhum existe
+        mock_exists.side_effect = lambda p: False
+        self.assertTrue(self.backend.get_daemon_log_path().endswith("daemon.log"))
+
+    def test_get_gui_log_path(self):
+        self.assertTrue(self.backend.get_gui_log_path().endswith("app.log"))
+
+    @patch('os.path.exists', return_value=True)
+    def test_read_log_file_success(self, mock_exists):
+        with patch('builtins.open', mock_open(read_data="test log data")):
+            content = self.backend.read_log_file("/some/path.log")
+            self.assertEqual(content, "test log data")
+
+    @patch('os.path.exists', return_value=False)
+    def test_read_log_file_not_found(self, mock_exists):
+        content = self.backend.read_log_file("/some/path.log")
+        self.assertIn("Arquivo de log não encontrado", content)
+
+    @patch('os.path.exists', return_value=True)
+    def test_read_log_file_error(self, mock_exists):
+        with patch('builtins.open', side_effect=Exception("read error")):
+            content = self.backend.read_log_file("/some/path.log")
+            self.assertIn("Erro ao ler log", content)
+
+    @patch('os.path.exists', return_value=True)
+    @patch('builtins.open', new_callable=mock_open)
+    def test_clear_log_file_success(self, mock_file, mock_exists):
+        success = self.backend.clear_log_file("/some/path.log")
+        self.assertTrue(success)
+        mock_file().write.assert_called_with("")
+
+    @patch('os.path.exists', return_value=False)
+    def test_clear_log_file_not_found(self, mock_exists):
+        success = self.backend.clear_log_file("/some/path.log")
+        self.assertFalse(success)
+
+    @patch('os.path.exists', return_value=True)
+    def test_clear_log_file_error(self, mock_exists):
+        with patch('builtins.open', side_effect=Exception("write error")):
+            success = self.backend.clear_log_file("/some/path.log")
+            self.assertFalse(success)
+
 if __name__ == '__main__':
     unittest.main()
