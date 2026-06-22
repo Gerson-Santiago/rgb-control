@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Validador de Sincronia Documental - Gold Standard QA
-Verifica se docs/stack.md reflete fielmente o pyproject.toml.
+Validador de Sincronia Documental e Versionamento - Gold Standard QA
+Verifica se todos os arquivos com versionamento declaram a mesma versão do pyproject.toml.
 """
 import sys
 import os
@@ -12,51 +12,88 @@ from pathlib import Path
 def get_root() -> Path:
     return Path(__file__).parent.parent
 
-def check_version(toml_data: dict, stack_content: str):
-    version = toml_data.get("project", {}).get("version")
-    if not version:
-        print("❌ Versão não encontrada no pyproject.toml")
+def check_file_contains(path: Path, expected: str, desc: str):
+    if not path.exists():
+        print(f"❌ Arquivo não encontrado: {path} ({desc})")
         sys.exit(1)
-    
-    # Procura por (vX.X.X) ou vX.X.X no stack.md (primeira linha ou cabeçalho)
-    match = re.search(r"v(?P<version>\d+\.\d+\.\d+)", stack_content)
-    if not match:
-        print("❌ Versão não encontrada no docs/stack.md")
+        
+    content = path.read_text(encoding="utf-8")
+    if expected not in content:
+        print(f"❌ Descompasso em {path.name} ({desc}): esperava encontrar '{expected}'")
         sys.exit(1)
-    
-    stack_version = match.group("version")
-    if stack_version != version:
-        print(f"❌ Descompasso de Versão: pyproject({version}) != stack.md({stack_version})")
-        sys.exit(1)
-    
-    print(f"✅ Versões Sincronizadas: v{version}")
-
-def check_dependencies(toml_data: dict, stack_content: str):
-    # Opcional: Validar se deps de runtime estão no stack.md
-    # Como as deps no .deb são listadas manualmente no build_deb.sh,
-    # aqui buscamos validações de integridade básica.
-    pass
+    print(f"  ✅ {path.name} ({desc}) OK!")
 
 def main():
     root = get_root()
     pyproject_path = root / "pyproject.toml"
-    stack_path = root / "docs" / "stack.md"
-
-    if not pyproject_path.exists() or not stack_path.exists():
-        print("❌ Arquivos de configuração não encontrados.")
+    
+    if not pyproject_path.exists():
+        print("❌ pyproject.toml não encontrado.")
         sys.exit(1)
-
+        
     with open(pyproject_path, "rb") as f:
         toml_data = tomllib.load(f)
-
-    with open(stack_path, "r", encoding="utf-8") as f:
-        stack_content = f.read()
-
-    print("🔍 Auditando sincronia documental...")
-    check_version(toml_data, stack_content)
-    # check_dependencies(toml_data, stack_content)
+        
+    version = toml_data.get("project", {}).get("version")
+    if not version:
+        print("❌ Versão não encontrada no pyproject.toml")
+        sys.exit(1)
+        
+    print(f"🔍 Auditando sincronia de versão para v{version}...")
     
-    print("🚀 Sincronia de documentação OK!")
+    # 1. docs/stack.md
+    check_file_contains(
+        root / "docs" / "stack.md",
+        f"# Stack Tecnológica e Padrões de Projeto (v{version})",
+        "título principal"
+    )
+    
+    # 2. docs/TESTS.md
+    check_file_contains(
+        root / "docs" / "TESTS.md",
+        f"# Arquitetura de QA Gold Standard (v{version})",
+        "título principal"
+    )
+    
+    # 3. src/rgb_control/main.py
+    check_file_contains(
+        root / "src" / "rgb_control" / "main.py",
+        f'print("RGB Control v{version}")',
+        "flag --version"
+    )
+    
+    # 4. rgb.sh
+    check_file_contains(
+        root / "rgb.sh",
+        f'echo "RGB Controller v{version}"',
+        "flag --version"
+    )
+    
+    # 5. README.md
+    check_file_contains(
+        root / "README.md",
+        f"badge/version-{version}-blue",
+        "badge de versão"
+    )
+    check_file_contains(
+        root / "README.md",
+        f"rgb-control_{version}-1_all.deb",
+        "comando de instalação"
+    )
+    check_file_contains(
+        root / "README.md",
+        f"Solução profissional (v{version})",
+        "introdução vX.Y.Z"
+    )
+    
+    # 6. comandos/atualizar.sh
+    check_file_contains(
+        root / "comandos" / "atualizar.sh",
+        f"rgb-control_{version}-1_all.deb",
+        "comando de atualização"
+    )
+    
+    print("🚀 Sincronia de versão OK em todos os arquivos!")
 
 if __name__ == "__main__":
     main()

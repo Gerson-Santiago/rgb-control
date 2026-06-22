@@ -26,7 +26,12 @@ echo "✅ Bash CLI Tests OK!"
 echo "📊 Rodando Suíte Completa e Consolidando Coverage..."
 pytest tests/ -v --tb=short --cov=src --cov-branch --cov-report=json --cov-report=term-missing:skip-covered --cov-fail-under=65 -p no:warnings
 
+# 2.5. Coverage Ratchet
 echo "📈 Executando Coverage Ratchet..."
 python3 scripts/coverage_ratchet.py
 
-echo "🚀 Todos os gates Mypy, Pyright e Ratchet passaram! O código está pronto para ser empacotado."
+# 3. Auditoria de Versionamento
+echo "🔍 Auditando sincronia de versão (trava de versionamento)..."
+python3 scripts/docs_sync_check.py
+
+echo "🚀 Todos os gates Mypy, Pyright, Ratchet e Versionamento passaram! O código está pronto para ser empacotado."
