@@ -108,6 +108,24 @@ run_menu() {
 }
 
 # Lógica Principal
+if [[ "$1" == "-v" || "$1" == "--version" ]]; then
+    echo "RGB Controller v1.1.0"
+    exit 0
+fi
+
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Uso: rgb [cor_predefinida | código_hex]"
+    echo "Exemplos:"
+    echo "  rgb vermelho"
+    echo "  rgb FF0000"
+    echo "  rgb -v, --version  Exibe a versão do aplicativo"
+    echo "  rgb -h, --help     Exibe esta ajuda de uso"
+    echo ""
+    echo "Cores predefinidas suportadas:"
+    echo "$(echo "${!COLORS[@]}" | tr ' ' '\n' | sort | paste -d, - - - - | sed 's/,\+$//' | sed 's/,/, /g' | sed 's/^/  /')"
+    exit 0
+fi
+
 if [[ $# -eq 0 ]]; then
     # Se não houver argumentos, abre o menu
     run_menu

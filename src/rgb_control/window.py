@@ -87,8 +87,8 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         main_box.set_margin_start(16)
         main_box.set_margin_end(16)
         
-        # Tenta .png diretamente
-        logo_path = get_asset_path("logo.png")
+        # Tenta .svg diretamente
+        logo_path = get_asset_path("logo.svg")
         if logo_path and os.path.exists(logo_path):
             hero_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
             hero_box.set_halign(Gtk.Align.CENTER)

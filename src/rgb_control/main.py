@@ -38,8 +38,8 @@ class SplashWindow(Gtk.Window): # type: ignore[misc]
         box.add_css_class("splash-box")
         
         try:
-            # PNG circular estático no centro do Splash
-            logo_file = get_asset_path("logo.png")
+            # SVG circular estático no centro do Splash
+            logo_file = get_asset_path("logo.svg")
             picture = Gtk.Picture.new_for_filename(logo_file)
             picture.set_content_fit(Gtk.ContentFit.CONTAIN)
             picture.set_size_request(160, 160)
@@ -111,7 +111,7 @@ class RgbControlApp(Adw.Application): # type: ignore[misc]
 def main() -> int:
     import sys
     if "--version" in sys.argv:
-        print("RGB Control v1.0.5")
+        print("RGB Control v1.1.0")
         return 0
     logger.info("Iniciando RGB Control App...")
     app = RgbControlApp()

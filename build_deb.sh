@@ -20,6 +20,7 @@ rm -rf "$DEB_DIR"
 mkdir -p "$DEB_DIR/DEBIAN"
 mkdir -p "$DEB_DIR/usr/bin"
 mkdir -p "$DEB_DIR/usr/share/applications"
+mkdir -p "$DEB_DIR/usr/share/icons/hicolor/scalable/apps"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/256x256/apps"
 mkdir -p "$DEB_DIR/usr/share/$PKG_NAME"
 
@@ -75,7 +76,7 @@ EOF
 chmod +x "$DEB_DIR/usr/bin/rgb-control"
 
 # Create .desktop file
-cat <<EOF > "$DEB_DIR/usr/share/applications/rgb-control.desktop"
+cat <<EOF > "$DEB_DIR/usr/share/applications/com.github.sant.rgbcontrol.desktop"
 [Desktop Entry]
 Name=RGB Control
 Comment=Controle de Iluminação OpenRGB
@@ -87,7 +88,8 @@ Categories=Utility;Settings;HardwareSettings;
 Keywords=rgb;led;openrgb;color;lighting;
 EOF
 
-# Copy Icons - PNG (256x256)
+# Copy Icons - SVG (Scalable) & PNG (256x256)
+cp "assets/logo.svg" "$DEB_DIR/usr/share/icons/hicolor/scalable/apps/rgb-control.svg"
 cp "assets/logo.png" "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/rgb-control.png"
 
 # Build .deb
@@ -95,3 +97,12 @@ echo "Running dpkg-deb --build..."
 dpkg-deb --build "$DEB_DIR"
 
 echo "Package $DEB_DIR.deb created successfully!"
+
+# Limpeza de builds antigos: manter apenas a versão atual e as 3 versões anteriores mais recentes
+echo ">> Limpando builds antigos (mantendo a atual e até 3 anteriores) <<"
+for deb in $(ls builds/${PKG_NAME}_*.deb 2>/dev/null | sort -V | head -n -4); do
+    echo "Removendo build antigo: $deb e seu diretório correspondente..."
+    rm -f "$deb"
+    rm -rf "${deb%.deb}"
+done
+
