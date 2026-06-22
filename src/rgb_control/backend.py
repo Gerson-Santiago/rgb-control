@@ -1,5 +1,6 @@
 import subprocess
 import os
+from typing import Any
 
 class Backend:
     STATUS_FILE = "/tmp/.controle_led.status"
@@ -164,4 +165,44 @@ class Backend:
             return True
         except Exception:
             return False
+
+    def get_extension_config_path(self) -> str:
+        """Retorna o caminho do arquivo de configuração da extensão do GNOME."""
+        return os.path.expanduser("~/.config/rgb-control/config.json")
+
+    def get_default_extension_config(self) -> dict[str, Any]:
+        """Retorna a configuração padrão para a extensão do GNOME."""
+        return {
+            "quick_colors": [
+                {"name": "Laranja", "hex": "#FF5500"},
+                {"name": "Vermelho", "hex": "#FF0000"},
+                {"name": "Azul", "hex": "#0000FF"}
+            ]
+        }
+
+    def get_extension_config(self) -> dict[str, Any]:
+        """Lê e retorna a configuração da extensão do GNOME."""
+        path = self.get_extension_config_path()
+        if os.path.exists(path):
+            try:
+                import json
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if "quick_colors" in data and len(data["quick_colors"]) == 3:
+                        return data # type: ignore[no-any-return]
+            except Exception:
+                pass
+        return self.get_default_extension_config()
+
+    def save_extension_config(self, config: dict[str, Any]) -> None:
+        """Salva a configuração da extensão do GNOME no arquivo JSON."""
+        path = self.get_extension_config_path()
+        try:
+            import json
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2)
+        except Exception as e:
+            print(f"Erro ao salvar config da extensão: {e}")
+
 

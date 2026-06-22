@@ -291,6 +291,43 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         
         main_box.append(lighting_group)
         main_box.append(custom_group)
+        
+        # Grupo 3: Extensão GNOME Shell
+        extension_group = Adw.PreferencesGroup()
+        extension_group.set_title("Extensão GNOME (Barra Superior)")
+        extension_group.set_description("Configure as 3 cores de acesso rápido exibidas no painel do GNOME")
+
+        config = self.backend.get_extension_config()
+        # Fallback de segurança se config for um Mock ou estrutura inválida nos testes legados
+        if not isinstance(config, dict) or "quick_colors" not in config or len(config["quick_colors"]) < 3:
+            config = self.backend.get_default_extension_config()
+
+        self.ext_pickers = []
+        for i in range(3):
+            row = Adw.ActionRow()
+            row.set_title(f"Cor de Atalho {i + 1}")
+            row.set_subtitle(f"Botão de cor {i + 1} no menu da extensão")
+            
+            color_hex = config["quick_colors"][i]["hex"]
+            if not isinstance(color_hex, str):
+                default_colors = ["#FF5500", "#FF0000", "#0000FF"]
+                color_hex = default_colors[i]
+            
+            picker = Gtk.ColorDialogButton()
+            picker.set_dialog(self.color_dialog)
+            picker.set_valign(Gtk.Align.CENTER)
+            
+            rgba = Gdk.RGBA()
+            rgba.parse(color_hex)
+            picker.set_rgba(rgba)
+            
+            picker.connect("notify::rgba", self.on_extension_color_changed, i)
+            
+            row.add_suffix(picker)
+            extension_group.add(row)
+            self.ext_pickers.append(picker)
+
+        main_box.append(extension_group)
 
         # Grupo 4: Ajuda e Instruções (Expander Row / Dropdown de manual)
         help_group = Adw.PreferencesGroup()
@@ -479,6 +516,36 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         hex_val = f"#{r:02X}{g:02X}{b:02X}"
         self.update_cpu_indicator(hex_val)
         self.backend.apply_color(hex_val, "Custom")
+
+    def on_extension_color_changed(self, picker_btn: Gtk.ColorDialogButton, param: Any, index: int) -> None:
+        rgba = picker_btn.get_rgba()
+        r, g, b = int(rgba.red * 255), int(rgba.green * 255), int(rgba.blue * 255)
+        hex_val = f"#{r:02X}{g:02X}{b:02X}"
+        
+        config = self.backend.get_extension_config()
+        if not isinstance(config, dict) or "quick_colors" not in config or len(config["quick_colors"]) < 3:
+            config = self.backend.get_default_extension_config()
+            
+        config["quick_colors"][index]["hex"] = hex_val
+        config["quick_colors"][index]["name"] = self.get_color_name_from_hex(hex_val, f"Cor {index+1}")
+        
+        self.backend.save_extension_config(config)
+        logger.info(f"Cor de atalho {index+1} da extensão GNOME alterada para {hex_val}")
+
+    def get_color_name_from_hex(self, hex_val: str, default_name: str) -> str:
+        mapping = {
+            "#FF0000": "Vermelho",
+            "#FF5500": "Laranja",
+            "#FFFF00": "Amarelo",
+            "#00FF00": "Verde",
+            "#00F2EA": "Ciano",
+            "#0000FF": "Azul",
+            "#AA00FF": "Roxo",
+            "#FFB200": "Ambar",
+            "#FFFFFF": "Branco",
+            "#000000": "Desativar"
+        }
+        return mapping.get(hex_val.upper(), default_name)
 
     def update_status_ui(self) -> bool:
         # Sincroniza estado UI -> Background sem disparar sinais recursivos

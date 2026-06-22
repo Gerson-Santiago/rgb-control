@@ -24,6 +24,7 @@ mkdir -p "$DEB_DIR/usr/share/icons/hicolor/scalable/apps"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/256x256/apps"
 mkdir -p "$DEB_DIR/usr/share/$PKG_NAME"
 mkdir -p "$DEB_DIR/lib/systemd/system"
+mkdir -p "$DEB_DIR/usr/share/gnome-shell/extensions/rgb-control@sant.github.com"
 
 # Create DEBIAN/control
 cat <<EOF > "$DEB_DIR/DEBIAN/control"
@@ -76,6 +77,9 @@ chmod +x "$DEB_DIR/usr/bin/rgb.sh"
 
 # Copy systemd service
 cp "packaging/rgb-control-daemon.service" "$DEB_DIR/lib/systemd/system/rgb-control-daemon.service"
+
+# Copy GNOME Shell extension
+cp -r gnome-extension/* "$DEB_DIR/usr/share/gnome-shell/extensions/rgb-control@sant.github.com/"
 
 # Create /usr/bin/rgb-control wrapper (mesmo diretório para assets)
 cat <<EOF > "$DEB_DIR/usr/bin/rgb-control"

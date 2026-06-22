@@ -75,6 +75,17 @@ class TestWindowCallbacks(unittest.TestCase):
             self.mock_backend.is_service_active.return_value = False
             self.mock_backend.is_led_mode_active.return_value = False
             
+            # Mock dos métodos da extensão GNOME
+            default_config = {
+                "quick_colors": [
+                    {"name": "Laranja", "hex": "#FF5500"},
+                    {"name": "Vermelho", "hex": "#FF0000"},
+                    {"name": "Azul", "hex": "#0000FF"}
+                ]
+            }
+            self.mock_backend.get_extension_config.return_value = default_config
+            self.mock_backend.get_default_extension_config.return_value = default_config
+            
             with patch('rgb_control.window.get_asset_path', return_value=""):
                 self.window = MainWindow(application=self.app)
 
@@ -103,3 +114,39 @@ class TestWindowCallbacks(unittest.TestCase):
         """Verifica o HEX específico para Vermelho."""
         self.window.on_color_clicked(MagicMock(), "#FF0000", "Vermelho")
         self.mock_backend.apply_color.assert_called_with("#FF0000", "Vermelho")
+
+    def test_extension_colors_ui_elements(self):
+        """Verifica se os 3 botões seletores da extensão GNOME foram instanciados."""
+        self.assertEqual(len(self.window.ext_pickers), 3)
+        for picker in self.window.ext_pickers:
+            self.assertIsInstance(picker, Gtk.ColorDialogButton)
+
+    def test_on_extension_color_changed_saves_config(self):
+        """Verifica se ao mudar a cor de atalho da extensão, a config é salva no Backend."""
+        # Configurar retorno do mock
+        self.mock_backend.get_extension_config.return_value = {
+            "quick_colors": [
+                {"name": "Laranja", "hex": "#FF5500"},
+                {"name": "Vermelho", "hex": "#FF0000"},
+                {"name": "Azul", "hex": "#0000FF"}
+            ]
+        }
+        
+        # Simula o seletor retornando uma cor (Verde)
+        mock_picker = MagicMock()
+        mock_rgba = MagicMock()
+        mock_rgba.red = 0.0
+        mock_rgba.green = 1.0
+        mock_rgba.blue = 0.0
+        mock_picker.get_rgba.return_value = mock_rgba
+        
+        # Dispara o callback para o índice 1 (segunda cor)
+        self.window.on_extension_color_changed(mock_picker, None, 1)
+        
+        # Deve ter lido a config
+        self.mock_backend.get_extension_config.assert_called()
+        # Deve ter salvo a config com a cor atualizada
+        self.mock_backend.save_extension_config.assert_called_once()
+        saved_config = self.mock_backend.save_extension_config.call_args[0][0]
+        self.assertEqual(saved_config["quick_colors"][1]["hex"], "#00FF00")
+        self.assertEqual(saved_config["quick_colors"][1]["name"], "Verde")
