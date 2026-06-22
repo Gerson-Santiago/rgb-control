@@ -25,3 +25,10 @@ Sempre que a versão for incrementada no `pyproject.toml` (fonte única de verda
 ### 3. Trava de Segurança no Pipeline
 *   O script `run_tests.sh` executa automaticamente a auditoria de versão via `python3 scripts/docs_sync_check.py`.
 *   Qualquer descompasso ou esquecimento causará a falha do pipeline local de qualidade, impedindo que o script `build_deb.sh` gere o pacote obsoleto ou inconsistente.
+
+### 4. Script de Automação de Versão (Recomendado para Agentes)
+Para evitar erros manuais de sincronização ao alterar a versão:
+*   **Ação**: Execute o script de automação passando a nova versão como parâmetro.
+*   **Comando**: `python3 scripts/bump_version.py X.Y.Z` (onde `X.Y.Z` é a nova versão pretendida).
+*   **Comportamento**: O script atualiza todos os 7 locais identificados acima e roda a auditoria `docs_sync_check.py` automaticamente para garantir a conformidade dos documentos.
+
