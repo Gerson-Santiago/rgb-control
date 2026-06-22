@@ -17,7 +17,7 @@ class Backend:
     def is_service_active(self) -> bool:
         """Verifica se o systemctl list-units ou is-active retorna active"""
         try:
-            res = subprocess.run(["systemctl", "is-active", "openrgb.service"], capture_output=True, text=True)
+            res = subprocess.run(["systemctl", "is-active", "rgb-control-daemon.service"], capture_output=True, text=True)
             return res.stdout.strip() == "active"
         except Exception:
             return False
@@ -26,7 +26,7 @@ class Backend:
         """Usa pkexec para subir privilegios e iniciar/parar o serviço"""
         try:
             action = "start" if active else "stop"
-            res = subprocess.run(["pkexec", "systemctl", action, "openrgb.service"], capture_output=True)
+            res = subprocess.run(["pkexec", "systemctl", action, "rgb-control-daemon.service"], capture_output=True)
             return res.returncode == 0
         except Exception:
             return False
@@ -111,3 +111,18 @@ class Backend:
                 return tail_lines
         except Exception as e:
             return [f"Erro ao ler log: {e}"]
+
+    def is_controller_connected(self) -> bool:
+        """Verifica no barramento evdev se o controle físico (1915:1025) está conectado."""
+        try:
+            from evdev import list_devices, InputDevice
+            for path in list_devices():
+                try:
+                    dev = InputDevice(path)
+                    if dev.info.vendor == 0x1915 and dev.info.product == 0x1025:
+                        return True
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return False

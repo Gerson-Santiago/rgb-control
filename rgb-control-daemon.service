@@ -1,0 +1,19 @@
+[Unit]
+Description=Controle de LEDs via Air Mouse (OpenRGB Daemon)
+After=network.target openrgb.service
+
+[Service]
+Type=simple
+Environment=PYTHONPATH="/usr/share/rgb-control"
+ExecStart=/usr/bin/python3 "/usr/share/rgb-control/rgb_daemon/main.py"
+WorkingDirectory=/usr/share/rgb-control
+Restart=always
+RestartSec=5
+User=root
+
+# Garante acesso ao ambiente de logs
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

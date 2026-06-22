@@ -36,6 +36,7 @@ def get_asset_path(filename: str) -> str:
 class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
     def __init__(self, application: Gtk.Application) -> None:
         self._updating_ui = False # Previne loops infinitos de sinais
+        self._last_ctrl_connected: Optional[bool] = None # Cache do estado do controle remoto
         super().__init__(application=application)
         self.set_title("RGB Control")
         # Tamanho mais generoso e ergonômico
@@ -112,11 +113,23 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         system_group.set_title("Configurações do Serviço")
         
         self.switch_svc = Adw.SwitchRow()
-        self.switch_svc.set_title("Serviço openrgb (Background)")
-        self.switch_svc.set_subtitle("Gerencia a conexão com o hardware")
+        self.switch_svc.set_title("Daemon de Captura (Background)")
+        self.switch_svc.set_subtitle("Gerencia a escuta de eventos do Air Mouse")
         self.switch_svc.set_active(self.backend.is_service_active())
         self._svc_handler_id = self.switch_svc.connect("notify::active", self.on_service_notify)
         system_group.add(self.switch_svc)
+
+        # Rótulo de status de conexão do controle remoto
+        self.row_controller = Adw.ActionRow()
+        self.row_controller.set_title("Controle Remoto (Air Mouse)")
+        self.row_controller.set_subtitle("Buscando dispositivo...")
+        self.row_controller.set_icon_name("accessory-controller-symbolic")
+
+        self.label_controller_status = Gtk.Label(label="Buscando...")
+        self.label_controller_status.set_valign(Gtk.Align.CENTER)
+        self.label_controller_status.add_css_class("dim-label")
+        self.row_controller.add_suffix(self.label_controller_status)
+        system_group.add(self.row_controller)
         
         main_box.append(system_group)
 
@@ -271,6 +284,38 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         
         main_box.append(lighting_group)
         main_box.append(custom_group)
+
+        # Grupo 4: Ajuda e Instruções (Expander Row / Dropdown de manual)
+        help_group = Adw.PreferencesGroup()
+        help_group.set_title("Documentação e Ajuda")
+
+        help_expander = Adw.ExpanderRow()
+        help_expander.set_title("Manual do Controle Remoto")
+        help_expander.set_subtitle("Lista de atalhos e botões mapeados")
+        help_expander.set_icon_name("help-about-symbolic")
+
+        help_btn_mic = Adw.ActionRow()
+        help_btn_mic.set_title("🎙️ ou 🏠  (Microfone / Home)")
+        help_btn_mic.set_subtitle("Liga / Desliga o MODO LED (Captura Remota)")
+        help_expander.add_row(help_btn_mic)
+
+        help_btn_next = Adw.ActionRow()
+        help_btn_next.set_title("➡️ ou ➕ Vol+ (Seta Direita / Aumentar Volume)")
+        help_btn_next.set_subtitle("Avança para a próxima cor da paleta")
+        help_expander.add_row(help_btn_next)
+
+        help_btn_prev = Adw.ActionRow()
+        help_btn_prev.set_title("⬅️ ou ➖ Vol- (Seta Esquerda / Diminuir Volume)")
+        help_btn_prev.set_subtitle("Retorna para a cor anterior da paleta")
+        help_expander.add_row(help_btn_prev)
+
+        help_btn_back = Adw.ActionRow()
+        help_btn_back.set_title("↩️  Back (Botão Voltar)")
+        help_btn_back.set_subtitle("Desativa o MODO LED e desliga a captura")
+        help_expander.add_row(help_btn_back)
+
+        help_group.add(help_expander)
+        main_box.append(help_group)
         
         # Leitura da Versão embutida
         v_path = get_asset_path("version.txt")
@@ -434,6 +479,23 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
             svc_active = self.backend.is_service_active()
             mode_active = self.backend.is_led_mode_active()
             
+            # Verifica se o controle remoto está fisicamente conectado
+            ctrl_connected = self.backend.is_controller_connected()
+            if ctrl_connected != self._last_ctrl_connected:
+                self._last_ctrl_connected = ctrl_connected
+                if ctrl_connected:
+                    self.label_controller_status.set_label("Conectado")
+                    self.label_controller_status.remove_css_class("dim-label")
+                    self.label_controller_status.remove_css_class("error")
+                    self.label_controller_status.add_css_class("success")
+                    self.row_controller.set_subtitle("Receptor USB detectado no barramento")
+                else:
+                    self.label_controller_status.set_label("Desconectado")
+                    self.label_controller_status.remove_css_class("dim-label")
+                    self.label_controller_status.remove_css_class("success")
+                    self.label_controller_status.add_css_class("error")
+                    self.row_controller.set_subtitle("Controle desligado ou receptor USB ausente")
+
             self._updating_ui = True
             
             if self.switch_svc.get_active() != svc_active:

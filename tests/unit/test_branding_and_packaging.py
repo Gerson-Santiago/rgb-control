@@ -80,3 +80,15 @@ class TestBrandingAndPackagingConsistency(unittest.TestCase):
         
         self.assertIn(expected_svg_dest, build_content, f"O build_deb.sh deve copiar o ícone SVG para '{expected_svg_dest}'")
         self.assertIn(expected_png_dest, build_content, f"O build_deb.sh deve copiar o ícone PNG para '{expected_png_dest}'")
+
+    def test_systemd_service_packaged(self):
+        """Garante que o arquivo de serviço do daemon existe e é empacotado no build_deb.sh."""
+        service_file = os.path.join(self.root_dir, "rgb-control-daemon.service")
+        self.assertTrue(os.path.exists(service_file), f"Arquivo de serviço ausente: {service_file}")
+        
+        build_deb_sh = os.path.join(self.root_dir, "build_deb.sh")
+        with open(build_deb_sh, "r", encoding="utf-8") as f:
+            build_content = f.read()
+            
+        self.assertIn("rgb-control-daemon.service", build_content, 
+                      "O build_deb.sh deve copiar e gerenciar o serviço rgb-control-daemon.service")

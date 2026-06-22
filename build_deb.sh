@@ -23,6 +23,7 @@ mkdir -p "$DEB_DIR/usr/share/applications"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/scalable/apps"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/256x256/apps"
 mkdir -p "$DEB_DIR/usr/share/$PKG_NAME"
+mkdir -p "$DEB_DIR/lib/systemd/system"
 
 # Create DEBIAN/control
 cat <<EOF > "$DEB_DIR/DEBIAN/control"
@@ -36,24 +37,30 @@ Maintainer: Sant <sant@local>
 Description: Interface Gráfica moderna em GTK4 para controle do OpenRGB com integrações.
 EOF
 
-# Create DEBIAN/postinst (atualiza cache de ícones)
+# Create DEBIAN/postinst (atualiza cache e ativa serviço daemon)
 cat <<EOF > "$DEB_DIR/DEBIAN/postinst"
 #!/bin/sh
 set -e
 if [ "\$1" = "configure" ]; then
     gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
     update-desktop-database -q || true
+    systemctl daemon-reload || true
+    systemctl enable rgb-control-daemon.service || true
+    systemctl restart rgb-control-daemon.service || true
 fi
 EOF
 chmod +x "$DEB_DIR/DEBIAN/postinst"
 
-# Create DEBIAN/postrm (limpa cache)
+# Create DEBIAN/postrm (limpa cache e desativa serviço daemon)
 cat <<EOF > "$DEB_DIR/DEBIAN/postrm"
 #!/bin/sh
 set -e
 if [ "\$1" = "remove" ] || [ "\$1" = "purge" ]; then
     gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
     update-desktop-database -q || true
+    systemctl stop rgb-control-daemon.service || true
+    systemctl disable rgb-control-daemon.service || true
+    systemctl daemon-reload || true
 fi
 EOF
 chmod +x "$DEB_DIR/DEBIAN/postrm"
@@ -66,6 +73,9 @@ cp -r src/rgb_daemon "$DEB_DIR/usr/share/$PKG_NAME/"
 cp -r assets "$DEB_DIR/usr/share/$PKG_NAME/"
 cp "rgb.sh" "$DEB_DIR/usr/bin/rgb.sh"
 chmod +x "$DEB_DIR/usr/bin/rgb.sh"
+
+# Copy systemd service
+cp "rgb-control-daemon.service" "$DEB_DIR/lib/systemd/system/rgb-control-daemon.service"
 
 # Create /usr/bin/rgb-control wrapper (mesmo diretório para assets)
 cat <<EOF > "$DEB_DIR/usr/bin/rgb-control"

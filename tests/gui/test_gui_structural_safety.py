@@ -35,6 +35,8 @@ class TestMainWindowStructureSafety(unittest.TestCase):
         self.assertIsInstance(self.window.toolbar_view, Adw.ToolbarView)
         self.assertIsInstance(self.window.switch_svc, Adw.SwitchRow)
         self.assertIsInstance(self.window.switch_mode, Adw.SwitchRow)
+        self.assertIsInstance(self.window.row_controller, Adw.ActionRow)
+        self.assertIsInstance(self.window.label_controller_status, Gtk.Label)
         self.assertIsInstance(self.window.fan_spinner, Gtk.Overlay)
 
     def test_fan_cooler_rendering_layers(self):
