@@ -8,8 +8,6 @@ import GLib from 'gi://GLib';
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-
 const RgbControlIndicator = GObject.registerClass(
 class RgbControlIndicator extends PanelMenu.Button {
     _init(extension) {
@@ -19,7 +17,6 @@ class RgbControlIndicator extends PanelMenu.Button {
         // Criar o ícone discreto no painel
         this._icon = new St.Icon({
             icon_name: 'lightbulb-symbolic',
-            icon_type: St.IconType.SYMBOLIC,
             style_class: 'system-status-icon'
         });
         this.add_child(this._icon);
@@ -102,8 +99,9 @@ class RgbControlIndicator extends PanelMenu.Button {
         // Adicionar novos botões circulares coloridos
         colors.forEach(colorData => {
             // Cria um botão estilizado como círculo com borda e sombra
+            const hexColor = colorData.hex;
             let button = new St.Button({
-                style: `background-color: ${colorData.hex}; width: 40px; height: 40px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.25); box-shadow: 0 2px 4px rgba(0,0,0,0.2);`,
+                style: `background-color: ${hexColor}; width: 40px; height: 40px; border-radius: 20px; border: 2px solid rgba(255, 255, 255, 0.25); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);`,
                 reactive: true,
                 can_focus: true,
                 track_hover: true
