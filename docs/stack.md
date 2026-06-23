@@ -1,4 +1,4 @@
-# Stack Tecnológica e Padrões de Projeto (v1.1.8)
+# Stack Tecnológica e Padrões de Projeto (v1.1.9)
 
 Este documento serve como a **"Fonte Única de Verdade"** para a infraestrutura técnica do projeto `openrgb`. 
 
@@ -49,6 +49,16 @@ Para garantir que o aplicativo integre-se perfeitamente com desktops Linux moder
     *   Um fallback rasterizado em `/usr/share/icons/hicolor/256x256/apps/rgb-control.png`.
 3.  **Histórico de Compilações (builds/):**
     O script [build_deb.sh](file:///home/sant/Área de trabalho/PROJETOS/openrgb/build_deb.sh) executa uma rotina de limpeza ao final da compilação. Ele utiliza ordenação semântica por versão (`sort -V`) para manter no diretório `builds/` exclusivamente a versão atual do build e as 3 versões anteriores mais recentes, removendo versões legadas obsoletas automaticamente.
+    *   **Comando oficial para nova build:**
+        ```bash
+        cd '/home/sant/Área de trabalho/PROJETOS/openrgb' && ./build_deb.sh
+        ```
+4.  **Extensão GNOME Shell (Barra Superior):**
+    A extensão em `gnome-extension/` (`rgb-control@sant.github.com`) oferece acesso rápido às cores predefinidas no painel superior. Compatível com **GNOME Shell 45–48** (declarado em `metadata.json` → `shell-version`).
+    *   **Instalação via `.deb`:** copiada para `/usr/share/gnome-shell/extensions/rgb-control@sant.github.com/` pelo `build_deb.sh`.
+    *   **Desenvolvimento local:** `./scripts/install_extension.sh` instala em `~/.local/share/gnome-shell/extensions/` e habilita via `gnome-extensions enable`.
+    *   **Sincronização com o app:** cores de atalho persistidas em `~/.config/rgb-control/config.json`; a extensão monitora o arquivo com `Gio.FileMonitor`.
+    *   **GNOME Shell 48:** subclasses de `PanelMenu.Button` usam `GObject.registerClass()` e `_init()`/`super._init()` (API ESM/GJS exigida a partir do Shell 48).
 
 ---
 

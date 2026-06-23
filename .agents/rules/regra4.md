@@ -31,3 +31,10 @@ Para evitar erros manuais de sincronização ao alterar a versão:
 *   **Ação**: Execute o script de automação passando a nova versão como parâmetro.
 *   **Comando**: `python3 scripts/bump_version.py X.Y.Z` (onde `X.Y.Z` é a nova versão pretendida).
 *   **Comportamento**: O script atualiza todos os 7 locais identificados acima e roda a auditoria `docs_sync_check.py` automaticamente para garantir a conformidade dos documentos.
+
+### 5. Regra de Build da Nova Versão
+Sempre gere a nova build Debian executando o script de empacotamento diretamente a partir da raiz do projeto:
+```bash
+cd '/home/sant/Área de trabalho/PROJETOS/openrgb' && ./build_deb.sh
+```
+Isso garante que o arquivo `.deb` seja criado com a versão definida em `pyproject.toml` e que o diretório `builds/` contenha apenas os artefatos mais recentes.

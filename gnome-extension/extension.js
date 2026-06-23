@@ -6,15 +6,21 @@ import St from 'gi://St';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
 
+const ExtensionUtils = imports.misc.extensionUtils;
+
+const RgbControlIndicator = GObject.registerClass(
 class RgbControlIndicator extends PanelMenu.Button {
-    constructor(extension) {
-        super(0.0, 'RGB Control Indicator', false);
+    _init(extension) {
+        super._init(0.0, 'RGB Control Indicator', false);
         this._extension = extension;
+        this._iconPath = `${extension.path}/icon.svg`;
 
         // Criar o ícone discreto no painel
         this._icon = new St.Icon({
-            gicon: Gio.Icon.new_for_string('display-brightness-symbolic'),
+            gicon: Gio.icon_new_for_string(this._iconPath),
+            icon_type: St.IconType.FULLCOLOR,
             style_class: 'system-status-icon'
         });
         this.add_child(this._icon);
@@ -126,9 +132,10 @@ class RgbControlIndicator extends PanelMenu.Button {
         }
 
         try {
-            this._monitor = file.monitor_file(Gio.FileMonitorFlags.NONE, null);
-            this._monitorId = this._monitor.connect('changed', (mon, f, other, eventType) => {
-                if (eventType === Gio.FileMonitorEvent.CHANGED || eventType === Gio.FileMonitorEvent.CHANGES_DONE_HINT) {
+            this._monitor = parentDir.monitor_directory(Gio.FileMonitorFlags.NONE, null);
+            this._monitorId = this._monitor.connect('changed', (mon, changedFile, other, eventType) => {
+                if (changedFile && changedFile.get_path() === this._configPath &&
+                    (eventType === Gio.FileMonitorEvent.CHANGED || eventType === Gio.FileMonitorEvent.CREATED || eventType === Gio.FileMonitorEvent.CHANGES_DONE_HINT)) {
                     this._loadConfig();
                 }
             });
@@ -142,12 +149,18 @@ class RgbControlIndicator extends PanelMenu.Button {
         try {
             let proc = new Gio.Subprocess({
                 argv: ['/usr/bin/rgb.sh', cleanHex],
-                flags: Gio.SubprocessFlags.NONE,
+                flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
             });
             proc.init(null);
-            proc.wait_async(null, null);
+            proc.wait_async(null, (source, res) => {
+                try {
+                    proc.wait_finish(res);
+                } catch (e) {
+                    log('RGB Control Extension: rgb.sh failed: ' + e);
+                }
+            });
         } catch (e) {
-            console.error('RGB Control Extension: Erro ao rodar rgb.sh', e);
+            log('RGB Control Extension: Erro ao rodar rgb.sh: ' + e);
         }
     }
 
@@ -155,12 +168,18 @@ class RgbControlIndicator extends PanelMenu.Button {
         try {
             let proc = new Gio.Subprocess({
                 argv: ['/usr/bin/rgb-control'],
-                flags: Gio.SubprocessFlags.NONE,
+                flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
             });
             proc.init(null);
-            proc.wait_async(null, null);
+            proc.wait_async(null, (source, res) => {
+                try {
+                    proc.wait_finish(res);
+                } catch (e) {
+                    log('RGB Control Extension: rgb-control failed: ' + e);
+                }
+            });
         } catch (e) {
-            console.error('RGB Control Extension: Erro ao rodar rgb-control', e);
+            log('RGB Control Extension: Erro ao rodar rgb-control: ' + e);
         }
     }
 
@@ -174,7 +193,7 @@ class RgbControlIndicator extends PanelMenu.Button {
         }
         super.destroy();
     }
-}
+});
 
 export default class RgbControlExtension extends Extension {
     enable() {

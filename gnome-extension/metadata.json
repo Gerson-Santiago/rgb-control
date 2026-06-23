@@ -2,10 +2,13 @@
   "uuid": "rgb-control@sant.github.com",
   "name": "RGB Control Quick Settings",
   "description": "Acesso rápido e discreto às cores predefinidas dos LEDs através do OpenRGB",
+  "version": 1,
   "shell-version": [
     "45",
     "46",
-    "47"
+    "47",
+    "48"
   ],
-  "url": "https://github.com/Gerson-Santiago/rgb-control"
+  "url": "https://github.com/Gerson-Santiago/rgb-control",
+  "icon": "icon.svg"
 }
