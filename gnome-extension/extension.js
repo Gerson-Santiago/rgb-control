@@ -33,37 +33,41 @@ class RgbControlIndicator extends PanelMenu.Button {
     }
 
     _createMenu() {
-        // Título/Cabeçalho do menu
-        let titleItem = new PopupMenu.PopupMenuItem('RGB Control', { reactive: false });
-        this.menu.addMenuItem(titleItem);
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        try {
+            // Título/Cabeçalho do menu
+            this._titleItem = new PopupMenu.PopupMenuItem('RGB Control', { reactive: false });
+            this.menu.addMenuItem(this._titleItem);
+            this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        // Seção para botões de cores rápidas (Layout Horizontal)
-        this._colorsContainerItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
-        this._colorsBox = new St.BoxLayout({
-            style: 'spacing: 12px; padding: 6px 12px;',
-            vertical: false,
-            x_expand: true,
-            x_align: Clutter.ActorAlign.CENTER
-        });
-        this._colorsContainerItem.add_child(this._colorsBox);
-        this.menu.addMenuItem(this._colorsContainerItem);
-        
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            // Seção para botões de cores rápidas (Layout Horizontal)
+            this._colorsContainerItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
+            this._colorsBox = new St.BoxLayout({
+                style: 'spacing: 12px; padding: 6px 12px;',
+                vertical: false,
+                x_expand: true,
+                x_align: Clutter.ActorAlign.CENTER
+            });
+            this._colorsContainerItem.add_child(this._colorsBox);
+            this.menu.addMenuItem(this._colorsContainerItem);
+            
+            this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        // Botão Desligar LEDs
-        let turnOffItem = new PopupMenu.PopupImageMenuItem('Desligar LEDs', 'display-brightness-off-symbolic');
-        turnOffItem.connect('activate', () => {
-            this._runColorCommand('000000');
-        });
-        this.menu.addMenuItem(turnOffItem);
+            // Botão Desligar LEDs
+            let turnOffItem = new PopupMenu.PopupImageMenuItem('Desligar LEDs', 'display-brightness-off-symbolic');
+            turnOffItem.connect('activate', () => {
+                this._runColorCommand('000000');
+            });
+            this.menu.addMenuItem(turnOffItem);
 
-        // Botão Abrir App Completo
-        let openAppItem = new PopupMenu.PopupImageMenuItem('Abrir App Completo', 'preferences-system-symbolic');
-        openAppItem.connect('activate', () => {
-            this._runAppCommand();
-        });
-        this.menu.addMenuItem(openAppItem);
+            // Botão Abrir App Completo
+            let openAppItem = new PopupMenu.PopupImageMenuItem('Abrir App Completo', 'preferences-system-symbolic');
+            openAppItem.connect('activate', () => {
+                this._runAppCommand();
+            });
+            this.menu.addMenuItem(openAppItem);
+        } catch (e) {
+            logError(e, 'RGB Control Extension: Erro ao inicializar layout do menu');
+        }
     }
 
     _loadConfig() {
@@ -98,21 +102,44 @@ class RgbControlIndicator extends PanelMenu.Button {
 
         // Adicionar novos botões circulares coloridos
         colors.forEach(colorData => {
-            // Cria um botão estilizado como círculo com borda e sombra
-            const hexColor = colorData.hex;
-            let button = new St.Button({
-                style: `background-color: ${hexColor}; width: 40px; height: 40px; border-radius: 20px; border: 2px solid rgba(255, 255, 255, 0.25); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);`,
-                reactive: true,
-                can_focus: true,
-                track_hover: true
-            });
-            button.set_tooltip_text(colorData.name);
+            try {
+                // Cria um botão estilizado como círculo com borda e sombra
+                const hexColor = colorData.hex;
+                let button = new St.Button({
+                    style: `background-color: ${hexColor}; width: 40px; height: 40px; border-radius: 20px; border: 2px solid rgba(255, 255, 255, 0.25); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);`,
+                    reactive: true,
+                    can_focus: true,
+                    track_hover: true
+                });
 
-            button.connect('clicked', () => {
-                this._runColorCommand(colorData.hex);
-            });
+                // Acessibilidade (Leitores de tela)
+                try {
+                    button.set_accessible_name(colorData.name);
+                } catch (e) {
+                    console.warn('RGB Control Extension: Erro ao definir accessible_name', e);
+                }
 
-            this._colorsBox.add_child(button);
+                // Feedback visual dinâmico no título do menu ao passar o mouse (hover)
+                button.connect('enter-event', () => {
+                    if (this._titleItem && this._titleItem.label) {
+                        this._titleItem.label.set_text(`RGB Control (${colorData.name})`);
+                    }
+                });
+
+                button.connect('leave-event', () => {
+                    if (this._titleItem && this._titleItem.label) {
+                        this._titleItem.label.set_text('RGB Control');
+                    }
+                });
+
+                button.connect('clicked', () => {
+                    this._runColorCommand(colorData.hex);
+                });
+
+                this._colorsBox.add_child(button);
+            } catch (err) {
+                logError(err, 'RGB Control Extension: Erro ao instanciar botão de cor');
+            }
         });
     }
 
