@@ -15,12 +15,11 @@ class RgbControlIndicator extends PanelMenu.Button {
     _init(extension) {
         super._init(0.0, 'RGB Control Indicator', false);
         this._extension = extension;
-        this._iconPath = `${extension.path}/icon.svg`;
 
         // Criar o ícone discreto no painel
         this._icon = new St.Icon({
-            gicon: Gio.icon_new_for_string(this._iconPath),
-            icon_type: St.IconType.FULLCOLOR,
+            icon_name: 'lightbulb-symbolic',
+            icon_type: St.IconType.SYMBOLIC,
             style_class: 'system-status-icon'
         });
         this.add_child(this._icon);
@@ -107,9 +106,9 @@ class RgbControlIndicator extends PanelMenu.Button {
                 style: `background-color: ${colorData.hex}; width: 40px; height: 40px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.25); box-shadow: 0 2px 4px rgba(0,0,0,0.2);`,
                 reactive: true,
                 can_focus: true,
-                track_hover: true,
-                tooltip_text: colorData.name
+                track_hover: true
             });
+            button.set_tooltip_text(colorData.name);
 
             button.connect('clicked', () => {
                 this._runColorCommand(colorData.hex);
