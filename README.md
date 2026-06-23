@@ -1,14 +1,14 @@
 # openrgb — Controle Desktop Moderno para Gabinetes Gaming 🎨🎮🐧
 
-![Version](https://img.shields.io/badge/version-1.1.11-blue)
+![Version](https://img.shields.io/badge/version-1.1.12-blue)
 ![Quality Gate](https://img.shields.io/badge/quality--gate-passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-73%25-success)
 
 
-sudo apt install --reinstall ./builds/rgb-control_1.1.11-1_all.deb
+sudo apt install --reinstall ./builds/rgb-control_1.1.12-1_all.deb
 
 
-Solução profissional (v1.1.11) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos, integrando um **Air Mouse XING WEI 2.4G USB** (Lelong LE-7278) como controle remoto nativo no Linux.
+Solução profissional (v1.1.12) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos, integrando um **Air Mouse XING WEI 2.4G USB** (Lelong LE-7278) como controle remoto nativo no Linux.
 
 
 Construído com **Python 3.13**, **GTK4 / Libadwaita** e **Clean Architecture**.
@@ -33,7 +33,7 @@ sudo apt install python3-evdev python3-gi libadwaita-1-0 dunst openrgb
 ### Instalação (Padrão Debian)
 Baixe o último release `.deb` e instale:
 ```bash
-sudo apt install ./builds/rgb-control_1.1.11-1_all.deb
+sudo apt install ./builds/rgb-control_1.1.12-1_all.deb
 ```
 
 ## 🎮 Operação com Air Mouse
@@ -51,13 +51,25 @@ Este projeto segue padrões de **QA Gold Standard**. Para contribuir ou rodar em
 
 1.  **Manual Técnico de Stack**: Consulte [docs/stack.md](docs/stack.md).
 2.  **Guia de Blindagem de Testes**: Consulte [docs/TESTS.md](docs/TESTS.md).
-3.  **Portão de Qualidade**: Execute `./run_tests.sh` para validar toda a arquitetura.
+3.  **Processo do Pipeline**: Consulte o [Pipeline Reference](file:///home/sant/Área de trabalho/PROJETOS/openrgb/.agents/workflows/pipeline.md) para compreender a árvore de decisões.
+4.  **Portão de Qualidade**: Execute `./run_tests.sh` para validar toda a arquitetura.
 
 ### Setup de Desenvolvimento
+1. Clone o repositório:
 ```bash
 git clone https://github.com/Gerson-Santiago/rgb-control.git
+```
+2. Instale as dependências locais de desenvolvimento:
+```bash
 pip install -e .[dev]
-./run_tests.sh
+```
+3. Execute o script de onboarding para configurar os git hooks locais:
+```bash
+./scripts/setup_dev.sh
+```
+4. Para guiar o ciclo de desenvolvimento, execute o pipeline interativo:
+```bash
+bash scripts/pipeline_run.sh
 ```
 
 ---

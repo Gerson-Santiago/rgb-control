@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+# Pipeline Reference: .agents/workflows/pipeline.md
 """
 Script de Bump de Versão Automatizado.
-Atualiza todas as referências de versão nos 7 arquivos controlados.
+Atualiza referências de versão nos arquivos controlados.
 """
 import sys
 import re
@@ -113,9 +114,6 @@ def main():
             f"badge/version-{current_version}-blue",
             f"badge/version-{new_version}-blue"
         ).replace(
-            f"rgb-control_{current_version}-1_all.deb",
-            f"rgb-control_{new_version}-1_all.deb"
-        ).replace(
             f"Solução profissional (v{current_version})",
             f"Solução profissional (v{new_version})"
         )
@@ -127,20 +125,13 @@ def main():
     if atualizar_path.exists():
         content = atualizar_path.read_text(encoding="utf-8")
         new_content = content.replace(
-            f"rgb-control_{current_version}-1_all.deb",
-            f"rgb-control_{new_version}-1_all.deb"
+            f"# Version: {current_version}",
+            f"# Version: {new_version}"
         )
         atualizar_path.write_text(new_content, encoding="utf-8")
         print("  ✅ scripts/atualizar.sh atualizado")
         
-    print("\n🔍 Executando verificação de sincronia documental...")
-    import subprocess
-    result = subprocess.run([sys.executable, str(root / "scripts" / "docs_sync_check.py")])
-    if result.returncode == 0:
-        print("\n🎉 Bump de versão concluído com sucesso e todos os documentos estão sincronizados!")
-    else:
-        print("\n⚠️ A sincronização documental falhou após o bump. Por favor, verifique as mensagens de erro acima.")
-        sys.exit(1)
+    print("\n🎉 Bump de versão concluído com sucesso! Execute o build ou run_tests.sh para validar a sincronia.")
 
 if __name__ == "__main__":
     main()

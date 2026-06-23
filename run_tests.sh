@@ -1,4 +1,5 @@
 #!/bin/bash
+# Pipeline Reference: .agents/workflows/pipeline.md
 # run_tests.sh - Executado antes do build_deb.sh ou git push
 set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

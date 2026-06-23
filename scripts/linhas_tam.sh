@@ -1,3 +1,4 @@
+# Pipeline Reference: .agents/workflows/pipeline.md
 cd /home/sant/Área\ de\ trabalho/PROJETOS/openrgb
 find . -type f \
   ! -path "*/.git/*" \

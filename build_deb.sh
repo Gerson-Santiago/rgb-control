@@ -1,4 +1,5 @@
 #!/bin/bash
+# Pipeline Reference: .agents/workflows/pipeline.md
 set -e
 
 PKG_NAME="rgb-control"
@@ -111,6 +112,15 @@ echo "Running dpkg-deb --build..."
 dpkg-deb --build "$DEB_DIR"
 
 echo "Package $DEB_DIR.deb created successfully!"
+
+# Atualiza automaticamente o README.md com o nome correto do pacote (.deb) gerado nesta build
+python3 -c "
+import re
+readme_path = 'README.md'
+readme = open(readme_path, 'r', encoding='utf-8').read()
+updated = re.sub(r'rgb-control_\d+\.\d+\.\d+-\d+_all\.deb', 'rgb-control_${VERSION}-${REV}_all.deb', readme)
+open(readme_path, 'w', encoding='utf-8').write(updated)
+"
 
 # Limpeza de builds antigos: manter apenas a versão atual e as 3 versões anteriores mais recentes
 echo ">> Limpando builds antigos (mantendo a atual e até 3 anteriores) <<"
