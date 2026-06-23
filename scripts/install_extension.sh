@@ -1,4 +1,5 @@
 #!/bin/bash
+# Pipeline Reference: .agents/workflows/pipeline.md
 set -e
 
 UUID="rgb-control@sant.github.com"

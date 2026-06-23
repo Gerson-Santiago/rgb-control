@@ -1,4 +1,0 @@
-cd '/home/sant/Área de trabalho/PROJETOS/openrgb'
-python3 scripts/bump_version.py 1.1.10
-./scripts/atualizar.sh
-./scripts/install_extension.sh

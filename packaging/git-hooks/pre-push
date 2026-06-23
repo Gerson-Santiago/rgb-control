@@ -1,0 +1,21 @@
+#!/bin/bash
+# Pipeline Reference: .agents/workflows/pipeline.md
+#
+# Git Hook: pre-push
+# Impede o push direto para a branch main localmente.
+
+# Permite bypass apenas via variável de ambiente específica
+if [[ "${ALLOW_MAIN_PUSH:-0}" == "1" ]]; then
+    exit 0
+fi
+
+# Lê a branch atual
+current_branch=$(git symbolic-ref --short HEAD)
+
+if [[ "$current_branch" == "main" ]]; then
+    echo -e "\n❌ Erro: Pushes diretos para a branch 'main' são proibidos neste repositório!"
+    echo -e "Crie uma branch de feature e submeta as alterações via Pull Request."
+    echo -e "Se você for o administrador executando um release oficial, execute com:"
+    echo -e "  ALLOW_MAIN_PUSH=1 git push ...\n"
+    exit 1
+fi

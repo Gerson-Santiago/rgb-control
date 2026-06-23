@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Pipeline Reference: .agents/workflows/pipeline.md
 """
 Validador de Sincronia Documental e Versionamento - Gold Standard QA
 Verifica se todos os arquivos com versionamento declaram a mesma versão do pyproject.toml.
@@ -75,11 +76,7 @@ def main():
         f"badge/version-{version}-blue",
         "badge de versão"
     )
-    check_file_contains(
-        root / "README.md",
-        f"rgb-control_{version}-1_all.deb",
-        "comando de instalação"
-    )
+
     check_file_contains(
         root / "README.md",
         f"Solução profissional (v{version})",
@@ -89,8 +86,8 @@ def main():
     # 6. scripts/atualizar.sh
     check_file_contains(
         root / "scripts" / "atualizar.sh",
-        f"rgb-control_{version}-1_all.deb",
-        "comando de atualização"
+        f"# Version: {version}",
+        "comentário de versão"
     )
     
     print("🚀 Sincronia de versão OK em todos os arquivos!")

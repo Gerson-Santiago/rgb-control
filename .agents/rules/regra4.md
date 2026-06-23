@@ -31,17 +31,10 @@ Sempre que a versão for incrementada no `pyproject.toml` (fonte única de verda
 * O script `run_tests.sh` executa automaticamente a auditoria de versão via `python3 scripts/docs_sync_check.py`.
 * Qualquer descompasso ou esquecimento causará a falha do pipeline local de qualidade, impedindo que o script `build_deb.sh` gere o pacote obsoleto ou inconsistente.
 
-## 4. Script de Automação de Versão (Recomendado para Agentes)
+## 4. Script de Automação de Versão
 
-Para evitar erros manuais de sincronização ao alterar a versão:
+Para versionar a entrega, utilize `bump_version.py` conforme a árvore de decisões do [.agents/workflows/pipeline.md](file:///home/sant/Área de trabalho/PROJETOS/openrgb/.agents/workflows/pipeline.md).
 
-* **Ação**: Execute o script de automação passando a nova versão como parâmetro.
-* **Comando**: `python3 scripts/bump_version.py X.Y.Z` (onde `X.Y.Z` é a nova versão pretendida).
-* **Comportamento**: O script atualiza todos os 7 locais identificados acima e roda a auditoria `docs_sync_check.py` automaticamente para garantir a conformidade dos documentos.
+### 5. Regra de Build
 
-### 5. Regra de Build da Nova Versão
-Sempre gere a nova build Debian executando o script de empacotamento diretamente a partir da raiz do projeto:
-```bash
-cd '/home/sant/Área de trabalho/PROJETOS/openrgb' && ./build_deb.sh
-```
-Isso garante que o arquivo `.deb` seja criado com a versão definida em `pyproject.toml` e que o diretório `builds/` contenha apenas os artefatos mais recentes.
+Toda compilação do pacote deb é efetuada por `build_deb.sh`, que roda automaticamente o gate de testes antes de consolidar o pacote na pasta `builds/`.

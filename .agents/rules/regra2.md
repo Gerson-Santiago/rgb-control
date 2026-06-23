@@ -12,11 +12,11 @@ O projeto exige alta confiabilidade devido à interação direta com hardware.
 
 2. **Metas de Cobertura**:
    - **Mínimo Absoluto**: 80% de cobertura geral.
-   - **Alvo Ideal**: 90%+ para as camadas de `Domain` e `Application`.
+   - As metas de cobertura de testes são definidas conforme a política de qualidade descrita em [.agents/workflows/pipeline.md](file:///home/sant/Área de trabalho/PROJETOS/openrgb/.agents/workflows/pipeline.md).
 
 3. **Ferramental**:
    - Usar `pytest` com `pytest-cov`.
    - Mockar rigorosamente toda a infraestrutura (`Infrastructure`) para evitar efeitos colaterais no hardware durante os testes.
 
 4. **Pipeline de Qualidade**:
-   - Nenhum commit deve ser feito sem passar pelo workflow `/pipeline`.
+   - Nenhum commit ou push deve ser realizado sem seguir o fluxo detalhado em [.agents/workflows/pipeline.md](file:///home/sant/Área de trabalho/PROJETOS/openrgb/.agents/workflows/pipeline.md).

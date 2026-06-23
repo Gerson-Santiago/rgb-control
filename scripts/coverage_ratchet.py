@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Pipeline Reference: .agents/workflows/pipeline.md
 import json
 import os
 import sys
