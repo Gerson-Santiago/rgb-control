@@ -70,7 +70,7 @@ class TestBrandingAndPackagingConsistency(unittest.TestCase):
             build_content = f.read()
             
         # Extrai a linha de definição do Icon= no arquivo .desktop embutido
-        icon_match = re.search(r"Icon=([a-zA-Z0-9_-]+)", build_content)
+        icon_match = re.search(r"Icon=([a-zA-Z0-9_\.-]+)", build_content)
         self.assertTrue(icon_match, "Não foi possível localizar a definição 'Icon=' no arquivo .desktop do build_deb.sh")
         icon_name = icon_match.group(1)
         

@@ -7,7 +7,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-# Lista de 12 arquivos que devem conter o cabeçalho canônico
+# Lista de 13 arquivos que devem conter o cabeçalho canônico
 EXPECTED_FILES = [
     "scripts/pipeline_run.sh",
     "scripts/bump_version.py",
@@ -21,20 +21,27 @@ EXPECTED_FILES = [
     "build_deb.sh",
     "packaging/git-hooks/commit-msg",
     "packaging/git-hooks/pre-push",
+    "packaging/com.github.sant.rgbcontrol.metainfo.xml",
 ]
 
 def test_pipeline_reference_headers():
-    """Garante que todos os 12 arquivos de scripts/hooks possuam a referência do pipeline no cabeçalho."""
-    canonical_header = "# Pipeline Reference: .agents/workflows/pipeline.md"
+    """Garante que todos os 13 arquivos de scripts/hooks/metainfo possuam a referência do pipeline no cabeçalho."""
+    canonical_bash_header = "# Pipeline Reference: .agents/workflows/pipeline.md"
+    canonical_xml_header = "<!-- Pipeline Reference: .agents/workflows/pipeline.md -->"
     
     for relative_path in EXPECTED_FILES:
         path = PROJECT_ROOT / relative_path
         assert path.exists(), f"Arquivo esperado não encontrado: {relative_path}"
         
         content = path.read_text(encoding="utf-8")
-        assert canonical_header in content, (
-            f"Arquivo '{relative_path}' não contém a referência canônica: '{canonical_header}'"
-        )
+        if relative_path.endswith(".xml"):
+            assert canonical_xml_header in content, (
+                f"Arquivo '{relative_path}' não contém a referência canônica XML: '{canonical_xml_header}'"
+            )
+        else:
+            assert canonical_bash_header in content, (
+                f"Arquivo '{relative_path}' não contém a referência canônica bash: '{canonical_bash_header}'"
+            )
 
 def test_rule_files_links():
     """Garante que as regras 2, 3 e 4 em .agents/rules/ referenciem o pipeline.md."""
@@ -154,4 +161,33 @@ def test_deb_filename_not_in_sync_check():
     """docs_sync_check.py não deve verificar o filename do .deb — isso é responsabilidade do build_deb.sh."""
     content = (PROJECT_ROOT / "scripts" / "docs_sync_check.py").read_text()
     assert "_all.deb" not in content
+
+
+def test_gnome_debian_packaging_standards():
+    """Garante que o empacotamento Debian segue os padrões modernos de integração do GNOME/Debian."""
+    build_script = PROJECT_ROOT / "build_deb.sh"
+    assert build_script.exists()
+    content = build_script.read_text(encoding="utf-8")
+    
+    # 1. Verifica se o ícone configurado no .desktop usa o ID reverso
+    assert "Icon=com.github.sant.rgbcontrol" in content, (
+        "O arquivo .desktop gerado em build_deb.sh deve usar Icon=com.github.sant.rgbcontrol"
+    )
+    
+    # 2. Verifica se copia os ícones com a nomenclatura reversa
+    assert "com.github.sant.rgbcontrol.svg" in content, (
+        "build_deb.sh deve copiar o ícone com o nome com.github.sant.rgbcontrol.svg"
+    )
+    assert "com.github.sant.rgbcontrol.png" in content, (
+        "build_deb.sh deve copiar o ícone com o nome com.github.sant.rgbcontrol.png"
+    )
+    
+    # 3. Verifica se cria e copia metadados AppStream
+    assert 'usr/share/metainfo' in content, (
+        "build_deb.sh deve criar a pasta usr/share/metainfo"
+    )
+    assert 'com.github.sant.rgbcontrol.metainfo.xml' in content, (
+        "build_deb.sh deve copiar o arquivo de metadados com.github.sant.rgbcontrol.metainfo.xml"
+    )
+
 

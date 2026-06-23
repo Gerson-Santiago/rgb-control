@@ -23,6 +23,7 @@ mkdir -p "$DEB_DIR/usr/bin"
 mkdir -p "$DEB_DIR/usr/share/applications"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/scalable/apps"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/256x256/apps"
+mkdir -p "$DEB_DIR/usr/share/metainfo"
 mkdir -p "$DEB_DIR/usr/share/$PKG_NAME"
 mkdir -p "$DEB_DIR/lib/systemd/system"
 mkdir -p "$DEB_DIR/usr/share/gnome-shell/extensions/rgb-control@sant.github.com"
@@ -82,6 +83,17 @@ cp "packaging/rgb-control-daemon.service" "$DEB_DIR/lib/systemd/system/rgb-contr
 # Copy GNOME Shell extension
 cp -r gnome-extension/* "$DEB_DIR/usr/share/gnome-shell/extensions/rgb-control@sant.github.com/"
 
+# Validate AppStream Metadata if appstreamcli is installed
+if command -v appstreamcli >/dev/null 2>&1; then
+    echo "🔍 Validando metadados AppStream..."
+    appstreamcli validate packaging/com.github.sant.rgbcontrol.metainfo.xml
+else
+    echo "⚠️ appstreamcli não instalado. Pulando lint do AppStream (recomendado para empacotamento oficial)."
+fi
+
+# Copy AppStream Metadata
+cp "packaging/com.github.sant.rgbcontrol.metainfo.xml" "$DEB_DIR/usr/share/metainfo/"
+
 # Create /usr/bin/rgb-control wrapper (mesmo diretório para assets)
 cat <<EOF > "$DEB_DIR/usr/bin/rgb-control"
 #!/bin/bash
@@ -96,7 +108,7 @@ cat <<EOF > "$DEB_DIR/usr/share/applications/com.github.sant.rgbcontrol.desktop"
 Name=RGB Control
 Comment=Controle de Iluminação OpenRGB
 Exec=/usr/bin/rgb-control
-Icon=rgb-control
+Icon=com.github.sant.rgbcontrol
 Terminal=false
 Type=Application
 Categories=Utility;Settings;HardwareSettings;
@@ -104,8 +116,8 @@ Keywords=rgb;led;openrgb;color;lighting;
 EOF
 
 # Copy Icons - SVG (Scalable) & PNG (256x256)
-cp "assets/logo.svg" "$DEB_DIR/usr/share/icons/hicolor/scalable/apps/rgb-control.svg"
-cp "assets/logo.png" "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/rgb-control.png"
+cp "assets/logo.svg" "$DEB_DIR/usr/share/icons/hicolor/scalable/apps/com.github.sant.rgbcontrol.svg"
+cp "assets/logo.png" "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/com.github.sant.rgbcontrol.png"
 
 # Build .deb
 echo "Running dpkg-deb --build..."

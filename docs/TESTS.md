@@ -1,4 +1,4 @@
-# Arquitetura de QA Gold Standard (v1.1.13)
+# Arquitetura de QA Gold Standard (v1.1.14)
 
 Este documento detalha o sistema de blindagem de qualidade implementado no projeto `openrgb`. O objetivo é garantir que o software seja resiliente, livre de vazamentos de memória e protegido contra mudanças que quebrem o comportamento esperado.
 
