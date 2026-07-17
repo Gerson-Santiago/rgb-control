@@ -9,23 +9,14 @@
 
 set -euo pipefail
 
-# ─── Cores e símbolos ─────────────────────────────────────────────────────────
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-DIM='\033[2m'
-RESET='\033[0m'
-
-OK="${GREEN}✓${RESET}"
-FAIL="${RED}✗${RESET}"
-ARROW="${CYAN}→${RESET}"
-WARN="${YELLOW}⚠${RESET}"
-
 # ─── Verificação de contexto ──────────────────────────────────────────────────
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# shellcheck source=scripts/lib/shell_ui.sh
+source "$ROOT/scripts/lib/shell_ui.sh"
+
+# BLUE é exclusivo deste script (cabeçalhos de etapa)
+BLUE='\033[0;34m'
 
 if [[ ! -f "$ROOT/pyproject.toml" || ! -f "$ROOT/build_deb.sh" ]]; then
     echo -e "\n${FAIL} ${RED}Execute a partir da raiz do projeto:${RESET}"

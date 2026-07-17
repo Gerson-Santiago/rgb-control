@@ -6,21 +6,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export PYTHONPATH="$SCRIPT_DIR/src:${PYTHONPATH:-}"
 
-# ── Cores ─────────────────────────────────────────────────────────────────────
-GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'
-CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
-OK="${GREEN}✓${RESET}"; FAIL="${RED}✗${RESET}"; WARN="${YELLOW}⚠${RESET}"
+# shellcheck source=scripts/lib/shell_ui.sh
+source "$SCRIPT_DIR/scripts/lib/shell_ui.sh"
 
 step() { echo -e "\n${BOLD}${CYAN}── $1 ──${RESET}"; }
 ok()   { echo -e "  ${OK} $1"; }
 fail() { echo -e "  ${FAIL} ${RED}$1${RESET}"; }
 warn() { echo -e "  ${WARN} ${YELLOW}$1${RESET}"; }
 
-echo -e "${BOLD}${CYAN}"
-echo "  ╔══════════════════════════════════════════════╗"
-echo "  ║      🧪  Pipeline Local de Qualidade         ║"
-echo "  ╚══════════════════════════════════════════════╝"
-echo -e "${RESET}"
+ui_banner "🧪  Pipeline Local de Qualidade         "
 
 # ── Gate 0: arquivos de teste não rastreados ──────────────────────────────────
 step "Gate 0 — Arquivos de teste não rastreados"
@@ -84,10 +78,4 @@ python3 scripts/docs_sync_check.py
 ok "Versão sincronizada"
 
 # ── Sumário final ─────────────────────────────────────────────────────────────
-echo ""
-echo -e "${GREEN}${BOLD}"
-echo "  ╔══════════════════════════════════════════════╗"
-echo "  ║  🚀  Todos os gates passaram!                ║"
-echo "  ║      Código pronto para empacotamento.       ║"
-echo "  ╚══════════════════════════════════════════════╝"
-echo -e "${RESET}"
+ui_banner "🚀  Todos os gates passaram! Pronto para empacotar."
