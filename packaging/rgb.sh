@@ -137,7 +137,16 @@ if [[ $# -eq 0 ]]; then
 else
     # Se houver argumento, verifica se é uma cor predefinida
     ARG=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-    if [[ ${COLORS[$ARG]} ]]; then
+    if [[ "$ARG" == "on" ]]; then
+        last_color="FFFFFF"
+        if [ -f "/tmp/.controle_led.color" ]; then
+            last_color=$(cat /tmp/.controle_led.color | tr -d '#' | tr -d ' ')
+            if [[ "$last_color" == "000000" || -z "$last_color" ]]; then
+                last_color="FFFFFF"
+            fi
+        fi
+        apply_color "$last_color" "on"
+    elif [[ ${COLORS[$ARG]} ]]; then
         apply_color "${COLORS[$ARG]}" "$ARG"
     else
         # Caso contrário, assume que é um código HEX

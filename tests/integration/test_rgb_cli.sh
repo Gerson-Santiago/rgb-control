@@ -62,4 +62,25 @@ if [[ "$output" != *"Uso: rgb"* || "$output" != *"Cores predefinidas"* ]]; then
 fi
 echo "✅ Passed: Help flags"
 
+# Test "on" command
+rm -f /tmp/.controle_led.color
+output=$(bash "$RBG" "on" 2>&1)
+if [[ "$output" != *"✅ on"* ]]; then
+    echo "❌ Fail: Expected success for 'on' without history, got '$output'"
+    exit 1
+fi
+
+echo "#00FF00" > /tmp/.controle_led.color
+output=$(bash "$RBG" "on" 2>&1)
+if [[ "$output" != *"✅ on"* ]]; then
+    echo "❌ Fail: Expected success for 'on' with green history, got '$output'"
+    exit 1
+fi
+val=$(cat /tmp/.controle_led.color)
+if [[ "$val" != "#00FF00" ]]; then
+    echo "❌ Fail: Expected color to remain green, got '$val'"
+    exit 1
+fi
+echo "✅ Passed: 'on' command with and without history"
+
 echo "🎯 All bash CLI tests passed."
