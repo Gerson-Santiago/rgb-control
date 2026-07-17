@@ -5,7 +5,7 @@
 ![Coverage](https://img.shields.io/badge/coverage-73%25-success)
 
 
-sudo apt install --reinstall ./builds/rgb-control_1.1.14-1_all.deb
+sudo apt install --reinstall ./builds/rgb-control_1.0.0-1_all.deb
 
 
 Solução profissional (v1.0.0) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos, integrando um **Air Mouse XING WEI 2.4G USB** (Lelong LE-7278) como controle remoto nativo no Linux.
@@ -33,7 +33,7 @@ sudo apt install python3-evdev python3-gi libadwaita-1-0 dunst openrgb
 ### Instalação (Padrão Debian)
 Baixe o último release `.deb` e instale:
 ```bash
-sudo apt install ./builds/rgb-control_1.1.14-1_all.deb
+sudo apt install ./builds/rgb-control_1.0.0-1_all.deb
 ```
 
 ## 🎮 Operação com Air Mouse

@@ -112,7 +112,7 @@ confirm() {
 }
 
 # ─── Cabeçalho ────────────────────────────────────────────────────────────────
-clear
+clear || true
 echo -e "${BOLD}${BLUE}"
 echo "  ╔══════════════════════════════════════════════════════╗"
 echo "  ║         OpenRGB — Pipeline de Desenvolvimento       ║"
