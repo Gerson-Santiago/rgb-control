@@ -1,0 +1,7 @@
+{
+  "quick_colors": [
+    { "name": "Laranja", "hex": "#FF5500" },
+    { "name": "Vermelho", "hex": "#FF0000" },
+    { "name": "Azul",    "hex": "#0000FF" }
+  ]
+}

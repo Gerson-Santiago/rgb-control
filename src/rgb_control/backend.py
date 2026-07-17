@@ -171,12 +171,25 @@ class Backend:
         return os.path.expanduser("~/.config/rgb-control/config.json")
 
     def get_default_extension_config(self) -> dict[str, Any]:
-        """Retorna a configuração padrão para a extensão do GNOME."""
+        """Lê a configuração padrão da extensão. SSOT: assets/default_config.json"""
+        import json
+        candidates = [
+            os.path.join(self.root_dir, "assets", "default_config.json"),
+            "/usr/share/rgb-control/assets/default_config.json",
+        ]
+        for path in candidates:
+            if os.path.exists(path):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        return json.load(f)  # type: ignore[no-any-return]
+                except Exception:
+                    pass
+        # Fallback de emergência — não deve ser atingido em ambiente normal
         return {
             "quick_colors": [
                 {"name": "Laranja", "hex": "#FF5500"},
                 {"name": "Vermelho", "hex": "#FF0000"},
-                {"name": "Azul", "hex": "#0000FF"}
+                {"name": "Azul",    "hex": "#0000FF"},
             ]
         }
 

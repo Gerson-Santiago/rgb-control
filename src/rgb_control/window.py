@@ -113,261 +113,26 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
             
             main_box.append(hero_box)
 
-        # --- Grupos de Preferências ---
-        
-        # Grupo 1: Status e Sistema
-        system_group = Adw.PreferencesGroup()
-        system_group.set_title("Configurações do Serviço")
-        
-        self.switch_svc = Adw.SwitchRow()
-        self.switch_svc.set_title("Daemon de Captura (Background)")
-        self.switch_svc.set_subtitle("Gerencia a escuta de eventos do Air Mouse")
-        self.switch_svc.set_active(self.backend.is_service_active())
-        self._svc_handler_id = self.switch_svc.connect("notify::active", self.on_service_notify)
-        system_group.add(self.switch_svc)
+        # --- Grupos de Preferências (construídos por métodos especializados) ---
+        main_box.append(self._build_system_group())
+        main_box.append(self._build_remote_group())
+        main_box.append(self._build_indicator_group())
 
-        # Rótulo de status de conexão do controle remoto
-        self.row_controller = Adw.ActionRow()
-        self.row_controller.set_title("Controle Remoto (Air Mouse)")
-        self.row_controller.set_subtitle("Buscando dispositivo...")
-        self.row_controller.set_icon_name("accessory-controller-symbolic")
-
-        self.label_controller_status = Gtk.Label(label="Buscando...")
-        self.label_controller_status.set_valign(Gtk.Align.CENTER)
-        self.label_controller_status.add_css_class("dim-label")
-        self.row_controller.add_suffix(self.label_controller_status)
-        system_group.add(self.row_controller)
-        
-        main_box.append(system_group)
-
-        # Grupo 2: Controle Remoto (MODULAR)
-        remote_group = Adw.PreferencesGroup()
-        remote_group.set_title("Controle Remoto")
-        remote_group.set_description("Gerencie a captura de botões do Air Mouse")
-
-        self.switch_mode = Adw.SwitchRow()
-        self.switch_mode.set_title("Ativar Captura Remota")
-        self.switch_mode.set_subtitle("Permite mudar cores via ← → ou Vol±")
-        self.switch_mode.set_active(self.backend.is_led_mode_active())
-        self._mode_handler_id = self.switch_mode.connect("notify::active", self.on_mode_notify)
-        remote_group.add(self.switch_mode)
-
-        main_box.append(remote_group)
-        
-        # Grupo EXTRA: Cor Atual do CPU (Indicador Dinâmico)
-        indicator_group = Adw.PreferencesGroup()
-        indicator_group.set_title("Cor Atual do CPU")
-        
-        # Elementos visuais do indicador
-        indicator_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        indicator_box.set_halign(Gtk.Align.CENTER)
-        indicator_box.set_margin_top(16)
-        indicator_box.set_margin_bottom(16)
-        
-        # Ventoinha Component Factory (Embutida e Animada)
-        self.cpu_fan_overlay = Gtk.Overlay()
-        self.cpu_fan_overlay.set_size_request(250, 250)
-        self.cpu_fan_overlay.set_halign(Gtk.Align.CENTER)
-        
-        # O Motor central que girará!
-        self.fan_spinner = Gtk.Overlay()
-        self.fan_spinner.add_css_class("fan")
-        
-        # Resplendor/Brilho de fundo conectado na energia da Cor
-        self.fan_glow = Gtk.Box()
-        self.fan_glow.set_halign(Gtk.Align.FILL)
-        self.fan_glow.set_valign(Gtk.Align.FILL)
-        self.fan_glow.add_css_class("fan-glow")
-        self.fan_spinner.add_overlay(self.fan_glow)
-        
-        # Pass (Hélices Mecânicas)
-        b1 = Gtk.Box(); b1.add_css_class("blade"); b1.add_css_class("b1")
-        b1.set_halign(Gtk.Align.CENTER); b1.set_valign(Gtk.Align.CENTER)
-        self.fan_spinner.add_overlay(b1)
-        
-        b2 = Gtk.Box(); b2.add_css_class("blade"); b2.add_css_class("b2")
-        b2.set_halign(Gtk.Align.CENTER); b2.set_valign(Gtk.Align.CENTER)
-        self.fan_spinner.add_overlay(b2)
-        
-        b3 = Gtk.Box(); b3.add_css_class("blade"); b3.add_css_class("b3")
-        b3.set_halign(Gtk.Align.CENTER); b3.set_valign(Gtk.Align.CENTER)
-        self.fan_spinner.add_overlay(b3)
-        
-        # Eixo Central Escudo do Fan
-        self.fan_hub = Gtk.Box()
-        self.fan_hub.add_css_class("fan-hub")
-        self.fan_hub.set_halign(Gtk.Align.CENTER)
-        self.fan_hub.set_valign(Gtk.Align.CENTER)
-        self.fan_hub.set_size_request(50, 50)
-        
-        # Montagem do chassi principal
-        self.cpu_fan_overlay.set_child(self.fan_spinner)
-        self.cpu_fan_overlay.add_overlay(self.fan_hub)
-        
-        indicator_box.append(self.cpu_fan_overlay)
-        
-        
-        # Provedor CSS dinamico isolado para evitar recompilar TODO o estilo global
-        self.cpu_css_provider = Gtk.CssProvider()
-        Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), self.cpu_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-        
-        indicator_row = Adw.ActionRow()
-        indicator_row.set_activatable(False)
-        indicator_row.set_child(indicator_box)
-        indicator_group.add(indicator_row)
-        
-        main_box.append(indicator_group)
-        
-        # Grupo 2: Paleta de Cores
-        lighting_group = Adw.PreferencesGroup()
-        lighting_group.set_title("Paleta de Cores")
-        lighting_group.set_description("Selecione uma cor para aplicar instantaneamente")
-        
-        # Container para a grade de cores
-        palette_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        
-        self.colors = [
-            ("Vermelho", "#FF0000"), ("Laranja", "#FF5500"), ("Amarelo", "#FFFF00"),
-            ("Verde", "#00FF00"), ("Ciano", "#00F2EA"), ("Azul", "#0000FF"),
-            ("Roxo", "#AA00FF"), ("Ambar", "#FFB200"), ("Branco", "#FFFFFF"),
-            ("Desativar", "#000000")
-        ]
-        
-        flowbox = Gtk.FlowBox()
-        flowbox.set_selection_mode(Gtk.SelectionMode.NONE)
-        flowbox.set_max_children_per_line(5)
-        flowbox.set_min_children_per_line(5)
-        flowbox.set_row_spacing(16)
-        flowbox.set_column_spacing(16)
-        flowbox.set_halign(Gtk.Align.CENTER)
-        
-        # Gerar CSS inline para as cores caso o style.css externo falhe ou precise de reforço
-        css_data = ""
-        for _, hex_val in self.colors:
-            cls = f"color-btn-{hex_val.strip('#')}"
-            css_data += f".{cls} {{ background-color: {hex_val}; }}\n"
-            
-        provider = Gtk.CssProvider()
-        provider.load_from_data(css_data.encode())
-        Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-
-        for name, hex_val in self.colors:
-            btn = Gtk.Button()
-            btn.add_css_class("color-btn")
-            btn.add_css_class(f"color-btn-{hex_val.strip('#')}")
-            btn.set_tooltip_text(name)
-            btn.connect("clicked", self.on_color_clicked, hex_val, name)
-            flowbox.insert(btn, -1)
-            
-        palette_box.append(flowbox)
-        
-        # Seletor Personalizado (dentro de outro grupo para destaque)
-        custom_group = Adw.PreferencesGroup()
-        custom_group.set_title("Cor Avançada")
-        
-        custom_row = Adw.ActionRow()
-        custom_row.set_title("Cor Personalizada")
-        custom_row.set_subtitle("Escolha qualquer cor do espectro")
-        
-        self.color_dialog = Gtk.ColorDialog()
-        picker_btn = Gtk.ColorDialogButton()
-        picker_btn.set_dialog(self.color_dialog)
-        picker_btn.set_valign(Gtk.Align.CENTER)
-        picker_btn.connect("notify::rgba", self.on_custom_color_selected)
-        
-        custom_row.add_suffix(picker_btn)
-        custom_group.add(custom_row)
-        
-        # Adw.PreferencesGroup.add() aceita qualquer Gtk.Widget — mas para
-        # garantir que o flowbox preencha corretamente, encapsulamos numa ActionRow
-        palette_row = Adw.ActionRow()
-        palette_row.set_activatable(False)
-        # Centraliza e expande o flowbox dentro da row
-        palette_box.set_hexpand(True)
-        palette_box.set_valign(Gtk.Align.CENTER)
-        palette_box.set_halign(Gtk.Align.CENTER)
-        palette_row.set_child(palette_box)
-        lighting_group.add(palette_row)
-        
+        # Paleta e cor personalizada (dois grupos separados)
+        lighting_group, custom_group = self._build_lighting_groups()
         main_box.append(lighting_group)
         main_box.append(custom_group)
-        
-        # Grupo 3: Extensão GNOME Shell
-        extension_group = Adw.PreferencesGroup()
-        extension_group.set_title("Extensão GNOME (Barra Superior)")
-        extension_group.set_description("Configure as 3 cores de acesso rápido exibidas no painel do GNOME")
 
-        config = self.backend.get_extension_config()
-        # Fallback de segurança se config for um Mock ou estrutura inválida nos testes legados
-        if not isinstance(config, dict) or "quick_colors" not in config or len(config["quick_colors"]) < 3:
-            config = self.backend.get_default_extension_config()
+        main_box.append(self._build_extension_group())
+        main_box.append(self._build_help_group())
 
-        self.ext_pickers = []
-        for i in range(3):
-            row = Adw.ActionRow()
-            row.set_title(f"Cor de Atalho {i + 1}")
-            row.set_subtitle(f"Botão de cor {i + 1} no menu da extensão")
-            
-            color_hex = config["quick_colors"][i]["hex"]
-            if not isinstance(color_hex, str):
-                default_colors = ["#FF5500", "#FF0000", "#0000FF"]
-                color_hex = default_colors[i]
-            
-            picker = Gtk.ColorDialogButton()
-            picker.set_dialog(self.color_dialog)
-            picker.set_valign(Gtk.Align.CENTER)
-            
-            rgba = Gdk.RGBA()
-            rgba.parse(color_hex)
-            picker.set_rgba(rgba)
-            
-            picker.connect("notify::rgba", self.on_extension_color_changed, i)
-            
-            row.add_suffix(picker)
-            extension_group.add(row)
-            self.ext_pickers.append(picker)
-
-        main_box.append(extension_group)
-
-        # Grupo 4: Ajuda e Instruções (Expander Row / Dropdown de manual)
-        help_group = Adw.PreferencesGroup()
-        help_group.set_title("Documentação e Ajuda")
-
-        help_expander = Adw.ExpanderRow()
-        help_expander.set_title("Manual do Controle Remoto")
-        help_expander.set_subtitle("Lista de atalhos e botões mapeados")
-        help_expander.set_icon_name("help-about-symbolic")
-
-        help_btn_mic = Adw.ActionRow()
-        help_btn_mic.set_title("🎙️ ou 🏠  (Microfone / Home)")
-        help_btn_mic.set_subtitle("Liga / Desliga o MODO LED (Captura Remota)")
-        help_expander.add_row(help_btn_mic)
-
-        help_btn_next = Adw.ActionRow()
-        help_btn_next.set_title("➡️ ou ➕ Vol+ (Seta Direita / Aumentar Volume)")
-        help_btn_next.set_subtitle("Avança para a próxima cor da paleta")
-        help_expander.add_row(help_btn_next)
-
-        help_btn_prev = Adw.ActionRow()
-        help_btn_prev.set_title("⬅️ ou ➖ Vol- (Seta Esquerda / Diminuir Volume)")
-        help_btn_prev.set_subtitle("Retorna para a cor anterior da paleta")
-        help_expander.add_row(help_btn_prev)
-
-        help_btn_back = Adw.ActionRow()
-        help_btn_back.set_title("↩️  Back (Botão Voltar)")
-        help_btn_back.set_subtitle("Desativa o MODO LED e desliga a captura")
-        help_expander.add_row(help_btn_back)
-
-        help_group.add(help_expander)
-        main_box.append(help_group)
-        
         # Leitura da Versão embutida
         v_path = get_asset_path("version.txt")
         v_str = "v1.0.0"
         if v_path and os.path.exists(v_path):
             with open(v_path, "r") as f:
                 v_str = f.read().strip()
-                
+
         version_label = Gtk.Label(label=f"RGB Control • {v_str}")
         version_label.add_css_class("dim-label")
         version_label.set_margin_top(16)
@@ -443,6 +208,254 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
             if parent is not None:
                 parent.append(self.cpu_hex_label)
 
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Construtores de grupos de preferências (Clean Code: __init__ enxuto)
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _build_system_group(self) -> Adw.PreferencesGroup:
+        """Constrói o grupo de Status e Serviço (daemon + controle remoto)."""
+        system_group = Adw.PreferencesGroup()
+        system_group.set_title("Configurações do Serviço")
+
+        self.switch_svc = Adw.SwitchRow()
+        self.switch_svc.set_title("Daemon de Captura (Background)")
+        self.switch_svc.set_subtitle("Gerencia a escuta de eventos do Air Mouse")
+        self.switch_svc.set_active(self.backend.is_service_active())
+        self._svc_handler_id = self.switch_svc.connect("notify::active", self.on_service_notify)
+        system_group.add(self.switch_svc)
+
+        self.row_controller = Adw.ActionRow()
+        self.row_controller.set_title("Controle Remoto (Air Mouse)")
+        self.row_controller.set_subtitle("Buscando dispositivo...")
+        self.row_controller.set_icon_name("accessory-controller-symbolic")
+
+        self.label_controller_status = Gtk.Label(label="Buscando...")
+        self.label_controller_status.set_valign(Gtk.Align.CENTER)
+        self.label_controller_status.add_css_class("dim-label")
+        self.row_controller.add_suffix(self.label_controller_status)
+        system_group.add(self.row_controller)
+
+        return system_group
+
+    def _build_remote_group(self) -> Adw.PreferencesGroup:
+        """Constrói o grupo de captura do controle remoto (Air Mouse)."""
+        remote_group = Adw.PreferencesGroup()
+        remote_group.set_title("Controle Remoto")
+        remote_group.set_description("Gerencie a captura de botões do Air Mouse")
+
+        self.switch_mode = Adw.SwitchRow()
+        self.switch_mode.set_title("Ativar Captura Remota")
+        self.switch_mode.set_subtitle("Permite mudar cores via ← → ou Vol±")
+        self.switch_mode.set_active(self.backend.is_led_mode_active())
+        self._mode_handler_id = self.switch_mode.connect("notify::active", self.on_mode_notify)
+        remote_group.add(self.switch_mode)
+
+        return remote_group
+
+    def _build_indicator_group(self) -> Adw.PreferencesGroup:
+        """Constrói o grupo da ventoinha animada (indicador de cor atual do CPU)."""
+        indicator_group = Adw.PreferencesGroup()
+        indicator_group.set_title("Cor Atual do CPU")
+
+        indicator_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        indicator_box.set_halign(Gtk.Align.CENTER)
+        indicator_box.set_margin_top(16)
+        indicator_box.set_margin_bottom(16)
+
+        # Ventoinha Component Factory (Embutida e Animada)
+        self.cpu_fan_overlay = Gtk.Overlay()
+        self.cpu_fan_overlay.set_size_request(250, 250)
+        self.cpu_fan_overlay.set_halign(Gtk.Align.CENTER)
+
+        self.fan_spinner = Gtk.Overlay()
+        self.fan_spinner.add_css_class("fan")
+
+        self.fan_glow = Gtk.Box()
+        self.fan_glow.set_halign(Gtk.Align.FILL)
+        self.fan_glow.set_valign(Gtk.Align.FILL)
+        self.fan_glow.add_css_class("fan-glow")
+        self.fan_spinner.add_overlay(self.fan_glow)
+
+        for cls in [("blade", "b1"), ("blade", "b2"), ("blade", "b3")]:
+            blade = Gtk.Box()
+            blade.add_css_class(cls[0])
+            blade.add_css_class(cls[1])
+            blade.set_halign(Gtk.Align.CENTER)
+            blade.set_valign(Gtk.Align.CENTER)
+            self.fan_spinner.add_overlay(blade)
+
+        self.fan_hub = Gtk.Box()
+        self.fan_hub.add_css_class("fan-hub")
+        self.fan_hub.set_halign(Gtk.Align.CENTER)
+        self.fan_hub.set_valign(Gtk.Align.CENTER)
+        self.fan_hub.set_size_request(50, 50)
+
+        self.cpu_fan_overlay.set_child(self.fan_spinner)
+        self.cpu_fan_overlay.add_overlay(self.fan_hub)
+        indicator_box.append(self.cpu_fan_overlay)
+
+        # Provedor CSS dinâmico isolado
+        self.cpu_css_provider = Gtk.CssProvider()
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(), self.cpu_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
+        indicator_row = Adw.ActionRow()
+        indicator_row.set_activatable(False)
+        indicator_row.set_child(indicator_box)
+        indicator_group.add(indicator_row)
+
+        return indicator_group
+
+    def _build_lighting_groups(self) -> Tuple[Adw.PreferencesGroup, Adw.PreferencesGroup]:
+        """Constrói o grupo da paleta de cores e o grupo de cor personalizada."""
+        lighting_group = Adw.PreferencesGroup()
+        lighting_group.set_title("Paleta de Cores")
+        lighting_group.set_description("Selecione uma cor para aplicar instantaneamente")
+
+        palette_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+
+        self.colors = [
+            ("Vermelho", "#FF0000"), ("Laranja", "#FF5500"), ("Amarelo", "#FFFF00"),
+            ("Verde", "#00FF00"), ("Ciano", "#00F2EA"), ("Azul", "#0000FF"),
+            ("Roxo", "#AA00FF"), ("Ambar", "#FFB200"), ("Branco", "#FFFFFF"),
+            ("Desativar", "#000000")
+        ]
+
+        flowbox = Gtk.FlowBox()
+        flowbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        flowbox.set_max_children_per_line(5)
+        flowbox.set_min_children_per_line(5)
+        flowbox.set_row_spacing(16)
+        flowbox.set_column_spacing(16)
+        flowbox.set_halign(Gtk.Align.CENTER)
+
+        css_data = ""
+        for _, hex_val in self.colors:
+            cls = f"color-btn-{hex_val.strip('#')}"
+            css_data += f".{cls} {{ background-color: {hex_val}; }}\n"
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(css_data.encode())
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
+        for name, hex_val in self.colors:
+            btn = Gtk.Button()
+            btn.add_css_class("color-btn")
+            btn.add_css_class(f"color-btn-{hex_val.strip('#')}")
+            btn.set_tooltip_text(name)
+            btn.connect("clicked", self.on_color_clicked, hex_val, name)
+            flowbox.insert(btn, -1)
+
+        palette_box.append(flowbox)
+
+        palette_row = Adw.ActionRow()
+        palette_row.set_activatable(False)
+        palette_box.set_hexpand(True)
+        palette_box.set_valign(Gtk.Align.CENTER)
+        palette_box.set_halign(Gtk.Align.CENTER)
+        palette_row.set_child(palette_box)
+        lighting_group.add(palette_row)
+
+        # Grupo de cor personalizada (separado para destaque visual)
+        custom_group = Adw.PreferencesGroup()
+        custom_group.set_title("Cor Avançada")
+
+        custom_row = Adw.ActionRow()
+        custom_row.set_title("Cor Personalizada")
+        custom_row.set_subtitle("Escolha qualquer cor do espectro")
+
+        self.color_dialog = Gtk.ColorDialog()
+        picker_btn = Gtk.ColorDialogButton()
+        picker_btn.set_dialog(self.color_dialog)
+        picker_btn.set_valign(Gtk.Align.CENTER)
+        picker_btn.connect("notify::rgba", self.on_custom_color_selected)
+
+        custom_row.add_suffix(picker_btn)
+        custom_group.add(custom_row)
+
+        return lighting_group, custom_group
+
+
+
+    def _build_extension_group(self) -> Adw.PreferencesGroup:
+        """Constrói o grupo de configuração dos 3 botões de cor rápida da extensão GNOME."""
+        extension_group = Adw.PreferencesGroup()
+        extension_group.set_title("Extensão GNOME (Barra Superior)")
+        extension_group.set_description("Configure as 3 cores de acesso rápido exibidas no painel do GNOME")
+
+        config = self.backend.get_extension_config()
+        # Se for mock ou estrutura inválida
+        if not isinstance(config, dict) or "quick_colors" not in config or len(config["quick_colors"]) < 3:
+            try:
+                config = self.backend.get_default_extension_config()
+            except Exception:
+                config = {}
+
+        self.ext_pickers = []
+        for i in range(3):
+            row = Adw.ActionRow()
+            row.set_title(f"Cor de Atalho {i + 1}")
+            row.set_subtitle(f"Botão de cor {i + 1} no menu da extensão")
+
+            color_hex = ""
+            if isinstance(config, dict) and "quick_colors" in config and i < len(config["quick_colors"]):
+                color_hex = config["quick_colors"][i].get("hex", "")
+
+            # Se não for string válida, tenta ler do default do backend. Se falhar (mock), usa fallback estático estrito
+            if not isinstance(color_hex, str) or not color_hex.startswith("#"):
+                try:
+                    default_colors = self.backend.get_default_extension_config()["quick_colors"]
+                    color_hex = default_colors[i]["hex"]
+                except Exception:
+                    color_hex = ""
+
+            if not isinstance(color_hex, str) or not color_hex.startswith("#"):
+                color_hex = ["#FF5500", "#FF0000", "#0000FF"][i]
+
+            picker = Gtk.ColorDialogButton()
+            picker.set_dialog(self.color_dialog)
+            picker.set_valign(Gtk.Align.CENTER)
+
+            rgba = Gdk.RGBA()
+            rgba.parse(color_hex)
+            picker.set_rgba(rgba)
+
+            picker.connect("notify::rgba", self.on_extension_color_changed, i)
+
+            row.add_suffix(picker)
+            extension_group.add(row)
+            self.ext_pickers.append(picker)
+
+        return extension_group
+
+    def _build_help_group(self) -> Adw.PreferencesGroup:
+        """Constrói o grupo de documentação e manual de atalhos do controle remoto."""
+        help_group = Adw.PreferencesGroup()
+        help_group.set_title("Documentação e Ajuda")
+
+        help_expander = Adw.ExpanderRow()
+        help_expander.set_title("Manual do Controle Remoto")
+        help_expander.set_subtitle("Lista de atalhos e botões mapeados")
+        help_expander.set_icon_name("help-about-symbolic")
+
+        shortcuts: List[Tuple[str, str]] = [
+            ("🎙️ ou 🏠  (Microfone / Home)", "Liga / Desliga o MODO LED (Captura Remota)"),
+            ("➡️ ou ➕ Vol+ (Seta Direita / Aumentar Volume)", "Avança para a próxima cor da paleta"),
+            ("⬅️ ou ➖ Vol- (Seta Esquerda / Diminuir Volume)", "Retorna para a cor anterior da paleta"),
+            ("↩️  Back (Botão Voltar)", "Desativa o MODO LED e desliga a captura"),
+        ]
+        for title, subtitle in shortcuts:
+            row = Adw.ActionRow()
+            row.set_title(title)
+            row.set_subtitle(subtitle)
+            help_expander.add_row(row)
+
+        help_group.add(help_expander)
+        return help_group
 
     def load_custom_css(self) -> None:
         """Carrega o arquivo style.css — busca no mesmo dir do window.py e em assets/"""
