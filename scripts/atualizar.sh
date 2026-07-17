@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pipeline Reference: .agents/workflows/pipeline.md
-# Version: 1.0.0
+# Version: 1.0.1
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -26,3 +26,22 @@ if command -v appstreamcli >/dev/null 2>&1; then
     sudo appstreamcli update || sudo appstreamcli refresh-cache --force || true
 fi
 
+GREEN='\033[0;32m'; CYAN='\033[0;36m'; YELLOW='\033[1;33m'
+BOLD='\033[1m'; DIM='\033[2m'; RESET='\033[0m'
+
+echo -e "\n${GREEN}${BOLD}"
+echo "  ╔══════════════════════════════════════════════╗"
+echo -e "  ║  ✅  Instalação concluída: v${VERSION}-${REV}${RESET}${GREEN}${BOLD}"
+echo "  ╚══════════════════════════════════════════════╝"
+echo -e "${RESET}"
+echo -e "${BOLD}  Próximas etapas:${RESET}\n"
+echo -e "  ${CYAN}Passo 2${RESET} — Instalar a extensão GNOME:"
+echo -e "  ${DIM}  \$ bash scripts/install_extension.sh${RESET}"
+echo -e "\n  ${CYAN}Passo 3${RESET} — Verificação manual do comportamento no sistema."
+echo -e "\n  ${CYAN}Passo 4${RESET} — Se tudo estiver OK, faça o commit:"
+echo -e "  ${DIM}  \$ git add -A${RESET}"
+echo -e "  ${DIM}  \$ git commit -m \"tipo(escopo): descrição\"  ${DIM}# Conventional Commits${RESET}"
+echo -e "  ${DIM}  \$ git push origin <sua-branch>${RESET}"
+echo -e "\n  ${YELLOW}⚠${RESET}  Se a verificação manual falhar, reverta com:"
+echo -e "  ${DIM}  \$ git checkout -- .${RESET}"
+echo ""
