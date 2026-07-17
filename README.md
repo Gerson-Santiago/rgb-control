@@ -1,6 +1,6 @@
 # openrgb — Controle Desktop Moderno para Gabinetes Gaming 🎨🎮🐧
 
-![Version](https://img.shields.io/badge/version-1.1.14-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Quality Gate](https://img.shields.io/badge/quality--gate-passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-73%25-success)
 
@@ -8,7 +8,7 @@
 sudo apt install --reinstall ./builds/rgb-control_1.1.14-1_all.deb
 
 
-Solução profissional (v1.1.14) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos, integrando um **Air Mouse XING WEI 2.4G USB** (Lelong LE-7278) como controle remoto nativo no Linux.
+Solução profissional (v1.0.0) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos, integrando um **Air Mouse XING WEI 2.4G USB** (Lelong LE-7278) como controle remoto nativo no Linux.
 
 
 Construído com **Python 3.13**, **GTK4 / Libadwaita** e **Clean Architecture**.

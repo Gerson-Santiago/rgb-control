@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pipeline Reference: .agents/workflows/pipeline.md
-# Version: 1.1.14
+# Version: 1.0.0
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
