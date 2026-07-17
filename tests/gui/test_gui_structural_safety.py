@@ -1,7 +1,9 @@
+# Pipeline Reference: run_tests.sh — novos arquivos de teste precisam de `git add` (Gate 0 bloqueia arquivos não rastreados).
 import unittest
 from unittest.mock import MagicMock, patch
 from gi.repository import Gtk, Adw, Gio
-from rgb_control.window import MainWindow, LogViewerWindow
+from rgb_control.window import MainWindow
+from rgb_control.log_viewer import LogViewerWindow
 
 class TestMainWindowStructureSafety(unittest.TestCase):
     """
@@ -29,7 +31,6 @@ class TestMainWindowStructureSafety(unittest.TestCase):
             # Recriando o setup sem patches de baixo nível que quebram a C-Binding
             with patch('rgb_control.window.get_asset_path', return_value=""):
                 self.window = MainWindow(application=self.app)
-
     def test_core_ui_widgets_are_bound_and_valid(self):
         """Verifica se os componentes principais foram instanciados corretamente."""
         self.assertIsInstance(self.window.toolbar_view, Adw.ToolbarView)
@@ -37,25 +38,8 @@ class TestMainWindowStructureSafety(unittest.TestCase):
         self.assertIsInstance(self.window.switch_mode, Adw.SwitchRow)
         self.assertIsInstance(self.window.row_controller, Adw.ActionRow)
         self.assertIsInstance(self.window.label_controller_status, Gtk.Label)
-        self.assertIsInstance(self.window.fan_spinner, Gtk.Overlay)
         self.assertIsInstance(self.window.btn_logs, Gtk.Button)
 
-    def test_fan_cooler_rendering_layers(self):
-        """Verifica se a ventoinha dinâmica possui as camadas de glow necessárias."""
-        # Se a ventoinha estiver lá, o overlay deve ter pelo menos um child (o spinner)
-        self.assertIsNotNone(self.window.fan_spinner)
-        # O Hub central deve existir
-        has_hub = False
-        # Para GTK4, inspecionamos os children se necessário, mas aqui basta verificar a atribuição
-        self.assertTrue(hasattr(self.window, 'fan_spinner'))
-
-    def test_update_cpu_indicator_logic(self):
-        """Valida que a atualização do indicador de CPU (hex label) funciona sem crashes."""
-        # Forçamos a criação do label se ele não existir
-        self.window.update_cpu_indicator("#00FF00")
-        self.assertIsNotNone(self.window.cpu_hex_label)
-        # O markup deve conter a cor
-        self.assertIn("00FF00", self.window.cpu_hex_label.get_label())
 
     def test_startup_does_not_crash(self):
         """Teste de fumaça (Smoke Test) para garantir que o __init__ não levanta exceções."""

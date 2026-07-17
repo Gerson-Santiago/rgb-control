@@ -1,3 +1,4 @@
+# Pipeline Reference: run_tests.sh — novos arquivos de teste precisam de `git add` (Gate 0 bloqueia arquivos não rastreados).
 import pytest
 import gc
 import tracemalloc
@@ -23,7 +24,6 @@ def test_ui_update_memory_stability(app_instance):
         # Aquecimento (Warm-up) para carregar buffers iniciais do GTK
         for _ in range(5):
             win.update_status_ui()
-            win.update_cpu_indicator("#00FF00")
         
         gc.collect()
         tracemalloc.start()
@@ -33,7 +33,6 @@ def test_ui_update_memory_stability(app_instance):
         # Loop de estresse: simulando 100 atualizações
         for i in range(100):
             win.update_status_ui()
-            win.update_cpu_indicator(f"#{i%255:02X}AAAA")
             
         gc.collect()
         snap2 = tracemalloc.take_snapshot()

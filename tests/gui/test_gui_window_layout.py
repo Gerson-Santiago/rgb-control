@@ -1,3 +1,4 @@
+# Pipeline Reference: run_tests.sh — novos arquivos de teste precisam de `git add` (Gate 0 bloqueia arquivos não rastreados).
 import unittest
 import os
 from unittest.mock import MagicMock, patch
@@ -96,14 +97,12 @@ class TestWindowCallbacks(unittest.TestCase):
         self.window.switch_svc.set_active(True)
         # O efeito de reversão deve ser síncrono na mesma thread de UI
         self.assertFalse(self.window.switch_svc.get_active())
-
     def test_core_ui_widgets_are_bound_and_valid(self):
         """Verifica se os componentes principais foram instanciados corretamente."""
         self.assertIsInstance(self.window.toolbar_view, Adw.ToolbarView)
-        # No Libadwaita, switch_svc é um Adw.SwitchRow
         self.assertIsInstance(self.window.switch_svc, Adw.SwitchRow)
         self.assertIsInstance(self.window.switch_mode, Adw.SwitchRow)
-        self.assertIsInstance(self.window.fan_spinner, Gtk.Overlay)
+
 
     def test_color_callback_calls_backend(self):
         """Verifica se ao clicar numa cor (Verde), o Backend.apply_color é invocado."""

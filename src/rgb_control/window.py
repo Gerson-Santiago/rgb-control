@@ -1,15 +1,15 @@
 import gi # type: ignore[import-untyped]
 import gi
 import os
+import logging
 from typing import Optional, Any, Tuple, List, Union
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Adw, GLib, Gio, Gdk # type: ignore[import-untyped]
-import logging
 from rgb_control.backend import Backend
-from rgb_control.utils import hex_to_rgba_tuple
+from rgb_control.log_viewer import LogViewerWindow
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +39,8 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         self._last_ctrl_connected: Optional[bool] = None # Cache do estado do controle remoto
         super().__init__(application=application)
         self.set_title("RGB Control")
-        # Tamanho mais generoso e ergonômico
-        self.set_default_size(550, 750)
-        self.cpu_hex_label: Optional[Gtk.Label] = None # Inicialização segura
+        # Tamanho mais compacto sem a ventoinha
+        self.set_default_size(500, 520)
 
         
         logger.info("Carregando interface Libadwaita Premium...")
@@ -116,7 +115,6 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         # --- Grupos de Preferências (construídos por métodos especializados) ---
         main_box.append(self._build_system_group())
         main_box.append(self._build_remote_group())
-        main_box.append(self._build_indicator_group())
 
         # Paleta e cor personalizada (dois grupos separados)
         lighting_group, custom_group = self._build_lighting_groups()
@@ -147,66 +145,6 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         
         # Inicializa o estado visual lendo o cache global do daemon na memoria
         startup_color = self.backend.get_current_color()
-        self.update_cpu_indicator(startup_color)
-
-    def update_cpu_indicator(self, hex_val: str) -> None:
-        """Atualiza a Ventoinha 3D GTK com Glow Radiação do Fundo (Estética avançada)"""
-        r, g, b, a = hex_to_rgba_tuple(hex_val)
-        color_str = f"#{r:02X}{g:02X}{b:02X}"
-
-
-            
-        css = f"""
-        .fan {{
-            min-width: 75px; min-height: 75px;
-            border-radius: 50%;
-            background: radial-gradient(circle at center, rgba({r},{g},{b},0.95) 0%, rgba({int(r*0.2)},{int(g*0.2)},{int(b*0.2)},0.8) 100%);
-            animation: spin 1s linear infinite;
-        }}
-        .fan-paused {{
-            animation-play-state: paused;
-        }}
-        .fan-glow {{
-            border-radius: 50%;
-            background: radial-gradient(circle at center, rgba({r},{g},{b}, 0.5) 0%, rgba(0,0,0,0) 70%);
-            opacity: 0.8;
-        }}
-        .fan-hub {{
-            min-width: 50px; min-height: 50px;
-            background: #fff;
-            border-radius: 50%;
-            border: 7px double {color_str};
-            box-shadow: 0 0 10px rgba({r},{g},{b}, 0.8);
-        }}
-        .blade {{
-            min-width: 100px; min-height: 50px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 25px;
-            box-shadow: 0 0 15px rgba({r},{g},{b}, 0.6);
-            transform-origin: 50% 50%;
-        }}
-        .b1 {{ transform: rotate(0deg) translate(75px, 0); }}
-        .b2 {{ transform: rotate(120deg) translate(75px, 0); }}
-        .b3 {{ transform: rotate(240deg) translate(75px, 0); }}
-        
-        @keyframes spin {{
-            0%   {{ transform: rotate(0deg); }}
-            100% {{ transform: rotate(360deg); }}
-        }}
-        """
-        self.cpu_css_provider.load_from_data(css.encode())
-        
-        if self.cpu_hex_label is not None:
-            self.cpu_hex_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
-        else:
-            new_label = Gtk.Label()
-            new_label.set_markup(f"<span font_family='monospace' size='large' weight='bold'>{color_str.upper()}</span>")
-            new_label.add_css_class("dim-label")
-            self.cpu_hex_label = new_label
-            # Procura o overlay parent para append
-            parent = self.cpu_fan_overlay.get_parent()
-            if parent is not None:
-                parent.append(self.cpu_hex_label)
 
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -253,60 +191,7 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
 
         return remote_group
 
-    def _build_indicator_group(self) -> Adw.PreferencesGroup:
-        """Constrói o grupo da ventoinha animada (indicador de cor atual do CPU)."""
-        indicator_group = Adw.PreferencesGroup()
-        indicator_group.set_title("Cor Atual do CPU")
 
-        indicator_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        indicator_box.set_halign(Gtk.Align.CENTER)
-        indicator_box.set_margin_top(16)
-        indicator_box.set_margin_bottom(16)
-
-        # Ventoinha Component Factory (Embutida e Animada)
-        self.cpu_fan_overlay = Gtk.Overlay()
-        self.cpu_fan_overlay.set_size_request(250, 250)
-        self.cpu_fan_overlay.set_halign(Gtk.Align.CENTER)
-
-        self.fan_spinner = Gtk.Overlay()
-        self.fan_spinner.add_css_class("fan")
-
-        self.fan_glow = Gtk.Box()
-        self.fan_glow.set_halign(Gtk.Align.FILL)
-        self.fan_glow.set_valign(Gtk.Align.FILL)
-        self.fan_glow.add_css_class("fan-glow")
-        self.fan_spinner.add_overlay(self.fan_glow)
-
-        for cls in [("blade", "b1"), ("blade", "b2"), ("blade", "b3")]:
-            blade = Gtk.Box()
-            blade.add_css_class(cls[0])
-            blade.add_css_class(cls[1])
-            blade.set_halign(Gtk.Align.CENTER)
-            blade.set_valign(Gtk.Align.CENTER)
-            self.fan_spinner.add_overlay(blade)
-
-        self.fan_hub = Gtk.Box()
-        self.fan_hub.add_css_class("fan-hub")
-        self.fan_hub.set_halign(Gtk.Align.CENTER)
-        self.fan_hub.set_valign(Gtk.Align.CENTER)
-        self.fan_hub.set_size_request(50, 50)
-
-        self.cpu_fan_overlay.set_child(self.fan_spinner)
-        self.cpu_fan_overlay.add_overlay(self.fan_hub)
-        indicator_box.append(self.cpu_fan_overlay)
-
-        # Provedor CSS dinâmico isolado
-        self.cpu_css_provider = Gtk.CssProvider()
-        Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(), self.cpu_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
-
-        indicator_row = Adw.ActionRow()
-        indicator_row.set_activatable(False)
-        indicator_row.set_child(indicator_box)
-        indicator_group.add(indicator_row)
-
-        return indicator_group
 
     def _build_lighting_groups(self) -> Tuple[Adw.PreferencesGroup, Adw.PreferencesGroup]:
         """Constrói o grupo da paleta de cores e o grupo de cor personalizada."""
@@ -520,14 +405,12 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
 
     def on_color_clicked(self, widget: Gtk.Button, hex_val: str, name: str) -> None:
         logger.info(f"Cor predefinida escolhida: {name} ({hex_val})")
-        self.update_cpu_indicator(hex_val)
         self.backend.apply_color(hex_val, name)
 
     def on_custom_color_selected(self, picker_btn: Gtk.ColorDialogButton, param: Any) -> None:
         rgba = picker_btn.get_rgba()
         r, g, b = int(rgba.red * 255), int(rgba.green * 255), int(rgba.blue * 255)
         hex_val = f"#{r:02X}{g:02X}{b:02X}"
-        self.update_cpu_indicator(hex_val)
         self.backend.apply_color(hex_val, "Custom")
 
     def on_extension_color_changed(self, picker_btn: Gtk.ColorDialogButton, param: Any, index: int) -> None:
@@ -591,13 +474,7 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
                 self.switch_svc.set_active(svc_active)
                 self.switch_svc.handler_unblock(self._svc_handler_id)
                 
-            # Interromper / Congelar visualmente a ventoinha se o serviço subjacente estiver desativado!
-            if svc_active:
-                if self.fan_spinner.has_css_class("fan-paused"):
-                    self.fan_spinner.remove_css_class("fan-paused")
-            else:
-                if not self.fan_spinner.has_css_class("fan-paused"):
-                    self.fan_spinner.add_css_class("fan-paused")
+
                 
                 
             if self.switch_mode.get_active() != mode_active:
@@ -617,180 +494,3 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         """Abre o modal visualizador de logs"""
         log_window = LogViewerWindow(self, self.backend)
         log_window.present()
-
-
-class LogViewerWindow(Adw.Window): # type: ignore[misc]
-    def __init__(self, parent: Gtk.Window, backend: Backend) -> None:
-        super().__init__(transient_for=parent, modal=False)
-        self.set_title("Visualizador de Logs")
-        self.set_default_size(650, 500)
-        self.backend = backend
-        
-        # Conteúdo principal
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        self.set_content(box)
-        
-        # HeaderBar do modal
-        header = Adw.HeaderBar()
-        header.set_show_back_button(False)
-        box.append(header)
-        
-        # Barra de ferramentas para controles
-        control_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        control_bar.set_margin_start(12)
-        control_bar.set_margin_end(12)
-        control_bar.set_margin_top(8)
-        control_bar.set_margin_bottom(8)
-        
-        # DropDown para seleção de logs
-        self.dropdown = Gtk.DropDown.new_from_strings([
-            "Log do Daemon (Background)",
-            "Log do Aplicativo (GUI)"
-        ])
-        self.dropdown.connect("notify::selected", self.on_log_type_changed)
-        control_bar.append(self.dropdown)
-        
-        # Espaçador
-        spacer = Gtk.Box()
-        spacer.set_hexpand(True)
-        control_bar.append(spacer)
-        
-        # Botão Atualizar
-        self.btn_refresh = Gtk.Button()
-        self.btn_refresh.set_icon_name("view-refresh-symbolic")
-        self.btn_refresh.set_tooltip_text("Atualizar logs")
-        self.btn_refresh.connect("clicked", lambda b: self.refresh_logs())
-        control_bar.append(self.btn_refresh)
-        
-        # Botão Copiar
-        self.btn_copy = Gtk.Button()
-        self.btn_copy.set_icon_name("edit-copy-symbolic")
-        self.btn_copy.set_tooltip_text("Copiar para a área de transferência")
-        self.btn_copy.connect("clicked", self.on_copy_clicked)
-        control_bar.append(self.btn_copy)
-        
-        # Botão Limpar
-        self.btn_clear = Gtk.Button()
-        self.btn_clear.set_icon_name("user-trash-symbolic")
-        self.btn_clear.set_tooltip_text("Limpar logs do arquivo")
-        self.btn_clear.add_css_class("destructive-action")
-        self.btn_clear.connect("clicked", self.on_clear_clicked)
-        control_bar.append(self.btn_clear)
-        
-        box.append(control_bar)
-        
-        # TextView para exibição
-        self.scrolled = Gtk.ScrolledWindow()
-        self.scrolled.set_vexpand(True)
-        self.scrolled.set_hexpand(True)
-        self.scrolled.set_margin_start(12)
-        self.scrolled.set_margin_end(12)
-        self.scrolled.set_margin_bottom(12)
-        self.scrolled.add_css_class("card")
-        
-        self.text_view = Gtk.TextView()
-        self.text_view.set_editable(False)
-        self.text_view.set_monospace(True)
-        self.text_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
-        self.text_view.set_margin_top(8)
-        self.text_view.set_margin_bottom(8)
-        self.text_view.set_margin_start(8)
-        self.text_view.set_margin_end(8)
-        
-        self.scrolled.set_child(self.text_view)
-        box.append(self.scrolled)
-        
-        # Carregar logs
-        self.refresh_logs()
-        
-        # Conectar sinal de fechamento para limpar o timeout
-        self.connect("destroy", self.on_destroy)
-        
-        # Iniciar auto-refresh a cada 1.5s
-        self._refresh_timeout_id = GLib.timeout_add(1500, self.auto_refresh_logs)
-
-    def get_selected_log_path(self) -> str:
-        idx = self.dropdown.get_selected()
-        if idx == 0:
-            return self.backend.get_daemon_log_path()
-        else:
-            return self.backend.get_gui_log_path()
-
-    def refresh_logs(self) -> None:
-        path = self.get_selected_log_path()
-        content = self.backend.read_log_file(path)
-        
-        buffer = self.text_view.get_buffer()
-        buffer.set_text(content)
-        
-        # Rolar para o fim após o GTK renderizar
-        GLib.idle_add(self.scroll_to_bottom)
-
-    def scroll_to_bottom(self) -> bool:
-        adj = self.scrolled.get_vadjustment()
-        adj.set_value(adj.get_upper() - adj.get_page_size())
-        return False
-
-    def on_log_type_changed(self, dropdown: Gtk.DropDown, param: Any) -> None:
-        self.refresh_logs()
-
-    def on_copy_clicked(self, button: Gtk.Button) -> None:
-        buffer = self.text_view.get_buffer()
-        start, end = buffer.get_bounds()
-        text = buffer.get_text(start, end, True)
-        
-        clipboard = Gdk.Display.get_default().get_clipboard()
-        clipboard.set_text(text)
-        
-        # Feedback visual
-        button.set_icon_name("object-select-symbolic")
-        GLib.timeout_add(1000, lambda: button.set_icon_name("edit-copy-symbolic") or False)
-
-    def on_clear_clicked(self, button: Gtk.Button) -> None:
-        dialog = Adw.MessageDialog(
-            transient_for=self,
-            heading="Limpar Logs",
-            body="Tem certeza que deseja apagar todo o conteúdo deste arquivo de log? Esta operação não pode ser desfeita."
-        )
-        dialog.add_response("cancel", "Cancelar")
-        dialog.add_response("clear", "Limpar")
-        dialog.set_response_appearance("clear", Adw.ResponseAppearance.DESTRUCTIVE)
-        dialog.set_default_response("cancel")
-        dialog.set_close_attempt_response_id("cancel")
-        
-        def on_response(d: Adw.MessageDialog, response_id: str) -> None:
-            if response_id == "clear":
-                path = self.get_selected_log_path()
-                self.backend.clear_log_file(path)
-                self.refresh_logs()
-            d.destroy()
-            
-        dialog.connect("response", on_response)
-        dialog.present()
-
-    def on_destroy(self, widget: Any) -> None:
-        if hasattr(self, '_refresh_timeout_id') and self._refresh_timeout_id:
-            GLib.source_remove(self._refresh_timeout_id)
-            self._refresh_timeout_id = None
-
-    def auto_refresh_logs(self) -> bool:
-        if not self.get_visible() and not os.environ.get("PYTEST_CURRENT_TEST"):
-            return False
-            
-        path = self.get_selected_log_path()
-        content = self.backend.read_log_file(path)
-        
-        buffer = self.text_view.get_buffer()
-        start, end = buffer.get_bounds()
-        current_text = buffer.get_text(start, end, True)
-        
-        if content != current_text:
-            adj = self.scrolled.get_vadjustment()
-            is_at_bottom = adj.get_value() >= (adj.get_upper() - adj.get_page_size() - 10)
-            
-            buffer.set_text(content)
-            
-            if is_at_bottom:
-                GLib.idle_add(self.scroll_to_bottom)
-                
-        return True

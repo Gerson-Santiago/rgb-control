@@ -1,3 +1,4 @@
+# Pipeline Reference: run_tests.sh — novos arquivos de teste precisam de `git add` (Gate 0 bloqueia arquivos não rastreados).
 import pytest
 from unittest.mock import MagicMock, patch
 from gi.repository import Gio

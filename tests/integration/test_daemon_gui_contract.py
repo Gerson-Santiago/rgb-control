@@ -1,3 +1,4 @@
+# Pipeline Reference: run_tests.sh — novos arquivos de teste precisam de `git add` (Gate 0 bloqueia arquivos não rastreados).
 import pytest
 import os
 from unittest.mock import MagicMock, patch
@@ -31,10 +32,7 @@ def test_daemon_gui_status_sync(app_instance, fake_filesystem):
         assert backend.is_led_mode_active() is True
         
         # Agora testa se a Janela reflete isso
-        win = MainWindow(application=app_instance)
-        # Mock do spinner para não dar erro
-        win.fan_spinner = MagicMock()
-        
+        win = MainWindow(application=app_instance)        
         win.update_status_ui()
         assert win.switch_svc.get_active() is True
         assert win.switch_mode.get_active() is True

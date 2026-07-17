@@ -1,38 +1,93 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Pipeline Reference: .agents/workflows/pipeline.md
 # run_tests.sh - Executado antes do build_deb.sh ou git push
-set -e
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+set -euo pipefail
 
-export PYTHONPATH="$SCRIPT_DIR/src:$PYTHONPATH"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PYTHONPATH="$SCRIPT_DIR/src:${PYTHONPATH:-}"
 
-echo "🧪 Iniciando Pipeline Local de Testes (Clean Architecture)..."
+# ── Cores ─────────────────────────────────────────────────────────────────────
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'
+CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
+OK="${GREEN}✓${RESET}"; FAIL="${RED}✗${RESET}"; WARN="${YELLOW}⚠${RESET}"
 
-# 1. Typechecking
-echo "🔍 Rodando Type Checking (Pyright)..."
+step() { echo -e "\n${BOLD}${CYAN}── $1 ──${RESET}"; }
+ok()   { echo -e "  ${OK} $1"; }
+fail() { echo -e "  ${FAIL} ${RED}$1${RESET}"; }
+warn() { echo -e "  ${WARN} ${YELLOW}$1${RESET}"; }
+
+echo -e "${BOLD}${CYAN}"
+echo "  ╔══════════════════════════════════════════════╗"
+echo "  ║      🧪  Pipeline Local de Qualidade         ║"
+echo "  ╚══════════════════════════════════════════════╝"
+echo -e "${RESET}"
+
+# ── Gate 0: arquivos de teste não rastreados ──────────────────────────────────
+step "Gate 0 — Arquivos de teste não rastreados"
+UNTRACKED_TESTS=$(git ls-files --others --exclude-standard 'tests/**/*.py' 2>/dev/null || true)
+if [[ -n "$UNTRACKED_TESTS" ]]; then
+    warn "Arquivos de teste novos encontrados fora do git (use 'git add'):"
+    echo "$UNTRACKED_TESTS" | while IFS= read -r f; do echo "       $f"; done
+    fail "Abortando: faça 'git add' nos arquivos acima antes de continuar."
+    exit 1
+fi
+ok "Nenhum arquivo de teste não rastreado."
+
+# ── Gate 1: Pyright ───────────────────────────────────────────────────────────
+step "Gate 1 — Pyright (type checking)"
 pyright src/
-echo "✅ Pyright OK!"
+ok "Pyright: 0 erros"
 
-echo "🔍 Rodando Strict Type Checking (Mypy)..."
-# Usa MYPYPATH para resolver pacotes internos e evitar duplicidade de nomes
+# ── Gate 2: Mypy --strict ─────────────────────────────────────────────────────
+step "Gate 2 — Mypy --strict"
 MYPYPATH=src python3 -m mypy --strict -p rgb_daemon -p rgb_control
-echo "✅ Mypy OK!"
+ok "Mypy: 0 issues"
 
-# 1.5. Bash CLI Tests
-echo "🖥️ Rodando Testes do Wrapper Bash (CLI)..."
+# ── Gate 3: Bash CLI ─────────────────────────────────────────────────────────
+step "Gate 3 — Bash CLI tests"
 ./tests/integration/test_rgb_cli.sh
-echo "✅ Bash CLI Tests OK!"
+ok "Bash CLI tests: OK"
 
-# 2. Testes e Coverage Global
-echo "📊 Rodando Suíte Completa e Consolidando Coverage..."
-pytest tests/ -v --tb=short --cov=src --cov-branch --cov-report=json --cov-report=term-missing:skip-covered --cov-fail-under=65 -p no:warnings
+# ── Gate 4: Suíte pytest + coverage ──────────────────────────────────────────
+step "Gate 4 — Pytest + Coverage"
 
-# 2.5. Coverage Ratchet
-echo "📈 Executando Coverage Ratchet..."
+# Lê o threshold atual do ratchet (evita hardcode desatualizado)
+# O pytest compara cobertura como inteiro; usamos floor para evitar falha espúria.
+# O Gate 5 (coverage_ratchet.py) verifica a precisão decimal.
+RATCHET_FILE="$SCRIPT_DIR/.coverage_ratchet_threshold"
+RATCHET_THRESHOLD=65
+if [[ -f "$RATCHET_FILE" ]]; then
+    RATCHET_THRESHOLD=$(python3 -c "import math; print(math.floor(float(open('$RATCHET_FILE').read())))")
+fi
+
+echo -e "  Threshold do ratchet: ${BOLD}${RATCHET_THRESHOLD}%${RESET} (floor inteiro — ratchet decimal no Gate 5)"
+
+python3 -m pytest tests/ \
+    -v \
+    --tb=short \
+    --cov=src \
+    --cov-branch \
+    --cov-report=json \
+    --cov-report=term-missing:skip-covered \
+    --cov-fail-under="${RATCHET_THRESHOLD}" \
+    -p no:warnings
+
+ok "Pytest: todos os testes passaram e cobertura ≥ ${RATCHET_THRESHOLD}%"
+
+# ── Gate 5: Coverage Ratchet ──────────────────────────────────────────────────
+step "Gate 5 — Coverage Ratchet"
 python3 scripts/coverage_ratchet.py
 
-# 3. Auditoria de Versionamento
-echo "🔍 Auditando sincronia de versão (trava de versionamento)..."
+# ── Gate 6: Auditoria de Versionamento ───────────────────────────────────────
+step "Gate 6 — Sincronia de versão"
 python3 scripts/docs_sync_check.py
+ok "Versão sincronizada"
 
-echo "🚀 Todos os gates Mypy, Pyright, Ratchet e Versionamento passaram! O código está pronto para ser empacotado."
+# ── Sumário final ─────────────────────────────────────────────────────────────
+echo ""
+echo -e "${GREEN}${BOLD}"
+echo "  ╔══════════════════════════════════════════════╗"
+echo "  ║  🚀  Todos os gates passaram!                ║"
+echo "  ║      Código pronto para empacotamento.       ║"
+echo "  ╚══════════════════════════════════════════════╝"
+echo -e "${RESET}"
