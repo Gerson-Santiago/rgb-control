@@ -83,3 +83,29 @@
     color: rgba(255, 255, 255, 0.45);
     padding: 6px 16px 2px;
 }
+
+/* ─── Botão de Configurações ───────────────────────────────── */
+.rgb-settings-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.05);
+    margin-right: 6px;
+    transition: border-color 150ms ease-in-out, background-color 150ms ease-in-out, box-shadow 150ms ease-in-out, transform 150ms ease-in-out;
+}
+
+.rgb-settings-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.08);
+}
+
+.rgb-settings-btn:active {
+    transform: scale(0.95);
+}
+
+.rgb-settings-icon {
+    color: rgba(255, 255, 255, 0.7);
+}
+

@@ -114,7 +114,7 @@ run_menu() {
 
 # Lógica Principal
 if [[ "$1" == "-v" || "$1" == "--version" ]]; then
-    echo "RGB Controller v2.6.0"
+    echo "RGB Controller v2.7.0"
     exit 0
 fi
 

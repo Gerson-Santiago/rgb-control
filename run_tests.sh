@@ -34,7 +34,7 @@ ok "Pyright: 0 erros"
 
 # ── Gate 2: Mypy --strict ─────────────────────────────────────────────────────
 step "Gate 2 — Mypy --strict"
-MYPYPATH=src python3 -m mypy --strict -p rgb_control
+MYPYPATH=src python3 -m mypy --strict -p rgb_config
 ok "Mypy: 0 issues"
 
 # ── Gate 3: Bash CLI ─────────────────────────────────────────────────────────
@@ -46,8 +46,6 @@ ok "Bash CLI tests: OK"
 step "Gate 4 — Pytest + Coverage"
 
 # Lê o threshold atual do ratchet (evita hardcode desatualizado)
-# O pytest compara cobertura como inteiro; usamos floor para evitar falha espúria.
-# O Gate 5 (coverage_ratchet.py) verifica a precisão decimal.
 RATCHET_FILE="$SCRIPT_DIR/.coverage_ratchet_threshold"
 RATCHET_THRESHOLD=65
 if [[ -f "$RATCHET_FILE" ]]; then

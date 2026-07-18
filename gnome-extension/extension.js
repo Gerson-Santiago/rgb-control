@@ -92,6 +92,38 @@ class RgbControlIndicator extends PanelMenu.Button {
                 x_expand: true
             });
             headerLayout.add_child(this._titleLabel);
+ 
+            // Botão de Configurações no Cabeçalho
+            this._settingsBtn = new St.Button({
+                style_class: 'rgb-settings-btn',
+                reactive: true,
+                can_focus: true,
+                track_hover: true,
+                y_align: Clutter.ActorAlign.CENTER
+            });
+            this._settingsBtn.set_accessible_name('Configurar Cores');
+            
+            let settingsIcon = new St.Icon({
+                icon_name: 'emblem-system-symbolic',
+                style_class: 'rgb-settings-icon',
+                style: 'width: 16px; height: 16px; margin: auto;'
+            });
+            this._settingsBtn.set_child(settingsIcon);
+            
+            this._settingsBtn.connect('enter-event', () => {
+                if (this._titleLabel) {
+                    this._titleLabel.set_text('RGB Control (Configurar)');
+                }
+            });
+            this._settingsBtn.connect('leave-event', () => {
+                if (this._titleLabel) {
+                    this._titleLabel.set_text('RGB Control');
+                }
+            });
+            this._settingsBtn.connect('clicked', () => {
+                this._extension.openPreferences();
+            });
+            headerLayout.add_child(this._settingsBtn);
 
             // Botão Liga/Desligar Moderno no Cabeçalho
             this._powerBtn = new St.Button({
@@ -142,7 +174,7 @@ class RgbControlIndicator extends PanelMenu.Button {
             this._colorsContainerItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
             this._colorsBox = new St.BoxLayout({
                 style: 'spacing: 12px; padding: 6px 12px;',
-                vertical: false,
+                vertical: true,
                 x_expand: true,
                 x_align: Clutter.ActorAlign.CENTER
             });
@@ -151,48 +183,10 @@ class RgbControlIndicator extends PanelMenu.Button {
             
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-            // Título Seção: Cores Predefinidas (MAIS CORES)
-            let presetLabelItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
-            presetLabelItem.add_child(new St.Label({
-                text: 'Paleta Estendida (Presets)',
-                style_class: 'rgb-section-label'
-            }));
-            this.menu.addMenuItem(presetLabelItem);
-
-            // Container para botões de cores predefinidas
-            this._presetsContainerItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
-            this._presetsBox = new St.BoxLayout({
-                style: 'spacing: 12px; padding: 6px 12px;',
-                vertical: false,
-                x_expand: true,
-                x_align: Clutter.ActorAlign.CENTER
-            });
-            
-            // Adicionar cores predefinidas estéticas (MAIS CORES)
-            const presetColors = [
-                { name: 'Verde', hex: '#00FF00' },
-                { name: 'Ciano', hex: '#00FFFF' },
-                { name: 'Roxo', hex: '#FF00FF' },
-                { name: 'Amarelo', hex: '#FFFF00' },
-                { name: 'Branco', hex: '#FFFFFF' }
-            ];
-            
-            presetColors.forEach(colorData => {
-                let button = this._createColorButton(colorData);
-                if (button) {
-                    this._presetsBox.add_child(button);
-                }
-            });
-
-            this._presetsContainerItem.add_child(this._presetsBox);
-            this.menu.addMenuItem(this._presetsContainerItem);
-
-            this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-
             // Botão Abrir App Completo
-            let openAppItem = new PopupMenu.PopupImageMenuItem('Abrir App Completo', 'preferences-system-symbolic');
+            let openAppItem = new PopupMenu.PopupImageMenuItem('Configurar Cores', 'preferences-color-symbolic');
             openAppItem.connect('activate', () => {
-                this._runAppCommand();
+                this._extension.openPreferences();
             });
             this.menu.addMenuItem(openAppItem);
         } catch (e) {
@@ -204,7 +198,12 @@ class RgbControlIndicator extends PanelMenu.Button {
         let colors = [
             { name: 'Laranja', hex: '#FF5500' },
             { name: 'Vermelho', hex: '#FF0000' },
-            { name: 'Azul', hex: '#0000FF' }
+            { name: 'Azul', hex: '#0000FF' },
+            { name: 'Verde', hex: '#00FF00' },
+            { name: 'Ciano', hex: '#00FFFF' },
+            { name: 'Roxo', hex: '#FF00FF' },
+            { name: 'Amarelo', hex: '#FFFF00' },
+            { name: 'Branco', hex: '#FFFFFF' }
         ];
 
         let file = Gio.File.new_for_path(this._configPath);
@@ -214,7 +213,7 @@ class RgbControlIndicator extends PanelMenu.Button {
                 if (success) {
                     let decoder = new TextDecoder('utf-8');
                     let json = JSON.parse(decoder.decode(contents));
-                    if (json && json.quick_colors && json.quick_colors.length === 3) {
+                    if (json && json.quick_colors && json.quick_colors.length === 8) {
                         colors = json.quick_colors;
                     }
                 }
@@ -229,12 +228,32 @@ class RgbControlIndicator extends PanelMenu.Button {
     _updateQuickColorButtons(colors) {
         // Limpar botões antigos
         this._colorsBox.destroy_all_children();
-
-        // Reconstruir botões com a nova lógica DRY
-        colors.forEach(colorData => {
+ 
+        // Criar duas linhas de layout horizontal
+        let row1 = new St.BoxLayout({
+            style: 'spacing: 12px;',
+            vertical: false,
+            x_expand: true,
+            x_align: Clutter.ActorAlign.CENTER
+        });
+        let row2 = new St.BoxLayout({
+            style: 'spacing: 12px; margin-top: 8px;',
+            vertical: false,
+            x_expand: true,
+            x_align: Clutter.ActorAlign.CENTER
+        });
+ 
+        this._colorsBox.add_child(row1);
+        this._colorsBox.add_child(row2);
+ 
+        colors.forEach((colorData, index) => {
             let button = this._createColorButton(colorData);
             if (button) {
-                this._colorsBox.add_child(button);
+                if (index < 4) {
+                    row1.add_child(button);
+                } else {
+                    row2.add_child(button);
+                }
             }
         });
     }
@@ -284,24 +303,6 @@ class RgbControlIndicator extends PanelMenu.Button {
         }
     }
 
-    _runAppCommand() {
-        try {
-            let proc = new Gio.Subprocess({
-                argv: ['/usr/bin/rgb-control'],
-                flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
-            });
-            proc.init(null);
-            proc.wait_async(null, (source, res) => {
-                try {
-                    proc.wait_finish(res);
-                } catch (e) {
-                    log('RGB Control Extension: rgb-control failed: ' + e);
-                }
-            });
-        } catch (e) {
-            log('RGB Control Extension: Erro ao rodar rgb-control: ' + e);
-        }
-    }
 
     destroy() {
         if (this._monitor) {

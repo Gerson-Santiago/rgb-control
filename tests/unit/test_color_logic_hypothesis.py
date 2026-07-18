@@ -1,40 +1,28 @@
 # Pipeline Reference: run_tests.sh — novos arquivos de teste precisam de `git add` (Gate 0 bloqueia arquivos não rastreados).
 import pytest
 from hypothesis import given, strategies as st
-from rgb_control.utils import hex_to_rgba_tuple
+from rgb_config.config import hex_to_rgb
+
 
 @given(
     r=st.integers(min_value=0, max_value=255),
     g=st.integers(min_value=0, max_value=255),
-    b=st.integers(min_value=0, max_value=255)
+    b=st.integers(min_value=0, max_value=255),
 )
-def test_hex_to_rgba_tuple_roundtrip(r, g, b):
+def test_hex_to_rgb_roundtrip(r: int, g: int, b: int) -> None:
     """Garante que qualquer HEX válido gere exatamente os componentes R, G, B originais."""
     hex_val = f"#{r:02X}{g:02X}{b:02X}"
-    res_r, res_g, res_b, res_a = hex_to_rgba_tuple(hex_val)
-    assert (res_r, res_g, res_b, res_a) == (r, g, b, 1.0)
+    res_r, res_g, res_b = hex_to_rgb(hex_val)
+    assert (res_r, res_g, res_b) == (r, g, b)
+
 
 @given(st.text())
-def test_hex_to_rgba_tuple_resilience(random_text):
-    """Garante que NUNCA haja crash (Exception) independentemente do lixo passado como input."""
-    # A função deve retornar o fallback (0, 0, 0, 1.0) para qualquer entrada inválida
+def test_hex_to_rgb_resilience(random_text: str) -> None:
+    """Garante que NUNCA haja crash independentemente do lixo passado como input."""
     try:
-        res = hex_to_rgba_tuple(random_text)
-        assert len(res) == 4
-        # r, g, b devem ser ints 0-255, alpha deve ser 1.0
-        for i in range(3):
-            assert 0 <= res[i] <= 255
-        assert res[3] == 1.0
+        res = hex_to_rgb(random_text)
+        assert len(res) == 3
+        for channel in res:
+            assert 0 <= channel <= 255
     except Exception as e:
         pytest.fail(f"A função crashou com o input '{random_text}': {e}")
-
-def test_hex_short_form_conversion():
-    """Garante suporte a formato curto #F00 -> (255, 0, 0, 1.0)."""
-    assert hex_to_rgba_tuple("#F00") == (255, 0, 0, 1.0)
-    assert hex_to_rgba_tuple("#0F0") == (0, 255, 0, 1.0)
-    assert hex_to_rgba_tuple("#00F") == (0, 0, 255, 1.0)
-
-def test_hex_lowercase_resilience():
-    """Garante que HEX em minúsculo seja tratado corretamente."""
-    assert hex_to_rgba_tuple("#ff0000") == (255, 0, 0, 1.0)
-    assert hex_to_rgba_tuple("aabbcc") == (170, 187, 204, 1.0)

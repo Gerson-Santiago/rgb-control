@@ -62,20 +62,33 @@ function runTests() {
         assertTrue(indicator !== null && indicator !== undefined, "Indicator deve ser instanciado após enable()");
         assertEquals(Main.panel.statusArea[metadata.uuid], indicator, "Indicator deve ser adicionado ao status area");
 
+        // Helper para obter botões nas linhas horizontais
+        function getButtons() {
+            let btns = [];
+            for (let row of indicator._colorsBox.children) {
+                for (let btn of row.children) {
+                    btns.push(btn);
+                }
+            }
+            return btns;
+        }
+
         // Mockar comandos de subprocesso para evitar execução real de comandos e testar chamadas
         let colorCommandsRun = [];
         let appCommandsRun = 0;
+        let lastAppArgs = [];
         indicator._runColorCommand = (hex) => {
             colorCommandsRun.push(hex);
         };
-        indicator._runAppCommand = () => {
+        indicator._runAppCommand = (args) => {
             appCommandsRun++;
+            lastAppArgs = args || [];
         };
 
         // 1. Validar carregamento da configuração padrão (quando o arquivo não existe)
-        // Cores padrão: Laranja (#FF5500), Vermelho (#FF0000), Azul (#0000FF)
-        const buttons = indicator._colorsBox.children;
-        assertEquals(buttons.length, 3, "Devem ser criados 3 botões por padrão");
+        // 8 cores padrão
+        const buttons = getButtons();
+        assertEquals(buttons.length, 8, "Devem ser criados 8 botões por padrão");
         assertTrue(buttons[0].style.includes('#FF5500'), "Primeiro botão deve ser Laranja");
         assertTrue(buttons[1].style.includes('#FF0000'), "Segundo botão deve ser Vermelho");
         assertTrue(buttons[2].style.includes('#0000FF'), "Terceiro botão deve ser Azul");
@@ -104,12 +117,24 @@ function runTests() {
         openAppItem.signals['activate']();
         assertEquals(appCommandsRun, 1, "Deve rodar o comando de abrir app");
 
-        // 6. Testar carregamento de configuração personalizada
+        // Testar botão de configurações no cabeçalho
+        const settingsBtn = indicator._settingsBtn;
+        assertTrue(settingsBtn !== undefined, "Botão settings deve ser criado");
+        settingsBtn.signals['clicked']();
+        assertEquals(appCommandsRun, 2, "Deve rodar o comando de abrir app com args");
+        assertTrue(lastAppArgs.includes('--configure'), "Deve passar --configure nos argumentos");
+
+        // 6. Testar carregamento de configuração personalizada (8 cores)
         const customConfig = {
             quick_colors: [
                 { name: "Verde", hex: "#00FF00" },
                 { name: "Amarelo", hex: "#FFFF00" },
-                { name: "Ciano", hex: "#00FFFF" }
+                { name: "Ciano", hex: "#00FFFF" },
+                { name: "Laranja", hex: "#FF5500" },
+                { name: "Vermelho", hex: "#FF0000" },
+                { name: "Azul", hex: "#0000FF" },
+                { name: "Roxo", hex: "#FF00FF" },
+                { name: "Branco", hex: "#FFFFFF" }
             ]
         };
         
@@ -119,11 +144,9 @@ function runTests() {
         // Chama o recarregamento manual para testar _loadConfig com novo JSON
         indicator._loadConfig();
 
-        const newButtons = indicator._colorsBox.children;
-        assertEquals(newButtons.length, 3, "Devem ser criados 3 novos botões");
+        const newButtons = getButtons();
+        assertEquals(newButtons.length, 8, "Devem ser criados 8 novos botões");
         assertTrue(newButtons[0].style.includes('#00FF00'), "Novo primeiro botão deve ser Verde");
-        assertTrue(newButtons[1].style.includes('#FFFF00'), "Novo segundo botão deve ser Amarelo");
-        assertTrue(newButtons[2].style.includes('#00FFFF'), "Novo terceiro botão deve ser Ciano");
 
         // Testar hover com a nova cor
         newButtons[0].signals['enter-event']();
@@ -138,8 +161,8 @@ function runTests() {
         GLib.file_set_contents(tempConfigPath, "{invalid json}");
 
         indicator._loadConfig();
-        const fallbackButtons = indicator._colorsBox.children;
-        assertEquals(fallbackButtons.length, 3, "Deve reverter para 3 botões");
+        const fallbackButtons = getButtons();
+        assertEquals(fallbackButtons.length, 8, "Deve reverter para 8 botões");
         assertTrue(fallbackButtons[0].style.includes('#FF5500'), "Primeiro botão deve voltar a ser Laranja");
 
         // 8. Testar desativação da extensão

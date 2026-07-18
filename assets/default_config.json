@@ -2,6 +2,11 @@
   "quick_colors": [
     { "name": "Laranja", "hex": "#FF5500" },
     { "name": "Vermelho", "hex": "#FF0000" },
-    { "name": "Azul",    "hex": "#0000FF" }
+    { "name": "Azul",    "hex": "#0000FF" },
+    { "name": "Verde",   "hex": "#00FF00" },
+    { "name": "Ciano",   "hex": "#00FFFF" },
+    { "name": "Roxo",    "hex": "#FF00FF" },
+    { "name": "Amarelo", "hex": "#FFFF00" },
+    { "name": "Branco",  "hex": "#FFFFFF" }
   ]
 }

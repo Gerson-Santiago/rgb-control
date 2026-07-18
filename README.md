@@ -1,14 +1,14 @@
 # openrgb — Controle Desktop Moderno para Gabinetes Gaming 🎨🎮🐧
 
-![Version](https://img.shields.io/badge/version-2.6.0-blue)
+![Version](https://img.shields.io/badge/version-2.7.0-blue)
 ![Quality Gate](https://img.shields.io/badge/quality--gate-passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-89%25-success)
 
 
-sudo apt install --reinstall ./builds/rgb-control_2.6.0-1_all.deb
+sudo apt install --reinstall ./builds/rgb-control_2.7.0-1_all.deb
 
 
-Solução profissional (v2.6.0) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos no Linux.
+Solução profissional (v2.7.0) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos no Linux.
 
 
 Construído com **Python 3.13**, **GTK4 / Libadwaita** e **Clean Architecture**.
@@ -32,7 +32,7 @@ sudo apt install python3-evdev python3-gi libadwaita-1-0 dunst openrgb
 ### Instalação (Padrão Debian)
 Baixe o último release `.deb` e instale:
 ```bash
-sudo apt install ./builds/rgb-control_2.6.0-1_all.deb
+sudo apt install ./builds/rgb-control_2.7.0-1_all.deb
 ```
 
 

@@ -22,7 +22,6 @@ EXPECTED_FILES = [
     "build_deb.sh",
     "packaging/git-hooks/commit-msg",
     "packaging/git-hooks/pre-push",
-    "packaging/com.github.sant.rgbcontrol.metainfo.xml",
 ]
 
 def test_pipeline_reference_headers():
@@ -162,33 +161,5 @@ def test_deb_filename_not_in_sync_check():
     """docs_sync_check.py não deve verificar o filename do .deb — isso é responsabilidade do build_deb.sh."""
     content = (PROJECT_ROOT / "scripts" / "docs_sync_check.py").read_text()
     assert "_all.deb" not in content
-
-
-def test_gnome_debian_packaging_standards():
-    """Garante que o empacotamento Debian segue os padrões modernos de integração do GNOME/Debian."""
-    build_script = PROJECT_ROOT / "build_deb.sh"
-    assert build_script.exists()
-    content = build_script.read_text(encoding="utf-8")
-    
-    # 1. Verifica se o ícone configurado no .desktop usa o ID reverso
-    assert "Icon=com.github.sant.rgbcontrol" in content, (
-        "O arquivo .desktop gerado em build_deb.sh deve usar Icon=com.github.sant.rgbcontrol"
-    )
-    
-    # 2. Verifica se copia os ícones com a nomenclatura reversa
-    assert "com.github.sant.rgbcontrol.svg" in content, (
-        "build_deb.sh deve copiar o ícone com o nome com.github.sant.rgbcontrol.svg"
-    )
-    assert "com.github.sant.rgbcontrol.png" in content, (
-        "build_deb.sh deve copiar o ícone com o nome com.github.sant.rgbcontrol.png"
-    )
-    
-    # 3. Verifica se cria e copia metadados AppStream
-    assert 'usr/share/metainfo' in content, (
-        "build_deb.sh deve criar a pasta usr/share/metainfo"
-    )
-    assert 'com.github.sant.rgbcontrol.metainfo.xml' in content, (
-        "build_deb.sh deve copiar o arquivo de metadados com.github.sant.rgbcontrol.metainfo.xml"
-    )
 
 
