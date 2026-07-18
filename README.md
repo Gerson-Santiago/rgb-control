@@ -1,75 +1,110 @@
-# openrgb — Controle Desktop Moderno para Gabinetes Gaming 🎨🎮🐧
+# rgb-control — Controle de LEDs OpenRGB para GNOME 🎨🐧
 
-![Version](https://img.shields.io/badge/version-2.7.0-blue)
+![Version](https://img.shields.io/badge/version-3.0.0-blue)
 ![Quality Gate](https://img.shields.io/badge/quality--gate-passed-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-89%25-success)
 
 
-sudo apt install --reinstall ./builds/rgb-control_2.7.0-1_all.deb
+```bash
+sudo apt install --reinstall ./builds/rgb-control_3.0.0-1_all.deb
+```
 
-
-Solução profissional (v2.7.0) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos no Linux.
-
-
-Construído com **Python 3.13**, **GTK4 / Libadwaita** e **Clean Architecture**.
+Solução focada (v3.0.0) para controlar a iluminação de gabinetes **ASUS TUF Gaming**
+e periféricos no Linux via **OpenRGB**.
 
 ---
 
-## ✨ Funcionalidades Principais
--   **Interface Premium**: Interface gráfica moderna baseada em GNOME/Libadwaita.
--   **Controle Dual**: Gerenciamento via GUI (Janela) ou CLI (Terminal).
--   **OSD (Dunst)**: Feedback visual na tela ao alternar modos de LED.
--   **Extensão GNOME Shell**: Menu de acesso rápido no painel superior (Shell **45–48**).
--   **Alta Fidelidade**: Suite de testes com 102+ validações (Property-based, Contract).
+## ✨ Componentes
 
-## 🚀 Instalação e Requisitos
+| Componente | Responsabilidade |
+|---|---|
+| **Extensão GNOME Shell** | Menu de acesso rápido no painel superior (Shell 45–48) |
+| **`rgb` CLI** | Aplicação de cores via terminal (`rgb azul`, `rgb off`, `rgb FF5500`) |
+| **`rgb_config`** | Módulo Python puro — leitura/escrita do `config.json` |
+| **`assets/default_config.json`** | SSOT das 8 cores padrão de atalho |
 
-### Dependências de Sistema
+---
+
+## 🖥️ Extensão GNOME Shell
+
+O ícone 💡 no painel superior abre um menu com:
+- **8 botões de cor** rápida configuráveis
+- **Botão liga/desliga** LEDs (off)
+- **Configurar Cores** → abre painel de Preferências nativo do GNOME
+
+### Configurar as cores de atalho
+
 ```bash
-sudo apt install python3-evdev python3-gi libadwaita-1-0 dunst openrgb
+gnome-extensions prefs rgb-control@sant.github.com
 ```
 
-### Instalação (Padrão Debian)
-Baixe o último release `.deb` e instale:
+Ou clique no ícone de engrenagem ⚙️ dentro do menu da extensão.
+
+---
+
+## 💻 CLI (`rgb`)
+
 ```bash
-sudo apt install ./builds/rgb-control_2.7.0-1_all.deb
+rgb azul          # Aplica azul
+rgb vermelho      # Aplica vermelho
+rgb FF5500        # Aplica cor hex diretamente
+rgb off           # Desliga LEDs
+rgb on            # Liga com última cor usada
+rgb               # Menu interativo (gum)
+rgb --help        # Ajuda completa
 ```
 
+Cores predefinidas: `branco`, `preto/off`, `vermelho`, `verde`, `azul`,
+`amarelo`, `laranja`, `ambar`, `roxo`, `ciano` (e variantes em inglês).
 
+---
 
-## 🛠️ Desenvolvimento e Qualidade
+## 🚀 Instalação
 
-Este projeto segue padrões de **QA Gold Standard**. Para contribuir ou rodar em modo desenvolvedor:
+### Dependências
+```bash
+sudo apt install openrgb
+```
 
-1.  **Manual Técnico de Stack**: Consulte [docs/stack.md](docs/stack.md).
-2.  **Guia de Blindagem de Testes**: Consulte [docs/TESTS.md](docs/TESTS.md).
-3.  **Processo do Pipeline**: Consulte o [Pipeline Reference](file:///home/sant/Área de trabalho/PROJETOS/openrgb/.agents/workflows/pipeline.md) para compreender a árvore de decisões.
-4.  **Portão de Qualidade**: Execute `./run_tests.sh` para validar toda a arquitetura.
+### Instalação via .deb
+```bash
+sudo apt install ./builds/rgb-control_3.0.0-1_all.deb
+```
 
-### Setup de Desenvolvimento
-1. Clone o repositório:
+---
+
+## 🛠️ Desenvolvimento
+
+### Setup
 ```bash
 git clone https://github.com/Gerson-Santiago/rgb-control.git
-```
-2. Instale as dependências locais de desenvolvimento:
-```bash
 pip install -e .[dev]
-```
-3. Execute o script de onboarding para configurar os git hooks locais:
-```bash
 ./scripts/setup_dev.sh
 ```
-4. Para guiar o ciclo de desenvolvimento, execute o pipeline interativo:
+
+### Pipeline de Qualidade
 ```bash
-bash scripts/pipeline_run.sh
+./run_tests.sh
+```
+
+Gates: arquivos não rastreados → Pyright → Mypy → CLI bash → Pytest+coverage → Ratchet → Versão
+
+### Build do pacote
+```bash
+./build_deb.sh
 ```
 
 ---
 
-## 🏗️ Estrutura do Projeto
--   **`src/rgb_control/`**: Aplicação de interface gráfica (GTK4).
--   **`tests/`**: Suite exaustiva de testes automatizados.
--   **`docs/`**: Documentação técnica detalhada.
+## 🏗️ Estrutura
+
+```
+rgb-control/
+├── gnome-extension/          # Extensão GNOME Shell (extension.js + prefs.js)
+├── src/rgb_config/           # Módulo Python puro — gerência de config.json
+├── packaging/rgb.sh          # Script CLI principal
+├── assets/default_config.json # SSOT das cores padrão
+└── tests/                   # Suite de testes automatizados
+```
 
 ---
-**Status: ESTÁVEL & BLINDADO 🛡️**
+**Status: ESTÁVEL 🛡️**

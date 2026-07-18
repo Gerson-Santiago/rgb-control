@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rgb-control"
-version = "2.7.0"
+version = "3.0.0"
 description = "RGB Control — Extensão GNOME Shell + CLI para controle OpenRGB"
 readme = "README.md"
 requires-python = ">=3.11"

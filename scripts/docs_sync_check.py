@@ -56,21 +56,14 @@ def main():
         "título principal"
     )
     
-    # 3. src/rgb_control/main.py
-    check_file_contains(
-        root / "src" / "rgb_control" / "main.py",
-        f'print("RGB Control v{version}")',
-        "flag --version"
-    )
-    
-    # 4. packaging/rgb.sh
+    # 3. packaging/rgb.sh
     check_file_contains(
         root / "packaging" / "rgb.sh",
         f'echo "RGB Controller v{version}"',
         "flag --version"
     )
     
-    # 5. README.md
+    # 4. README.md
     check_file_contains(
         root / "README.md",
         f"badge/version-{version}-blue",
@@ -79,11 +72,11 @@ def main():
 
     check_file_contains(
         root / "README.md",
-        f"Solução profissional (v{version})",
+        f"Solução focada (v{version})",
         "introdução vX.Y.Z"
     )
     
-    # 6. scripts/atualizar.sh
+    # 5. scripts/atualizar.sh
     check_file_contains(
         root / "scripts" / "atualizar.sh",
         f"# Version: {version}",

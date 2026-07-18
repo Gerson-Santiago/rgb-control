@@ -8,9 +8,6 @@ REV="1"
 ARCH="all"
 DEB_DIR="builds/${PKG_NAME}_${VERSION}-${REV}_${ARCH}"
 
-# Grava a versão empacotada para que a GUI possa exibi-la na base (rodapé)
-echo "v${VERSION}" > assets/version.txt
-
 echo ">> Executando Pipeline de Qualidade (Clean Architecture) <<"
 ./run_tests.sh
 
@@ -20,11 +17,7 @@ echo "Building Debian package: $DEB_DIR"
 rm -rf "$DEB_DIR"
 mkdir -p "$DEB_DIR/DEBIAN"
 mkdir -p "$DEB_DIR/usr/bin"
-mkdir -p "$DEB_DIR/usr/share/applications"
-mkdir -p "$DEB_DIR/usr/share/icons/hicolor/scalable/apps"
-mkdir -p "$DEB_DIR/usr/share/icons/hicolor/256x256/apps"
-mkdir -p "$DEB_DIR/usr/share/metainfo"
-mkdir -p "$DEB_DIR/usr/share/$PKG_NAME"
+mkdir -p "$DEB_DIR/usr/share/$PKG_NAME/assets"
 mkdir -p "$DEB_DIR/usr/share/gnome-shell/extensions/rgb-control@sant.github.com"
 
 # Create DEBIAN/control
@@ -34,82 +27,49 @@ Version: $VERSION-$REV
 Section: utils
 Priority: optional
 Architecture: $ARCH
-Depends: python3, python3-gi, python3-gi-cairo, gir1.2-gtk-4.0, gir1.2-adw-1
+Depends: openrgb, python3
 Maintainer: Sant <sant@local>
-Description: Interface Gráfica moderna em GTK4 para controle do OpenRGB com integrações.
+Description: Extensão GNOME Shell + CLI para controle de iluminação OpenRGB.
+ Painel de acesso rápido no Shell com 8 cores configuráveis e CLI rico (rgb).
 EOF
 
-# Create DEBIAN/postinst (atualiza cache)
+# Create DEBIAN/postinst
 cat <<EOF > "$DEB_DIR/DEBIAN/postinst"
 #!/bin/sh
 set -e
 if [ "\$1" = "configure" ]; then
-    gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
-    update-desktop-database -q || true
+    # Recarrega extensões do GNOME Shell se estiver rodando em sessão gráfica
+    if command -v gnome-extensions > /dev/null 2>&1; then
+        gnome-extensions enable rgb-control@sant.github.com 2>/dev/null || true
+    fi
 fi
 EOF
 chmod +x "$DEB_DIR/DEBIAN/postinst"
 
-
-# Create DEBIAN/postrm (limpa cache)
+# Create DEBIAN/postrm
 cat <<EOF > "$DEB_DIR/DEBIAN/postrm"
 #!/bin/sh
 set -e
 if [ "\$1" = "remove" ] || [ "\$1" = "purge" ]; then
-    gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
-    update-desktop-database -q || true
+    if command -v gnome-extensions > /dev/null 2>&1; then
+        gnome-extensions disable rgb-control@sant.github.com 2>/dev/null || true
+    fi
 fi
 EOF
 chmod +x "$DEB_DIR/DEBIAN/postrm"
 
-# Copy source python packages
-cp -r src/rgb_control "$DEB_DIR/usr/share/$PKG_NAME/"
+# Copia o módulo Python de configuração (rgb_config — puro, sem GTK)
+cp -r src/rgb_config "$DEB_DIR/usr/share/$PKG_NAME/"
 
-# Copy assets
-cp -r assets "$DEB_DIR/usr/share/$PKG_NAME/"
+# Copia o SSOT de cores padrão
+cp assets/default_config.json "$DEB_DIR/usr/share/$PKG_NAME/assets/"
+
+# Copia o script CLI rgb.sh
 cp "packaging/rgb.sh" "$DEB_DIR/usr/bin/rgb.sh"
 chmod +x "$DEB_DIR/usr/bin/rgb.sh"
 
-
-
-# Copy GNOME Shell extension
+# Copia a extensão GNOME Shell
 cp -r gnome-extension/* "$DEB_DIR/usr/share/gnome-shell/extensions/rgb-control@sant.github.com/"
-
-# Validate AppStream Metadata if appstreamcli is installed
-if command -v appstreamcli >/dev/null 2>&1; then
-    echo "🔍 Validando metadados AppStream..."
-    appstreamcli validate packaging/com.github.sant.rgbcontrol.metainfo.xml
-else
-    echo "⚠️ appstreamcli não instalado. Pulando lint do AppStream (recomendado para empacotamento oficial)."
-fi
-
-# Copy AppStream Metadata
-cp "packaging/com.github.sant.rgbcontrol.metainfo.xml" "$DEB_DIR/usr/share/metainfo/"
-
-# Create /usr/bin/rgb-control wrapper (mesmo diretório para assets)
-cat <<EOF > "$DEB_DIR/usr/bin/rgb-control"
-#!/bin/bash
-export PYTHONPATH="/usr/share/$PKG_NAME:\$PYTHONPATH"
-exec python3 -m rgb_control.main "\$@"
-EOF
-chmod +x "$DEB_DIR/usr/bin/rgb-control"
-
-# Create .desktop file
-cat <<EOF > "$DEB_DIR/usr/share/applications/com.github.sant.rgbcontrol.desktop"
-[Desktop Entry]
-Name=RGB Control
-Comment=Controle de Iluminação OpenRGB
-Exec=/usr/bin/rgb-control
-Icon=com.github.sant.rgbcontrol
-Terminal=false
-Type=Application
-Categories=Utility;Settings;HardwareSettings;
-Keywords=rgb;led;openrgb;color;lighting;
-EOF
-
-# Copy Icons - SVG (Scalable) & PNG (256x256)
-cp "assets/logo.svg" "$DEB_DIR/usr/share/icons/hicolor/scalable/apps/com.github.sant.rgbcontrol.svg"
-cp "assets/logo.png" "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/com.github.sant.rgbcontrol.png"
 
 # Build .deb
 echo "Running dpkg-deb --build..."

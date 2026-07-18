@@ -73,16 +73,15 @@ function runTests() {
             return btns;
         }
 
-        // Mockar comandos de subprocesso para evitar execução real de comandos e testar chamadas
+        // Mockar comandos de subprocesso e openPreferences para evitar execução real
         let colorCommandsRun = [];
-        let appCommandsRun = 0;
-        let lastAppArgs = [];
+        let prefsOpenedCount = 0;
         indicator._runColorCommand = (hex) => {
             colorCommandsRun.push(hex);
         };
-        indicator._runAppCommand = (args) => {
-            appCommandsRun++;
-            lastAppArgs = args || [];
+        // A extensão agora chama this._extension.openPreferences() — mock no objeto extension
+        extension.openPreferences = () => {
+            prefsOpenedCount++;
         };
 
         // 1. Validar carregamento da configuração padrão (quando o arquivo não existe)
@@ -111,18 +110,17 @@ function runTests() {
         powerBtn.signals['clicked']();
         assertEquals(colorCommandsRun[colorCommandsRun.length - 1], '000000', "Deve rodar o comando de desligar (000000)");
 
-        // 5. Testar clique em "Abrir App Completo"
-        const openAppItem = indicator.menu.items.find(item => item.text === 'Abrir App Completo');
+        // 5. Testar clique em "Configurar Cores" (abre Preferences nativas)
+        const openAppItem = indicator.menu.items.find(item => item.text === 'Configurar Cores');
         assertTrue(openAppItem !== undefined, "OpenAppItem deve ser criado");
         openAppItem.signals['activate']();
-        assertEquals(appCommandsRun, 1, "Deve rodar o comando de abrir app");
+        assertEquals(prefsOpenedCount, 1, "Deve chamar openPreferences() ao clicar em Configurar Cores");
 
-        // Testar botão de configurações no cabeçalho
+        // Testar botão de configurações no cabeçalho (também abre Preferences)
         const settingsBtn = indicator._settingsBtn;
         assertTrue(settingsBtn !== undefined, "Botão settings deve ser criado");
         settingsBtn.signals['clicked']();
-        assertEquals(appCommandsRun, 2, "Deve rodar o comando de abrir app com args");
-        assertTrue(lastAppArgs.includes('--configure'), "Deve passar --configure nos argumentos");
+        assertEquals(prefsOpenedCount, 2, "Deve chamar openPreferences() ao clicar no settings button");
 
         // 6. Testar carregamento de configuração personalizada (8 cores)
         const customConfig = {

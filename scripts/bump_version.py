@@ -84,18 +84,7 @@ def main():
         tests_path.write_text(new_content, encoding="utf-8")
         print("  ✅ docs/TESTS.md atualizado")
         
-    # 4. src/rgb_control/main.py
-    main_py_path = root / "src" / "rgb_control" / "main.py"
-    if main_py_path.exists():
-        content = main_py_path.read_text(encoding="utf-8")
-        new_content = content.replace(
-            f'print("RGB Control v{current_version}")',
-            f'print("RGB Control v{new_version}")'
-        )
-        main_py_path.write_text(new_content, encoding="utf-8")
-        print("  ✅ src/rgb_control/main.py atualizado")
-        
-    # 5. packaging/rgb.sh
+    # 4. packaging/rgb.sh
     rgb_sh_path = root / "packaging" / "rgb.sh"
     if rgb_sh_path.exists():
         content = rgb_sh_path.read_text(encoding="utf-8")
@@ -114,8 +103,8 @@ def main():
             f"badge/version-{current_version}-blue",
             f"badge/version-{new_version}-blue"
         ).replace(
-            f"Solução profissional (v{current_version})",
-            f"Solução profissional (v{new_version})"
+            f"Solução focada (v{current_version})",
+            f"Solução focada (v{new_version})"
         )
         readme_path.write_text(new_content, encoding="utf-8")
         print("  ✅ README.md atualizado")
