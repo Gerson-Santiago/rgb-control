@@ -1,7 +1,8 @@
 import GObject from 'gi://GObject';
 
-export const Button = GObject.registerClass(
-class Button extends GObject.Object {
+export const Button = GObject.registerClass({
+    GTypeName: 'RgbPanelMenuButton'
+}, class Button extends GObject.Object {
     _init(menuAlignment, name, reactive) {
         super._init();
         this.menuAlignment = menuAlignment;
@@ -17,6 +18,9 @@ class Button extends GObject.Object {
     }
     add_child(child) {
         this.children.push(child);
+    }
+    destroy() {
+        this.destroyed = true;
     }
 });
 

@@ -23,13 +23,17 @@ class BoxLayout extends GObject.Object {
     }
 });
 
-export const Button = GObject.registerClass(
-class Button extends GObject.Object {
+export const Button = GObject.registerClass({
+    GTypeName: 'RgbStButton'
+}, class Button extends GObject.Object {
     _init(params) {
         super._init();
         Object.assign(this, params);
         this.signals = {};
         this.accessible_name = '';
+    }
+    set_child(child) {
+        this.child = child;
     }
     set_accessible_name(name) {
         this.accessible_name = name;
@@ -40,4 +44,16 @@ class Button extends GObject.Object {
     }
 });
 
-export default { Icon, BoxLayout, Button };
+export const Label = GObject.registerClass({
+    GTypeName: 'RgbStLabel'
+}, class Label extends GObject.Object {
+    _init(params) {
+        super._init();
+        Object.assign(this, params);
+    }
+    set_text(t) {
+        this.text = t;
+    }
+});
+
+export default { Icon, BoxLayout, Button, Label };

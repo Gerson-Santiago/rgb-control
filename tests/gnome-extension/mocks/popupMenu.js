@@ -32,6 +32,9 @@ class PopupBaseMenuItem extends GObject.Object {
     add_child(child) {
         this.children.push(child);
     }
+    add_style_class_name(name) {
+        this.style_class = name;
+    }
 });
 
 export const PopupImageMenuItem = GObject.registerClass(

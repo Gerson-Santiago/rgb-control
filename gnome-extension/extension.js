@@ -32,14 +32,113 @@ class RgbControlIndicator extends PanelMenu.Button {
         this._setupConfigMonitor();
     }
 
+    _createColorButton(colorData) {
+        try {
+            const hexColor = colorData.hex.startsWith('#') ? colorData.hex : `#${colorData.hex}`;
+            let button = new St.Button({
+                style_class: 'rgb-color-btn',
+                style: `background-color: ${hexColor};`,
+                reactive: true,
+                can_focus: true,
+                track_hover: true
+            });
+
+            // Acessibilidade (Leitores de tela)
+            try {
+                button.set_accessible_name(colorData.name);
+            } catch (e) {
+                console.warn('RGB Control Extension: Erro ao definir accessible_name', e);
+            }
+
+            // Feedback visual dinâmico no título do menu ao passar o mouse (hover)
+            button.connect('enter-event', () => {
+                if (this._titleLabel) {
+                    this._titleLabel.set_text(`RGB Control (${colorData.name})`);
+                }
+            });
+
+            button.connect('leave-event', () => {
+                if (this._titleLabel) {
+                    this._titleLabel.set_text('RGB Control');
+                }
+            });
+
+            button.connect('clicked', () => {
+                this._runColorCommand(hexColor);
+            });
+
+            return button;
+        } catch (err) {
+            logError(err, 'RGB Control Extension: Erro ao instanciar botão de cor');
+            return null;
+        }
+    }
+
     _createMenu() {
         try {
-            // Título/Cabeçalho do menu
-            this._titleItem = new PopupMenu.PopupMenuItem('RGB Control', { reactive: false });
-            this.menu.addMenuItem(this._titleItem);
+            // Cabeçalho Customizado (Layout Horizontal)
+            let headerItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
+            headerItem.add_style_class_name('rgb-header-box');
+            
+            let headerLayout = new St.BoxLayout({
+                vertical: false,
+                x_expand: true
+            });
+
+            this._titleLabel = new St.Label({
+                text: 'RGB Control',
+                style_class: 'rgb-header-title',
+                y_align: Clutter.ActorAlign.CENTER,
+                x_expand: true
+            });
+            headerLayout.add_child(this._titleLabel);
+
+            // Botão Liga/Desligar Moderno no Cabeçalho
+            this._powerBtn = new St.Button({
+                style_class: 'rgb-power-btn',
+                reactive: true,
+                can_focus: true,
+                track_hover: true,
+                y_align: Clutter.ActorAlign.CENTER
+            });
+            this._powerBtn.set_accessible_name('Desligar LEDs');
+            
+            let powerIcon = new St.Icon({
+                icon_name: 'system-shutdown-symbolic',
+                style_class: 'rgb-power-icon',
+                style: 'width: 16px; height: 16px; margin: auto;'
+            });
+            this._powerBtn.set_child(powerIcon);
+            
+            this._powerBtn.connect('enter-event', () => {
+                if (this._titleLabel) {
+                    this._titleLabel.set_text('RGB Control (Desligar)');
+                }
+            });
+            this._powerBtn.connect('leave-event', () => {
+                if (this._titleLabel) {
+                    this._titleLabel.set_text('RGB Control');
+                }
+            });
+            this._powerBtn.connect('clicked', () => {
+                this._runColorCommand('000000');
+            });
+
+            headerLayout.add_child(this._powerBtn);
+            headerItem.add_child(headerLayout);
+            this.menu.addMenuItem(headerItem);
+
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-            // Seção para botões de cores rápidas (Layout Horizontal)
+            // Título Seção: Cores Rápidas
+            let quickLabelItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
+            quickLabelItem.add_child(new St.Label({
+                text: 'Cores Rápidas (Configuradas)',
+                style_class: 'rgb-section-label'
+            }));
+            this.menu.addMenuItem(quickLabelItem);
+
+            // Container para botões de cores rápidas (Layout Horizontal)
             this._colorsContainerItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
             this._colorsBox = new St.BoxLayout({
                 style: 'spacing: 12px; padding: 6px 12px;',
@@ -52,12 +151,43 @@ class RgbControlIndicator extends PanelMenu.Button {
             
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-            // Botão Desligar LEDs
-            let turnOffItem = new PopupMenu.PopupImageMenuItem('Desligar LEDs', 'display-brightness-off-symbolic');
-            turnOffItem.connect('activate', () => {
-                this._runColorCommand('000000');
+            // Título Seção: Cores Predefinidas (MAIS CORES)
+            let presetLabelItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
+            presetLabelItem.add_child(new St.Label({
+                text: 'Paleta Estendida (Presets)',
+                style_class: 'rgb-section-label'
+            }));
+            this.menu.addMenuItem(presetLabelItem);
+
+            // Container para botões de cores predefinidas
+            this._presetsContainerItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
+            this._presetsBox = new St.BoxLayout({
+                style: 'spacing: 12px; padding: 6px 12px;',
+                vertical: false,
+                x_expand: true,
+                x_align: Clutter.ActorAlign.CENTER
             });
-            this.menu.addMenuItem(turnOffItem);
+            
+            // Adicionar cores predefinidas estéticas (MAIS CORES)
+            const presetColors = [
+                { name: 'Verde', hex: '#00FF00' },
+                { name: 'Ciano', hex: '#00FFFF' },
+                { name: 'Roxo', hex: '#FF00FF' },
+                { name: 'Amarelo', hex: '#FFFF00' },
+                { name: 'Branco', hex: '#FFFFFF' }
+            ];
+            
+            presetColors.forEach(colorData => {
+                let button = this._createColorButton(colorData);
+                if (button) {
+                    this._presetsBox.add_child(button);
+                }
+            });
+
+            this._presetsContainerItem.add_child(this._presetsBox);
+            this.menu.addMenuItem(this._presetsContainerItem);
+
+            this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
             // Botão Abrir App Completo
             let openAppItem = new PopupMenu.PopupImageMenuItem('Abrir App Completo', 'preferences-system-symbolic');
@@ -100,45 +230,11 @@ class RgbControlIndicator extends PanelMenu.Button {
         // Limpar botões antigos
         this._colorsBox.destroy_all_children();
 
-        // Adicionar novos botões circulares coloridos
+        // Reconstruir botões com a nova lógica DRY
         colors.forEach(colorData => {
-            try {
-                // Cria um botão estilizado como círculo com borda e sombra
-                const hexColor = colorData.hex;
-                let button = new St.Button({
-                    style: `background-color: ${hexColor}; width: 40px; height: 40px; border-radius: 20px; border: 2px solid rgba(255, 255, 255, 0.25); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);`,
-                    reactive: true,
-                    can_focus: true,
-                    track_hover: true
-                });
-
-                // Acessibilidade (Leitores de tela)
-                try {
-                    button.set_accessible_name(colorData.name);
-                } catch (e) {
-                    console.warn('RGB Control Extension: Erro ao definir accessible_name', e);
-                }
-
-                // Feedback visual dinâmico no título do menu ao passar o mouse (hover)
-                button.connect('enter-event', () => {
-                    if (this._titleItem && this._titleItem.label) {
-                        this._titleItem.label.set_text(`RGB Control (${colorData.name})`);
-                    }
-                });
-
-                button.connect('leave-event', () => {
-                    if (this._titleItem && this._titleItem.label) {
-                        this._titleItem.label.set_text('RGB Control');
-                    }
-                });
-
-                button.connect('clicked', () => {
-                    this._runColorCommand(colorData.hex);
-                });
-
+            let button = this._createColorButton(colorData);
+            if (button) {
                 this._colorsBox.add_child(button);
-            } catch (err) {
-                logError(err, 'RGB Control Extension: Erro ao instanciar botão de cor');
             }
         });
     }

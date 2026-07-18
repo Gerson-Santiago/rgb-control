@@ -1,8 +1,14 @@
-# Pipeline Reference: run_tests.sh — novos arquivos de teste precisam de `git add` (Gate 0 bloqueia arquivos não rastreados).
 import unittest
 import os
 import json
 import subprocess
+import pytest
+
+@pytest.fixture(autouse=True)
+def mock_subprocess():
+    # Sobrescreve e desativa a fixture global do conftest.py para permitir
+    # a execução real do interpretador GJS nestes testes de integração.
+    pass
 
 class TestGnomeExtensionIntegration(unittest.TestCase):
     """
@@ -92,7 +98,7 @@ class TestGnomeExtensionIntegration(unittest.TestCase):
         
         # Rodar o processo na pasta test_dir para resolver imports relativos corretamente
         result = subprocess.run(
-            ["gjs", test_runner_path],
+            ["gjs", "-m", test_runner_path],
             cwd=self.test_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

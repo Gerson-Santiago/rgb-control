@@ -1,16 +1,85 @@
-.rgb-control-color-btn {
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    transition: all 150ms ease-in-out;
+/* RGBControl — stylesheet.css
+ * Estilos para a extensão Quick Settings do GNOME 45+
+ */
+
+/* ─── Layout do Cabeçalho e Título ─────────────────────────── */
+.rgb-header-box {
+    padding: 6px 12px;
+    x-expand: true;
 }
 
-.rgb-control-color-btn:hover {
-    border-color: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    transform: scale(1.05);
+.rgb-header-title {
+    font-size: 1.05em;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.95);
 }
 
-.rgb-control-color-btn:focus {
+/* ─── Botões da paleta de cores ──────────────────────────────── */
+.rgb-color-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    transition: border-color 150ms ease-in-out, box-shadow 150ms ease-in-out, transform 150ms ease-in-out;
+}
+
+.rgb-color-btn:hover {
+    border-color: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+    transform: scale(1.08);
+}
+
+.rgb-color-btn:focus {
     border-color: #3583e4;
     box-shadow: 0 0 0 2px #3583e4;
+}
+
+.rgb-color-btn.active {
+    border: 3px solid #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.65);
+}
+
+/* ─── Botão Liga/Desligar (Power Button) moderno ────────────── */
+.rgb-power-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    border: 2px solid rgba(255, 59, 48, 0.35);
+    background-color: rgba(255, 59, 48, 0.12);
+    transition: border-color 150ms ease-in-out, background-color 150ms ease-in-out, box-shadow 150ms ease-in-out, transform 150ms ease-in-out;
+}
+
+.rgb-power-btn:hover {
+    background-color: rgba(255, 59, 48, 0.85);
+    border-color: #ff453a;
+    box-shadow: 0 0 8px rgba(255, 59, 48, 0.5);
+    transform: scale(1.08);
+}
+
+.rgb-power-btn:focus {
+    border-color: #ff453a;
+    box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.4);
+}
+
+.rgb-power-btn:active {
+    background-color: #ff3b30;
+    transform: scale(0.95);
+}
+
+.rgb-power-icon {
+    color: #ff3b30;
+    transition: color 150ms ease-in-out;
+}
+
+.rgb-power-btn:hover .rgb-power-icon {
+    color: #ffffff;
+}
+
+/* Seções e Separadores */
+.rgb-section-label {
+    font-size: 0.8em;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 6px 16px 2px;
 }

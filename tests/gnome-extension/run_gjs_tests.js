@@ -82,31 +82,24 @@ function runTests() {
 
         // 2. Testar hover (enter-event / leave-event)
         buttons[0].signals['enter-event']();
-        assertEquals(indicator._titleItem.label.text, "RGB Control (Laranja)", "Título deve mostrar Laranja no enter-event");
+        assertEquals(indicator._titleLabel.text, "RGB Control (Laranja)", "Título deve mostrar Laranja no enter-event");
 
         buttons[0].signals['leave-event']();
-        assertEquals(indicator._titleItem.label.text, "RGB Control", "Título deve resetar no leave-event");
+        assertEquals(indicator._titleLabel.text, "RGB Control", "Título deve resetar no leave-event");
 
         // 3. Testar clique em botão de cor rápida
         buttons[0].signals['clicked']();
         assertEquals(colorCommandsRun.length, 1, "Deve rodar o comando de cor");
         assertEquals(colorCommandsRun[0], '#FF5500', "Deve passar a cor laranja");
 
-        // 4. Testar clique em "Desligar LEDs"
-        // No _createMenu, os itens adicionados são:
-        // 0: PopupMenuItem ('RGB Control')
-        // 1: PopupSeparatorMenuItem
-        // 2: PopupBaseMenuItem (_colorsContainerItem)
-        // 3: PopupSeparatorMenuItem
-        // 4: PopupImageMenuItem ('Desligar LEDs')
-        // 5: PopupImageMenuItem ('Abrir App Completo')
-        const turnOffItem = indicator.menu.items[4];
-        assertTrue(turnOffItem !== undefined, "TurnOffItem deve ser criado");
-        turnOffItem.signals['activate']();
+        // 4. Testar clique no botão moderno de Desligar (Power Button) no cabeçalho
+        const powerBtn = indicator._powerBtn;
+        assertTrue(powerBtn !== undefined, "Botão power deve ser criado");
+        powerBtn.signals['clicked']();
         assertEquals(colorCommandsRun[colorCommandsRun.length - 1], '000000', "Deve rodar o comando de desligar (000000)");
 
         // 5. Testar clique em "Abrir App Completo"
-        const openAppItem = indicator.menu.items[5];
+        const openAppItem = indicator.menu.items.find(item => item.text === 'Abrir App Completo');
         assertTrue(openAppItem !== undefined, "OpenAppItem deve ser criado");
         openAppItem.signals['activate']();
         assertEquals(appCommandsRun, 1, "Deve rodar o comando de abrir app");
@@ -134,7 +127,7 @@ function runTests() {
 
         // Testar hover com a nova cor
         newButtons[0].signals['enter-event']();
-        assertEquals(indicator._titleItem.label.text, "RGB Control (Verde)", "Título deve mostrar Verde no enter-event");
+        assertEquals(indicator._titleLabel.text, "RGB Control (Verde)", "Título deve mostrar Verde no enter-event");
         newButtons[0].signals['leave-event']();
 
         // Testar clique na nova cor
