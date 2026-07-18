@@ -1,14 +1,14 @@
 # openrgb — Controle Desktop Moderno para Gabinetes Gaming 🎨🎮🐧
 
-![Version](https://img.shields.io/badge/version-1.1.15-blue)
+![Version](https://img.shields.io/badge/version-2.6.0-blue)
 ![Quality Gate](https://img.shields.io/badge/quality--gate-passed-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-73%25-success)
+![Coverage](https://img.shields.io/badge/coverage-89%25-success)
 
 
-sudo apt install --reinstall ./builds/rgb-control_1.1.15-1_all.deb
+sudo apt install --reinstall ./builds/rgb-control_2.6.0-1_all.deb
 
 
-Solução profissional (v1.1.15) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos, integrando um **Air Mouse XING WEI 2.4G USB** (Lelong LE-7278) como controle remoto nativo no Linux.
+Solução profissional (v2.6.0) para controlar a iluminação de gabinetes **ASUS TUF Gaming** e periféricos no Linux.
 
 
 Construído com **Python 3.13**, **GTK4 / Libadwaita** e **Clean Architecture**.
@@ -18,10 +18,9 @@ Construído com **Python 3.13**, **GTK4 / Libadwaita** e **Clean Architecture**.
 ## ✨ Funcionalidades Principais
 -   **Interface Premium**: Interface gráfica moderna baseada em GNOME/Libadwaita.
 -   **Controle Dual**: Gerenciamento via GUI (Janela) ou CLI (Terminal).
--   **Remoto Air Mouse**: Mapeamento de botões de controle remoto para alternar cores e estados.
 -   **OSD (Dunst)**: Feedback visual na tela ao alternar modos de LED.
 -   **Extensão GNOME Shell**: Menu de acesso rápido no painel superior (Shell **45–48**).
--   **Alta Fidelidade**: Suite de testes com 66+ validações (Property-based, Memory Stress, Contract).
+-   **Alta Fidelidade**: Suite de testes com 102+ validações (Property-based, Contract).
 
 ## 🚀 Instalação e Requisitos
 
@@ -33,17 +32,10 @@ sudo apt install python3-evdev python3-gi libadwaita-1-0 dunst openrgb
 ### Instalação (Padrão Debian)
 Baixe o último release `.deb` e instale:
 ```bash
-sudo apt install ./builds/rgb-control_1.1.15-1_all.deb
+sudo apt install ./builds/rgb-control_2.6.0-1_all.deb
 ```
 
-## 🎮 Operação com Air Mouse
 
-| Botão | Ação |
-|---|---|
-| 🎙️ / 🏠 | Ativar / Desativar MODO LED |
-| ➡️ / ➕ Vol+ | Próxima cor |
-| ⬅️ / ➖ Vol− | Cor anterior |
-| ↩️ Back | Desativar MODO LED |
 
 ## 🛠️ Desenvolvimento e Qualidade
 
@@ -76,7 +68,6 @@ bash scripts/pipeline_run.sh
 
 ## 🏗️ Estrutura do Projeto
 -   **`src/rgb_control/`**: Aplicação de interface gráfica (GTK4).
--   **`src/rgb_daemon/`**: Daemon de monitoramento de hardware e evdev.
 -   **`tests/`**: Suite exaustiva de testes automatizados.
 -   **`docs/`**: Documentação técnica detalhada.
 

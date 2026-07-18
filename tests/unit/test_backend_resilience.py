@@ -123,40 +123,7 @@ class TestApplyColorResilience(unittest.TestCase):
             result = self.backend.get_current_color()
         self.assertEqual(result, "#FF0000")
 
-    def test_set_led_mode_with_invalid_pid_no_crash(self) -> None:
-        """
-        Quando o PID_FILE contém texto não numérico, set_led_mode não deve
-        lançar exceção — a falha deve ser capturada e logada silenciosamente.
-        """
-        def exists_side_effect(path: str) -> bool:
-            return True  # status_file e PID_FILE existem
 
-        with patch("os.path.exists", side_effect=exists_side_effect):
-            with patch("builtins.open", mock_open(read_data="NOT_A_PID")):
-                try:
-                    self.backend.set_led_mode(True)
-                except Exception as e:
-                    self.fail(
-                        f"set_led_mode não deveria lançar exceção com PID inválido, mas lançou: {e}"
-                    )
-
-    def test_set_led_mode_no_pid_file_writes_status_only(self) -> None:
-        """
-        Quando PID_FILE não existe, set_led_mode deve escrever o status_file
-        mas NÃO tentar enviar sinal SIGUSR1.
-        """
-        def exists_side_effect(path: str) -> bool:
-            # status_file existe (para abrir escrita), PID_FILE não existe
-            return path == self.backend.status_file
-
-        m = mock_open()
-        with patch("os.path.exists", side_effect=exists_side_effect):
-            with patch("builtins.open", m):
-                with patch("os.kill") as mock_kill:
-                    self.backend.set_led_mode(True)
-                    mock_kill.assert_not_called()
-
-        m.assert_called_once_with(self.backend.status_file, "w")
 
 
 if __name__ == "__main__":

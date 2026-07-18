@@ -12,8 +12,7 @@
       para gerenciar a iluminação de gabinetes ASUS TUF Gaming e periféricos através do OpenRGB.
     </p>
     <p>
-      Possui integração com Air Mouse local para controle remoto direto do sistema
-      e uma extensão nativa para o painel de Quick Settings do GNOME Shell.
+      Possui uma extensão nativa para o painel de Quick Settings do GNOME Shell para alternar cores de forma rápida.
     </p>
   </description>
   <launchable type="desktop-id">com.github.sant.rgbcontrol.desktop</launchable>

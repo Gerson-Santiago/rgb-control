@@ -56,8 +56,8 @@ class TestLogViewerWindowBase(unittest.TestCase):
 class TestLogViewerWidgets(TestLogViewerWindowBase):
     """Verifica a estrutura dos widgets após a inicialização."""
 
-    def test_dropdown_is_gtk_dropdown(self) -> None:
-        self.assertIsInstance(self.log_win.dropdown, Gtk.DropDown)
+    def test_lbl_title_is_gtk_label(self) -> None:
+        self.assertIsInstance(self.log_win.lbl_title, Gtk.Label)
 
     def test_btn_refresh_is_gtk_button(self) -> None:
         self.assertIsInstance(self.log_win.btn_refresh, Gtk.Button)
@@ -89,28 +89,7 @@ class TestLogViewerWidgets(TestLogViewerWindowBase):
         self.assertIn("destructive-action", self.log_win.btn_clear.get_css_classes())
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# 2. Seleção de fonte de log
-# ──────────────────────────────────────────────────────────────────────────────
 
-class TestLogViewerSelection(TestLogViewerWindowBase):
-
-    def test_index_0_returns_daemon_log_path(self) -> None:
-        self.log_win.dropdown.set_selected(0)
-        result = self.log_win.get_selected_log_path()
-        self.mock_backend.get_daemon_log_path.assert_called()
-        self.assertEqual(result, "/tmp/mock-daemon.log")
-
-    def test_index_1_returns_gui_log_path(self) -> None:
-        self.log_win.dropdown.set_selected(1)
-        result = self.log_win.get_selected_log_path()
-        self.mock_backend.get_gui_log_path.assert_called()
-        self.assertEqual(result, "/tmp/mock-gui.log")
-
-    def test_changing_dropdown_triggers_refresh(self) -> None:
-        initial_calls = self.mock_backend.read_log_file.call_count
-        self.log_win.dropdown.set_selected(1)
-        self.assertGreater(self.mock_backend.read_log_file.call_count, initial_calls)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -132,11 +111,7 @@ class TestLogViewerRefresh(TestLogViewerWindowBase):
         self.assertIn("linha 1", text)
         self.assertIn("linha 3", text)
 
-    def test_refresh_reads_correct_log_based_on_dropdown(self) -> None:
-        self.log_win.dropdown.set_selected(1)
-        self.mock_backend.read_log_file.reset_mock()
-        self.log_win.refresh_logs()
-        self.mock_backend.read_log_file.assert_called_with("/tmp/mock-gui.log")
+
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -307,10 +282,7 @@ class TestBackendLogMethods(unittest.TestCase):
         result = self.backend.clear_log_file("/tmp/nao-existe-abc123.log")
         self.assertFalse(result)
 
-    def test_get_daemon_log_path_returns_nonempty_string(self) -> None:
-        path = self.backend.get_daemon_log_path()
-        self.assertIsInstance(path, str)
-        self.assertTrue(len(path) > 0)
+
 
     def test_get_gui_log_path_returns_nonempty_string_with_rgb_control(self) -> None:
         path = self.backend.get_gui_log_path()

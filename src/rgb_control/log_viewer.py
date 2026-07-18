@@ -30,13 +30,10 @@ class LogViewerWindow(Adw.Window): # type: ignore[misc]
         control_bar.set_margin_top(8)
         control_bar.set_margin_bottom(8)
         
-        # DropDown para seleção de logs
-        self.dropdown = Gtk.DropDown.new_from_strings([
-            "Log do Daemon (Background)",
-            "Log do Aplicativo (GUI)"
-        ])
-        self.dropdown.connect("notify::selected", self.on_log_type_changed)
-        control_bar.append(self.dropdown)
+        # Rótulo para indicar o arquivo exibido
+        self.lbl_title = Gtk.Label(label="Log do Aplicativo (GUI)")
+        self.lbl_title.add_css_class("dim-label")
+        control_bar.append(self.lbl_title)
         
         # Espaçador
         spacer = Gtk.Box()
@@ -98,11 +95,7 @@ class LogViewerWindow(Adw.Window): # type: ignore[misc]
         self._refresh_timeout_id = GLib.timeout_add(1500, self.auto_refresh_logs)
         
     def get_selected_log_path(self) -> str:
-        idx = self.dropdown.get_selected()
-        if idx == 0:
-            return self.backend.get_daemon_log_path()
-        else:
-            return self.backend.get_gui_log_path()
+        return self.backend.get_gui_log_path()
 
     def refresh_logs(self) -> None:
         path = self.get_selected_log_path()
@@ -119,8 +112,7 @@ class LogViewerWindow(Adw.Window): # type: ignore[misc]
         adj.set_value(adj.get_upper() - adj.get_page_size())
         return False
 
-    def on_log_type_changed(self, dropdown: Gtk.DropDown, param: Any) -> None:
-        self.refresh_logs()
+
 
     def on_copy_clicked(self, button: Gtk.Button) -> None:
         buffer = self.text_view.get_buffer()

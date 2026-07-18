@@ -34,10 +34,6 @@ class TestMainWindowStructureSafety(unittest.TestCase):
     def test_core_ui_widgets_are_bound_and_valid(self):
         """Verifica se os componentes principais foram instanciados corretamente."""
         self.assertIsInstance(self.window.toolbar_view, Adw.ToolbarView)
-        self.assertIsInstance(self.window.switch_svc, Adw.SwitchRow)
-        self.assertIsInstance(self.window.switch_mode, Adw.SwitchRow)
-        self.assertIsInstance(self.window.row_controller, Adw.ActionRow)
-        self.assertIsInstance(self.window.label_controller_status, Gtk.Label)
         self.assertIsInstance(self.window.btn_logs, Gtk.Button)
 
 
@@ -68,20 +64,14 @@ class TestLogViewerWindow(unittest.TestCase):
 
     def test_log_viewer_widgets(self):
         """Verifica a inicialização e os tipos dos widgets do LogViewerWindow."""
-        self.assertIsInstance(self.log_win.dropdown, Gtk.DropDown)
+        self.assertIsInstance(self.log_win.lbl_title, Gtk.Label)
         self.assertIsInstance(self.log_win.btn_refresh, Gtk.Button)
         self.assertIsInstance(self.log_win.btn_copy, Gtk.Button)
         self.assertIsInstance(self.log_win.btn_clear, Gtk.Button)
         self.assertIsInstance(self.log_win.text_view, Gtk.TextView)
 
     def test_get_selected_log_path(self):
-        """Valida que o caminho do log correto é retornado de acordo com o DropDown."""
-        # Selecionado idx 0 (Daemon)
-        self.log_win.dropdown.set_selected(0)
-        self.assertEqual(self.log_win.get_selected_log_path(), "/tmp/mock-daemon.log")
-        
-        # Selecionado idx 1 (GUI)
-        self.log_win.dropdown.set_selected(1)
+        """Valida que o caminho do log correto é retornado."""
         self.assertEqual(self.log_win.get_selected_log_path(), "/tmp/mock-gui.log")
 
     def test_refresh_logs(self):

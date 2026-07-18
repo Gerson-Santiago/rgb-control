@@ -90,18 +90,10 @@ class TestWindowCallbacks(unittest.TestCase):
             with patch('rgb_control.window.get_asset_path', return_value=""):
                 self.window = MainWindow(application=self.app)
 
-    def test_on_service_notify_failure_reverts_switch(self):
-        """Testa se o switch do serviço reverte o estado quando o backend falha."""
-        self.mock_backend.set_service_state.side_effect = lambda state: not state
-        # Assumindo que começa False
-        self.window.switch_svc.set_active(True)
-        # O efeito de reversão deve ser síncrono na mesma thread de UI
-        self.assertFalse(self.window.switch_svc.get_active())
     def test_core_ui_widgets_are_bound_and_valid(self):
         """Verifica se os componentes principais foram instanciados corretamente."""
         self.assertIsInstance(self.window.toolbar_view, Adw.ToolbarView)
-        self.assertIsInstance(self.window.switch_svc, Adw.SwitchRow)
-        self.assertIsInstance(self.window.switch_mode, Adw.SwitchRow)
+
 
 
     def test_color_callback_calls_backend(self):

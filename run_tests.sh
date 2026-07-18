@@ -34,7 +34,7 @@ ok "Pyright: 0 erros"
 
 # ── Gate 2: Mypy --strict ─────────────────────────────────────────────────────
 step "Gate 2 — Mypy --strict"
-MYPYPATH=src python3 -m mypy --strict -p rgb_daemon -p rgb_control
+MYPYPATH=src python3 -m mypy --strict -p rgb_control
 ok "Mypy: 0 issues"
 
 # ── Gate 3: Bash CLI ─────────────────────────────────────────────────────────

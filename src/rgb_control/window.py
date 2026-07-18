@@ -35,8 +35,6 @@ def get_asset_path(filename: str) -> str:
 
 class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
     def __init__(self, application: Gtk.Application) -> None:
-        self._updating_ui = False # Previne loops infinitos de sinais
-        self._last_ctrl_connected: Optional[bool] = None # Cache do estado do controle remoto
         super().__init__(application=application)
         self.set_title("RGB Control")
         # Tamanho mais compacto sem a ventoinha
@@ -113,8 +111,6 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
             main_box.append(hero_box)
 
         # --- Grupos de Preferências (construídos por métodos especializados) ---
-        main_box.append(self._build_system_group())
-        main_box.append(self._build_remote_group())
 
         # Paleta e cor personalizada (dois grupos separados)
         lighting_group, custom_group = self._build_lighting_groups()
@@ -141,7 +137,6 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         self.toolbar_view.set_content(scrolled)
         
         self.setup_actions(application)
-        GLib.timeout_add(2000, self.update_status_ui)
         
         # Inicializa o estado visual lendo o cache global do daemon na memoria
         startup_color = self.backend.get_current_color()
@@ -151,45 +146,7 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
     # Construtores de grupos de preferências (Clean Code: __init__ enxuto)
     # ──────────────────────────────────────────────────────────────────────────
 
-    def _build_system_group(self) -> Adw.PreferencesGroup:
-        """Constrói o grupo de Status e Serviço (daemon + controle remoto)."""
-        system_group = Adw.PreferencesGroup()
-        system_group.set_title("Configurações do Serviço")
 
-        self.switch_svc = Adw.SwitchRow()
-        self.switch_svc.set_title("Daemon de Captura (Background)")
-        self.switch_svc.set_subtitle("Gerencia a escuta de eventos do Air Mouse")
-        self.switch_svc.set_active(self.backend.is_service_active())
-        self._svc_handler_id = self.switch_svc.connect("notify::active", self.on_service_notify)
-        system_group.add(self.switch_svc)
-
-        self.row_controller = Adw.ActionRow()
-        self.row_controller.set_title("Controle Remoto (Air Mouse)")
-        self.row_controller.set_subtitle("Buscando dispositivo...")
-        self.row_controller.set_icon_name("accessory-controller-symbolic")
-
-        self.label_controller_status = Gtk.Label(label="Buscando...")
-        self.label_controller_status.set_valign(Gtk.Align.CENTER)
-        self.label_controller_status.add_css_class("dim-label")
-        self.row_controller.add_suffix(self.label_controller_status)
-        system_group.add(self.row_controller)
-
-        return system_group
-
-    def _build_remote_group(self) -> Adw.PreferencesGroup:
-        """Constrói o grupo de captura do controle remoto (Air Mouse)."""
-        remote_group = Adw.PreferencesGroup()
-        remote_group.set_title("Controle Remoto")
-        remote_group.set_description("Gerencie a captura de botões do Air Mouse")
-
-        self.switch_mode = Adw.SwitchRow()
-        self.switch_mode.set_title("Ativar Captura Remota")
-        self.switch_mode.set_subtitle("Permite mudar cores via ← → ou Vol±")
-        self.switch_mode.set_active(self.backend.is_led_mode_active())
-        self._mode_handler_id = self.switch_mode.connect("notify::active", self.on_mode_notify)
-        remote_group.add(self.switch_mode)
-
-        return remote_group
 
 
 
@@ -376,32 +333,7 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         theme_system.connect("activate", lambda a,p: Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.DEFAULT))
         app.add_action(theme_system)
 
-    def on_service_notify(self, row: Adw.SwitchRow, param: Any) -> None:
-        if self._updating_ui:
-            return
-        
-        state = row.get_active()
-        logger.info(f"Toggle Serviço solicitado: {state}")
-        
-        # Bloqueio estrito de reentrada durante a operação e possível reversão
-        self._updating_ui = True
-        try:
-            success = self.backend.set_service_state(state)
-            if not success:
-                 logger.warning("Falha ao mudar estado do serviço no systemd")
-                 self.switch_svc.handler_block(self._svc_handler_id)
-                 row.set_active(not state)
-                 self.switch_svc.handler_unblock(self._svc_handler_id)
-        finally:
-            self._updating_ui = False
 
-
-    def on_mode_notify(self, row: Adw.SwitchRow, param: Any) -> None:
-        if self._updating_ui:
-            return
-        state = row.get_active()
-        logger.info(f"Toggle Modo solicitado: {state}")
-        self.backend.set_led_mode(state)
 
     def on_color_clicked(self, widget: Gtk.Button, hex_val: str, name: str) -> None:
         logger.info(f"Cor predefinida escolhida: {name} ({hex_val})")
@@ -443,52 +375,7 @@ class MainWindow(Adw.ApplicationWindow): # type: ignore[misc]
         }
         return mapping.get(hex_val.upper(), default_name)
 
-    def update_status_ui(self) -> bool:
-        # Sincroniza estado UI -> Background sem disparar sinais recursivos
-        try:
-            svc_active = self.backend.is_service_active()
-            mode_active = self.backend.is_led_mode_active()
-            
-            # Verifica se o controle remoto está fisicamente conectado
-            ctrl_connected = self.backend.is_controller_connected()
-            if ctrl_connected != self._last_ctrl_connected:
-                self._last_ctrl_connected = ctrl_connected
-                if ctrl_connected:
-                    self.label_controller_status.set_label("Conectado")
-                    self.label_controller_status.remove_css_class("dim-label")
-                    self.label_controller_status.remove_css_class("error")
-                    self.label_controller_status.add_css_class("success")
-                    self.row_controller.set_subtitle("Receptor USB detectado no barramento")
-                else:
-                    self.label_controller_status.set_label("Desconectado")
-                    self.label_controller_status.remove_css_class("dim-label")
-                    self.label_controller_status.remove_css_class("success")
-                    self.label_controller_status.add_css_class("error")
-                    self.row_controller.set_subtitle("Controle desligado ou receptor USB ausente")
 
-            self._updating_ui = True
-            
-            if self.switch_svc.get_active() != svc_active:
-                logger.info(f"Sincronizando Switch Serviço para: {svc_active}")
-                self.switch_svc.handler_block(self._svc_handler_id)
-                self.switch_svc.set_active(svc_active)
-                self.switch_svc.handler_unblock(self._svc_handler_id)
-                
-
-                
-                
-            if self.switch_mode.get_active() != mode_active:
-                logger.info(f"Sincronizando Switch Modo para: {mode_active}")
-                self.switch_mode.handler_block(self._mode_handler_id)
-                self.switch_mode.set_active(mode_active)
-                self.switch_mode.handler_unblock(self._mode_handler_id)
-                
-            self._updating_ui = False
-        except Exception as e:
-            logger.error(f"Erro na sincronização da UI: {e}")
-            self._updating_ui = False
-            
-        return True
 
     def on_view_logs_clicked(self, button: Gtk.Button) -> None:
         """Abre o modal visualizador de logs"""

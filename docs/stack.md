@@ -1,4 +1,4 @@
-# Stack Tecnológica e Padrões de Projeto (v1.1.15)
+# Stack Tecnológica e Padrões de Projeto (v2.6.0)
 
 Este documento serve como a **"Fonte Única de Verdade"** para a infraestrutura técnica do projeto `openrgb`.
 
@@ -11,12 +11,10 @@ Este documento serve como a **"Fonte Única de Verdade"** para a infraestrutura 
 
 | Componente | Tecnologia | Versão Mínima | Finalidade |
 | :--- | :--- | :--- | :--- |
-| **Linguagem** | Python | 3.13 | Lógica core, daemon e GUI |
+| **Linguagem** | Python | 3.13 | Lógica core e GUI |
 | **GUI Framework** | GTK4 / Libadwaita | 4.0 / 1.0 | Interface moderna e responsiva |
 | **Runtime Bindings** | PyGObject (gi) | 3.44 | Ponte entre Python e C (GTK/Adw) |
-| **Hardware I/O** | python-evdev | 1.6 | Leitura direta de eventos de mouse/teclado |
 | **Hardware Backend** | OpenRGB | 0.9 | Driver de controle de LEDs (via CLI) |
-| **IPC & Sinais** | D-Bus / POSIX | - | Comunicação entre GUI, Daemon e Systemd |
 
 ---
 

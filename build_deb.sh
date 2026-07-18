@@ -25,7 +25,6 @@ mkdir -p "$DEB_DIR/usr/share/icons/hicolor/scalable/apps"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/256x256/apps"
 mkdir -p "$DEB_DIR/usr/share/metainfo"
 mkdir -p "$DEB_DIR/usr/share/$PKG_NAME"
-mkdir -p "$DEB_DIR/lib/systemd/system"
 mkdir -p "$DEB_DIR/usr/share/gnome-shell/extensions/rgb-control@sant.github.com"
 
 # Create DEBIAN/control
@@ -40,45 +39,38 @@ Maintainer: Sant <sant@local>
 Description: Interface Gráfica moderna em GTK4 para controle do OpenRGB com integrações.
 EOF
 
-# Create DEBIAN/postinst (atualiza cache e ativa serviço daemon)
+# Create DEBIAN/postinst (atualiza cache)
 cat <<EOF > "$DEB_DIR/DEBIAN/postinst"
 #!/bin/sh
 set -e
 if [ "\$1" = "configure" ]; then
     gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
     update-desktop-database -q || true
-    systemctl daemon-reload || true
-    systemctl enable rgb-control-daemon.service || true
-    systemctl restart rgb-control-daemon.service || true
 fi
 EOF
 chmod +x "$DEB_DIR/DEBIAN/postinst"
 
-# Create DEBIAN/postrm (limpa cache e desativa serviço daemon)
+
+# Create DEBIAN/postrm (limpa cache)
 cat <<EOF > "$DEB_DIR/DEBIAN/postrm"
 #!/bin/sh
 set -e
 if [ "\$1" = "remove" ] || [ "\$1" = "purge" ]; then
     gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
     update-desktop-database -q || true
-    systemctl stop rgb-control-daemon.service || true
-    systemctl disable rgb-control-daemon.service || true
-    systemctl daemon-reload || true
 fi
 EOF
 chmod +x "$DEB_DIR/DEBIAN/postrm"
 
 # Copy source python packages
 cp -r src/rgb_control "$DEB_DIR/usr/share/$PKG_NAME/"
-cp -r src/rgb_daemon "$DEB_DIR/usr/share/$PKG_NAME/"
 
 # Copy assets
 cp -r assets "$DEB_DIR/usr/share/$PKG_NAME/"
 cp "packaging/rgb.sh" "$DEB_DIR/usr/bin/rgb.sh"
 chmod +x "$DEB_DIR/usr/bin/rgb.sh"
 
-# Copy systemd service
-cp "packaging/rgb-control-daemon.service" "$DEB_DIR/lib/systemd/system/rgb-control-daemon.service"
+
 
 # Copy GNOME Shell extension
 cp -r gnome-extension/* "$DEB_DIR/usr/share/gnome-shell/extensions/rgb-control@sant.github.com/"
